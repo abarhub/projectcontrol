@@ -1,13 +1,13 @@
-package org.projectix.server;
+package org.projectix.cli;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ProjectixApplication {
+public class ProjectixCliApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ProjectixApplication.class, args);
+        SpringApplication.run(ProjectixCliApplication.class, args);
     }
 
 }
