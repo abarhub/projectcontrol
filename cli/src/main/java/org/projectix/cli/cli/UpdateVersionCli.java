@@ -3,7 +3,6 @@ package org.projectix.cli.cli;
 import org.apache.commons.lang3.StringUtils;
 import org.projectix.core.service.PomParserService;
 import org.projectix.core.service.XmlParserService;
-import org.projectix.core.vo.ResultatBalise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -11,10 +10,7 @@ import org.springframework.util.CollectionUtils;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 @Component
@@ -25,6 +21,11 @@ public class UpdateVersionCli implements Callable<Integer> {
 
     private XmlParserService xmlParserService;
     private PomParserService pomParserService;
+
+    public UpdateVersionCli(XmlParserService xmlParserService, PomParserService pomParserService) {
+        this.xmlParserService = xmlParserService;
+        this.pomParserService = pomParserService;
+    }
 
     public Integer call() throws Exception {
         //mailService.sendMessage(to, subject, String.join(" ", body));
@@ -40,7 +41,7 @@ public class UpdateVersionCli implements Callable<Integer> {
 
     private void afficheVersions() throws Exception {
         Path pomFile = Path.of("./pom.xml").toAbsolutePath();
-        System.out.println("analyse du fichier : "+pomFile);
+        System.out.println("analyse du fichier : " + pomFile);
         var resultat = xmlParserService.parse(pomFile, List.of(PomParserService.PROJET_VERSION));
         if (!CollectionUtils.isEmpty(resultat)) {
             var res = resultat.getFirst();
@@ -49,6 +50,7 @@ public class UpdateVersionCli implements Callable<Integer> {
     }
 
     private void affiche(String versionActuelle, Path pomFile) throws Exception {
+        System.out.println("version actuelle : " + versionActuelle);
         List<String> listeVersions = getListeVersion(versionActuelle);
         List<String> liste2 = new ArrayList<>();
         Map<String, String> map = new HashMap<>();
@@ -57,17 +59,24 @@ public class UpdateVersionCli implements Callable<Integer> {
             map.put(libelle, version);
             liste2.add(libelle);
         }
-        while(true) {
+//        var console = System.console();
+//        if (console == null) {
+//            throw new Exception("console est null");
+//        }
+        Scanner scan = new Scanner(System.in);
+        while (true) {
             System.out.println("Versions disponibles :");
             System.out.println("=====================");
             int i = 1;
             for (String libelle : liste2) {
                 System.out.println(i + " ) " + libelle);
+                i++;
             }
             System.out.println("0 ) Quitter");
 
             System.out.println("Veullez sélectionner une version :");
-            String choixStr = System.console().readLine();
+//            String choixStr = console.readLine();
+            String choixStr = scan.nextLine();
             if (StringUtils.isNotBlank(choixStr)) {
                 int choix = Integer.parseInt(choixStr);
                 if (choix == 0) {
