@@ -21,7 +21,6 @@ import java.util.List;
 @Service
 public class XmlParserService {
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlParserService.class);
 
     public List<ResultatBalise> parse(Path fichier, List<List<String>> balisesRecherche) throws Exception {
@@ -29,6 +28,8 @@ public class XmlParserService {
         List<ResultatBalise> resultat = new ArrayList<>();
 
         XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+
+        LOGGER.info("Parsing du fichier {}", inputFile);
 
         try (var inputStream = Files.newInputStream(inputFile)) {
             XMLEventReader reader = inputFactory.createXMLEventReader(inputStream);
@@ -47,8 +48,12 @@ public class XmlParserService {
 
                     LOGGER.info("Texte original dans <node2> : {},({})", originalText, event.getLocation());
                     Position debut, fin;
-                    debut = new Position(event.getLocation().getLineNumber(), event.getLocation().getColumnNumber());
-                    fin = new Position(event.getLocation().getLineNumber(), event.getLocation().getColumnNumber() + originalText.length() - 1);
+                    debut = new Position(event.getLocation().getLineNumber(),
+                            event.getLocation().getColumnNumber()-originalText.length()-2,
+                            event.getLocation().getCharacterOffset());
+                    fin = new Position(event.getLocation().getLineNumber(),
+                            event.getLocation().getColumnNumber()-3 /*+ originalText.length() - 1*/,
+                            event.getLocation().getCharacterOffset() + (originalText.length() - 1));
                     resultat.add(new ResultatBalise(List.copyOf(balises), originalText, debut, fin));
 
                 } else if (event.isEndElement()) {
@@ -60,6 +65,8 @@ public class XmlParserService {
             reader.close();
         }
 
+        LOGGER.info("nb resultat {}", resultat.size());
+
         return resultat;
     }
 
@@ -69,18 +76,54 @@ public class XmlParserService {
         char[] caracteres = contenu.toCharArray();
 
         // 2. Parcourir le tableau pour trouver les positions de début et fin
+//        PositionIndex posDebut = trouverPosition(caracteres, debut);
+//        PositionIndex posFin = trouverPosition(caracteres, fin);
+        int posDebut=debut.position();
+        int posFin= fin.position();
+
+        // 3. Valider que les positions ont été trouvées
+        if (posDebut<=0) {
+            throw new IllegalArgumentException("Position de début " + debut + " non trouvée dans le fichier " + cheminFichier);
+        }
+        if (posFin<=0) {
+            throw new IllegalArgumentException("Position de fin " + fin + " non trouvée dans le fichier " + cheminFichier);
+        }
+        if (posDebut > posFin) {
+            throw new IllegalArgumentException("La position de début doit être avant la position de fin " + cheminFichier);
+        }
+
+        // 4. Remplacer en mémoire dans le tableau de caractères
+        char[] nouveauContenu = remplacerDansTableau(caracteres, posDebut, posFin, nouveauTexte);
+
+        // 5. Écrire le nouveau contenu dans le fichier
+        Files.writeString(Paths.get(cheminFichier), new String(nouveauContenu));
+
+        LOGGER.info("Remplacement effectué :");
+        LOGGER.info("- Position début: " + debut + " (index " + posDebut + ")");
+        LOGGER.info("- Position fin: " + fin + " (index " + posFin + ")");
+        LOGGER.info("- Texte remplacé par: \"" + nouveauTexte + "\"");
+    }
+
+    public void modifierFichier2(String cheminFichier, Position debut, Position fin, String nouveauTexte) throws IOException {
+        // 1. Charger le fichier entier en tableau de caractères
+        String contenu = Files.readString(Paths.get(cheminFichier));
+        char[] caracteres = contenu.toCharArray();
+
+        // 2. Parcourir le tableau pour trouver les positions de début et fin
         PositionIndex posDebut = trouverPosition(caracteres, debut);
         PositionIndex posFin = trouverPosition(caracteres, fin);
+//        int posDebut=debut.position();
+//        int posFin= fin.position();
 
         // 3. Valider que les positions ont été trouvées
         if (!posDebut.trouve()) {
-            throw new IllegalArgumentException("Position de début " + debut + " non trouvée dans le fichier");
+            throw new IllegalArgumentException("Position de début " + debut + " non trouvée dans le fichier " + cheminFichier);
         }
         if (!posFin.trouve()) {
-            throw new IllegalArgumentException("Position de fin " + fin + " non trouvée dans le fichier");
+            throw new IllegalArgumentException("Position de fin " + fin + " non trouvée dans le fichier " + cheminFichier);
         }
         if (posDebut.index() > posFin.index()) {
-            throw new IllegalArgumentException("La position de début doit être avant la position de fin");
+            throw new IllegalArgumentException("La position de début doit être avant la position de fin " + cheminFichier);
         }
 
         // 4. Remplacer en mémoire dans le tableau de caractères
@@ -90,8 +133,8 @@ public class XmlParserService {
         Files.writeString(Paths.get(cheminFichier), new String(nouveauContenu));
 
         LOGGER.info("Remplacement effectué :");
-        LOGGER.info("- Position début: " + debut + " (index " + posDebut.index() + ")");
-        LOGGER.info("- Position fin: " + fin + " (index " + posFin.index() + ")");
+        LOGGER.info("- Position début: " + debut + " (index " + posDebut + ")");
+        LOGGER.info("- Position fin: " + fin + " (index " + posFin + ")");
         LOGGER.info("- Texte remplacé par: \"" + nouveauTexte + "\"");
     }
 

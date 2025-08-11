@@ -40,7 +40,7 @@ public class UpdateVersionCli implements Callable<Integer> {
     }
 
     private void afficheVersions() throws Exception {
-        Path pomFile = Path.of("./pom.xml").toAbsolutePath();
+        Path pomFile = Path.of("./pom.xml").toAbsolutePath().normalize();
         System.out.println("analyse du fichier : " + pomFile);
         var resultat = xmlParserService.parse(pomFile, List.of(PomParserService.PROJET_VERSION));
         if (!CollectionUtils.isEmpty(resultat)) {

@@ -5,11 +5,9 @@ import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-
 import org.projectix.core.vo.ResultatBalise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -30,8 +28,11 @@ public class PomParserService {
     public static final List<String> PROJET_PARENT_GROUPEID = List.of("project", "parent", "groupId");
     public static final List<String> PROJET_PARENT_ARTIFACTID = List.of("project", "parent", "artifactId");
 
-    @Autowired
-    private XmlParserService xmlParserService;
+    private final XmlParserService xmlParserService;
+
+    public PomParserService(XmlParserService xmlParserService) {
+        this.xmlParserService = xmlParserService;
+    }
 
     public void parsePom(Path file) throws Exception {
         var resultat = xmlParserService.parse(file, List.of(PROJET_VERSION, PROJET_ARTIFACTID, PROJET_GROUPEID));
@@ -43,21 +44,26 @@ public class PomParserService {
             var versionOpt = resultat.stream().filter(x -> Objects.equals(x.balises(), PROJET_VERSION)).findFirst();
             if (versionOpt.isPresent()) {
                 var versionOld = versionOpt.get();
-                LOGGER.info("version: {} <> {} (fichier: {})", versionOld.valeur(), version,file);
-                xmlParserService.modifierFichier(file.toString(), versionOld.positionDebut(), versionOld.positionFin(), version);
-                FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
-                Repository repository = repositoryBuilder.setGitDir(file.getParent().resolve(".git").toFile())
-                        .readEnvironment() // Lire GIT_DIR et d'autres variables d'environnement
-                        .findGitDir() // Chercher le répertoire .git
-                        .build();
-                try (Git git = new Git(repository)) {
+                LOGGER.info("version: {} <> {} (fichier: {})", versionOld.valeur(), version, file);
+                xmlParserService.modifierFichier2(file.toString(), versionOld.positionDebut(), versionOld.positionFin(), version);
+                var repoDir = file.getParent().resolve(".git");
+                if (Files.exists(repoDir)) {
+                    FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
+                    Repository repository = repositoryBuilder.setGitDir(repoDir.toFile())
+                            .readEnvironment() // Lire GIT_DIR et d'autres variables d'environnement
+                            .findGitDir() // Chercher le répertoire .git
+                            .build();
+                    try (Git git = new Git(repository)) {
 
-                    AddCommand add = git.add();
-                    add.addFilepattern(file.getFileName().toString()).call();
+                        AddCommand add = git.add();
+                        add.addFilepattern(file.getFileName().toString()).call();
 
-                    updateEnfantPom(resultat, file, version, git);
+                        updateEnfantPom(resultat, file, version, git);
 
-                    git.commit().setMessage("chore(version): préparation de la version "+version).call();
+                        git.commit().setMessage("chore(version): préparation de la version " + version).call();
+                    }
+                } else {
+                    updateEnfantPom(resultat, file, version, null);
                 }
             }
         }
@@ -79,7 +85,7 @@ public class PomParserService {
                             .filter(Files::isDirectory)
                             .filter(x -> Files.exists(x.resolve("pom.xml")))
                             .toList();
-                    LOGGER.info("liste2: {}",liste2);
+                    LOGGER.info("liste2: {}", liste2);
                     for (var path : liste2) {
                         var file2 = path.resolve("pom.xml");
                         var resultat2 = xmlParserService.parse(file2, List.of(PROJET_PARENT_VERSION,
@@ -97,11 +103,13 @@ public class PomParserService {
                                 var artifactParentId = artifactIdOpt2.get().valeur();
                                 var versionParent = versionOpt2.get();
                                 if (Objects.equals(groupId, groupParentId) && Objects.equals(artifactId, artifactParentId)) {
-                                    LOGGER.info("version parent: {} <> {} (fichier: {})", versionParent.valeur(), version,file2);
+                                    LOGGER.info("version parent: {} <> {} (fichier: {})", versionParent.valeur(), version, file2);
                                     xmlParserService.modifierFichier(file2.toString(), versionParent.positionDebut(),
                                             versionParent.positionFin(), version);
-                                    AddCommand add = git.add();
-                                    add.addFilepattern(path.getFileName()+"/"+file2.getFileName().toString()).call();
+                                    if (git != null) {
+                                        AddCommand add = git.add();
+                                        add.addFilepattern(path.getFileName() + "/" + file2.getFileName().toString()).call();
+                                    }
                                 }
                             }
                         }
