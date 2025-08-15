@@ -1,9 +1,9 @@
-package org.projectix.core.service;
+package org.projectcontrol.core.service;
 
 
-import org.projectix.core.vo.Position;
-import org.projectix.core.vo.PositionIndex;
-import org.projectix.core.vo.ResultatBalise;
+import org.projectcontrol.core.vo.Position;
+import org.projectcontrol.core.vo.PositionIndex;
+import org.projectcontrol.core.vo.ResultatBalise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

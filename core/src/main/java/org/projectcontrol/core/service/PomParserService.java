@@ -1,11 +1,11 @@
-package org.projectix.core.service;
+package org.projectcontrol.core.service;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.projectix.core.vo.ResultatBalise;
+import org.projectcontrol.core.vo.ResultatBalise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

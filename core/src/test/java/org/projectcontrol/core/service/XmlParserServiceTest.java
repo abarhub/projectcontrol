@@ -1,11 +1,10 @@
-package org.projectix.core.service;
+package org.projectcontrol.core.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.projectix.core.vo.Position;
+import org.projectcontrol.core.vo.Position;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;

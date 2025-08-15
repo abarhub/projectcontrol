@@ -8,10 +8,10 @@
         <version>3.5.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>org.projectix</groupId>
-    <artifactId>projectix-parent</artifactId>
+    <groupId>org.projectcontrol</groupId>
+    <artifactId>projectcontrol-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>projectix-parent</name>
+    <name>projectcontrol-parent</name>
     <packaging>pom</packaging>
     <description>Demo project for Spring Boot</description>
     <url/>
@@ -48,7 +48,7 @@
             </dependency>
 
             <dependency>
-                <groupId>org.projectix</groupId>
+                <groupId>org.projectcontrol</groupId>
                 <artifactId>core</artifactId>
                 <version>${core.version}</version>
             </dependency>

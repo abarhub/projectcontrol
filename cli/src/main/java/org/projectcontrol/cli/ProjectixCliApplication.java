@@ -1,10 +1,10 @@
-package org.projectix.cli;
+package org.projectcontrol.cli;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {"org.projectix.cli","org.projectix.core"})
+@SpringBootApplication(scanBasePackages = {"org.projectcontrol.cli","org.projectcontrol.core"})
 public class ProjectixCliApplication {
 
     public static void main(String[] args) {

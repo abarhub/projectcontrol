@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.projectix</groupId>
-        <artifactId>projectix-parent</artifactId>
+        <groupId>org.projectcontrol</groupId>
+        <artifactId>projectcontrol-parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -46,7 +46,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.projectix</groupId>
+            <groupId>org.projectcontrol</groupId>
             <artifactId>core</artifactId>
         </dependency>
     </dependencies>

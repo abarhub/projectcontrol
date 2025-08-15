@@ -1,8 +1,8 @@
-package org.projectix.core.service;
+package org.projectcontrol.core.service;
 
 
-import org.projectix.core.utils.Line;
-import org.projectix.core.utils.StreamGobbler;
+import org.projectcontrol.core.utils.Line;
+import org.projectcontrol.core.utils.StreamGobbler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-package org.projectix.core.service;
+package org.projectcontrol.core.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

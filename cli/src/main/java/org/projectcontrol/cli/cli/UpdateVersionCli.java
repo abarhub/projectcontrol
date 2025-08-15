@@ -1,8 +1,8 @@
-package org.projectix.cli.cli;
+package org.projectcontrol.cli.cli;
 
 import org.apache.commons.lang3.StringUtils;
-import org.projectix.core.service.PomParserService;
-import org.projectix.core.service.XmlParserService;
+import org.projectcontrol.core.service.PomParserService;
+import org.projectcontrol.core.service.XmlParserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
