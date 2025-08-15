@@ -2,6 +2,7 @@ package org.projectcontrol.server.vo;
 
 public class Projet {
 
+    private String id;
     private String nom;
     private String description;
     private String repertoire;
@@ -10,6 +11,14 @@ public class Projet {
     private String goMod;
     private String cargoToml;
     private ProjetPom projetPom;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getNom() {
         return nom;

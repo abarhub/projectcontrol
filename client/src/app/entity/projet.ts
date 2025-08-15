@@ -9,4 +9,5 @@ class Projet {
   cargoToml: string = '';
   parent: Artifact | null = null;
   artifact: Artifact | null = null;
+  projetEnfants: Projet[] = [];
 }

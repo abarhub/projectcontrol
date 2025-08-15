@@ -1,5 +1,7 @@
 package org.projectcontrol.server.dto;
 
+import java.util.List;
+
 public class ProjetDto {
 
     private String nom;
@@ -11,6 +13,7 @@ public class ProjetDto {
     private String cargoToml;
     private ArtifactDto parent;
     private ArtifactDto artifact;
+    private List<ProjetDto> projetEnfants;
 
     public String getNom() {
         return nom;
@@ -82,5 +85,13 @@ public class ProjetDto {
 
     public void setArtifact(ArtifactDto artifact) {
         this.artifact = artifact;
+    }
+
+    public List<ProjetDto> getProjetEnfants() {
+        return projetEnfants;
+    }
+
+    public void setProjetEnfants(List<ProjetDto> projetEnfants) {
+        this.projetEnfants = projetEnfants;
     }
 }

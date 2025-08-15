@@ -1,10 +1,13 @@
 import {Component} from '@angular/core';
 import {ProjetService} from '../service/projet.service';
+import {RouterLink} from '@angular/router';
 
 
 @Component({
   selector: 'app-tableau-principal',
-  imports: [],
+  imports: [
+    RouterLink
+  ],
   templateUrl: './tableau-principal.html',
   styleUrl: './tableau-principal.scss'
 })

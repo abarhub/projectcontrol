@@ -34,7 +34,13 @@
       @for (projet of listeProjet; track projet.nom) {
 
         <tr>
-          <th>{{ projet.nom }}</th>
+          <th>
+            @if(projet.nom){
+              <a [routerLink]="['details', projet.nom]">Current User</a>
+            } @else {
+              {{ projet.nom }}
+            }
+          </th>
           <td>
             @if (projet.artifact) {
               <!--              {{ projet.artifact.groupId }}:{{ projet.artifact.artefactId }}:{{ projet.artifact.version }}-->

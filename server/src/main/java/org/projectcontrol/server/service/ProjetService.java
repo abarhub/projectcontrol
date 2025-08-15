@@ -392,6 +392,9 @@ public class ProjetService {
                     if (pom.getArtifact() != null) {
                         projetDto.setArtifact(convert(pom.getArtifact()));
                     }
+                    if(pom.getProjetPomEnfants() != null) {
+                        projetDto.setProjetEnfants(convert(pom.getProjetPomEnfants()));
+                    }
                 }
                 listeResultat.add(projetDto);
             } catch (Exception e) {
@@ -399,6 +402,19 @@ public class ProjetService {
             }
         }
         return listeResultat;
+    }
+
+    private List<ProjetDto> convert(List<ProjetPom> projetPomEnfants) {
+        List<ProjetDto> projetEnfants;
+        projetEnfants=new ArrayList<>();
+        for(ProjetPom pom:projetPomEnfants){
+            ProjetDto projet=new ProjetDto();
+            projet.setParent(convert(pom.getParent()));
+            projet.setArtifact(convert(pom.getArtifact()));
+            projetEnfants.add(projet);
+        }
+
+        return projetEnfants;
     }
 
     private ArtifactDto convert(ArtefactMaven artifact) {
@@ -508,11 +524,11 @@ public class ProjetService {
 
     private void analysePom(Path pomFile, Projet projet) throws IOException {
         if (pomFile != null) {
+            ProjetPom projetPom = new ProjetPom();
             if (Files.exists(pomFile)) {
 
                 MavenXpp3Reader reader = new MavenXpp3Reader();
                 Model model = null;
-                ProjetPom projetPom = new ProjetPom();
                 try (var fileReader = Files.newBufferedReader(pomFile)) {
                     model = reader.read(fileReader);
                 } catch (Exception e) {
@@ -522,6 +538,8 @@ public class ProjetService {
                 projet.setProjetPom(projetPom);
 
                 if (model != null) {
+                    projet.setDescription(model.getDescription());
+                    projetPom.setNom(model.getName());
                     Parent parent = model.getParent();
                     if (parent != null) {
 //                        String s = parent.getGroupId() + ":" + parent.getArtifactId() + ":" + parent.getVersion();
@@ -573,22 +591,30 @@ public class ProjetService {
 
                 // analyse des enfants
 
-//                var liste = Files.list(pomFile.getParent())
-//                        .filter(Files::isDirectory)
-//                        .toList();
+                var liste = Files.list(pomFile.getParent())
+                        .filter(Files::isDirectory)
+                        .toList();
 
-//                for (var f : liste) {
-//                    var f2 = f.resolve("pom.xml");
-//                    if (Files.exists(f2)) {
+                for (var f : liste) {
+                    var f2 = f.resolve("pom.xml");
+                    if (Files.exists(f2)) {
 //                        resultat.append("* enfant ").append(f.getFileName()).append(" :").append("\n");
-//                        analysePom(f2, resultat);
+                        Projet projetEnfant = new Projet();
+                        analysePom(f2, projetEnfant);
+                        if (projetEnfant.getProjetPom() != null) {
+                            if (projetPom.getProjetPomEnfants() == null) {
+                                projetPom.setProjetPomEnfants(new ArrayList<>());
+                            }
+                            projetPom.getProjetPomEnfants().add(projetEnfant.getProjetPom());
+                        }
+
 //
 //                        var f3 = f.resolve("package.json");
 //                        if (Files.exists(f3)) {
 //                            analysePackageJson(f3, resultat);
 //                        }
-//                    }
-//                }
+                    }
+                }
 
             }
         }
