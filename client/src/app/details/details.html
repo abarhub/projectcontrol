@@ -1,1 +1,117 @@
 <p>details works!</p>
+<p>nom projet : {{ nomProjet() }}</p>
+<p>{{ projet()?.nom }}</p>
+<p>Description : {{ projet()?.description }}</p>
+
+<hr/>
+
+<table class="table">
+  <!--  <thead>-->
+  <!--  <tr>-->
+  <!--    <th>Nom</th>-->
+  <!--    <th>Valeur</th>-->
+  <!--  </tr>-->
+  <!--  </thead>-->
+  <tbody>
+  <tr>
+    <th>Nom</th>
+    <td>{{ projet()?.nom }}</td>
+  </tr>
+  <tr>
+    <th>Description</th>
+    <td>{{ projet()?.description }}</td>
+  </tr>
+  <tr>
+    <th>Parent</th>
+    <td>
+      {{ projet()?.parent?.groupId }}:{{ projet()?.parent?.artefactId }}:{{ projet()?.parent?.version }}
+    </td>
+  </tr>
+  <tr>
+    <th>Artifact</th>
+    <td>
+      {{ projet()?.artifact?.groupId }}:{{ projet()?.artifact?.artefactId }}:{{ projet()?.artifact?.version }}
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+@if (projet()?.properties) {
+<hr/>
+Propriétés :
+
+<table class="table">
+  <tbody>
+
+    @for (property of projet()?.properties | keyvalue; track property.key) {
+      <tr>
+        <th>{{ property.key }}</th>
+        <td>{{ property.value }}</td>
+      </tr>
+
+    }
+
+  </tbody>
+</table>
+
+}
+
+@if (projet()?.dependencies) {
+<hr/>
+dépendances :
+
+<table class="table">
+  <tbody>
+
+    @for (dependance of projet()?.dependencies; track dependance.groupId ; let index = $index) {
+
+      <tr>
+        <th>dependance {{index}}</th>
+        <td>{{ dependance.groupId }} : {{ dependance.artefactId }} : {{ dependance.version }}</td>
+      </tr>
+    }
+
+  </tbody>
+</table>
+}
+
+@if (projet()?.projetEnfants) {
+<hr/>
+
+@for (projet of projet()?.projetEnfants; track projet.nom) {
+  <p>
+    Module {{ projet.nom }}
+  </p>
+  <table class="table">
+    <!--  <thead>-->
+    <!--  <tr>-->
+    <!--    <th>Nom</th>-->
+    <!--    <th>Valeur</th>-->
+    <!--  </tr>-->
+    <!--  </thead>-->
+    <tbody>
+    <tr>
+      <th>Nom</th>
+      <td>{{ projet?.nom }}</td>
+    </tr>
+    <tr>
+      <th>Description</th>
+      <td>{{ projet?.description }}</td>
+    </tr>
+    <tr>
+      <th>Parent</th>
+      <td>
+        {{ projet?.parent?.groupId }}:{{ projet?.parent?.artefactId }}:{{ projet?.parent?.version }}
+      </td>
+    </tr>
+    <tr>
+      <th>Artifact</th>
+      <td>
+        {{ projet?.artifact?.groupId }}:{{ projet?.artifact?.artefactId }}:{{ projet?.artifact?.version }}
+      </td>
+    </tr>
+    </tbody>
+  </table>
+}
+}
+

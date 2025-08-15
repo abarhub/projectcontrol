@@ -1,6 +1,9 @@
 package org.projectcontrol.server.dto;
 
+import org.projectcontrol.server.vo.ArtefactMaven;
+
 import java.util.List;
+import java.util.Map;
 
 public class ProjetDto {
 
@@ -13,6 +16,8 @@ public class ProjetDto {
     private String cargoToml;
     private ArtifactDto parent;
     private ArtifactDto artifact;
+    private Map<String,String> properties;
+    private List<ArtefactMaven> dependencies;
     private List<ProjetDto> projetEnfants;
 
     public String getNom() {
@@ -85,6 +90,22 @@ public class ProjetDto {
 
     public void setArtifact(ArtifactDto artifact) {
         this.artifact = artifact;
+    }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, String> properties) {
+        this.properties = properties;
+    }
+
+    public List<ArtefactMaven> getDependencies() {
+        return dependencies;
+    }
+
+    public void setDependencies(List<ArtefactMaven> dependencies) {
+        this.dependencies = dependencies;
     }
 
     public List<ProjetDto> getProjetEnfants() {

@@ -36,7 +36,7 @@
         <tr>
           <th>
             @if(projet.nom){
-              <a [routerLink]="['details', projet.nom]">Current User</a>
+              <a [routerLink]="['details', projet.nom]">{{ projet.nom }}</a>
             } @else {
               {{ projet.nom }}
             }

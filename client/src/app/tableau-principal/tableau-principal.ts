@@ -20,7 +20,7 @@ export class TableauPrincipal {
 
 
   public test() {
-    this.projetService.getProjet().subscribe({
+    this.projetService.getProjets().subscribe({
         next: (data) => {
           console.log(data);
           this.listeProjet = data;

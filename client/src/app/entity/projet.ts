@@ -9,5 +9,7 @@ class Projet {
   cargoToml: string = '';
   parent: Artifact | null = null;
   artifact: Artifact | null = null;
+  properties: Map<string, string> = new Map<string, string>();
+  dependencies: Artifact[] = [];
   projetEnfants: Projet[] = [];
 }

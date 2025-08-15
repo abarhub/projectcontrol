@@ -8,7 +8,11 @@ import {Observable} from 'rxjs';
 export class ProjetService {
   private http = inject(HttpClient);
 
-  getProjet():Observable<Projet[]>  {
+  getProjets():Observable<Projet[]>  {
     return this.http.get<Projet[]>('http://localhost:8080/api/projet');
+  }
+
+  getProjet(nom:string):Observable<Projet>  {
+    return this.http.get<Projet>('http://localhost:8080/api/projet/'+nom);
   }
 }

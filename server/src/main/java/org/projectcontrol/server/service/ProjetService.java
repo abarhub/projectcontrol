@@ -370,8 +370,11 @@ public class ProjetService {
         return listeVersions;
     }
 
-    public List<ProjetDto> getProjetDto() {
+    public List<ProjetDto> getProjetDto(String nomProjet) {
         var liste = getProjets();
+        if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) && liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
+            liste = liste.stream().filter(p -> p.getNom().equals(nomProjet)).toList();
+        }
         List<ProjetDto> listeResultat = new ArrayList<>();
         for (Projet projet : liste) {
             try {
@@ -386,15 +389,7 @@ public class ProjetService {
                 projetDto.setRepertoire(projet.getRepertoire());
                 if (projet.getProjetPom() != null) {
                     var pom = projet.getProjetPom();
-                    if (pom.getParent() != null) {
-                        projetDto.setParent(convert(pom.getParent()));
-                    }
-                    if (pom.getArtifact() != null) {
-                        projetDto.setArtifact(convert(pom.getArtifact()));
-                    }
-                    if(pom.getProjetPomEnfants() != null) {
-                        projetDto.setProjetEnfants(convert(pom.getProjetPomEnfants()));
-                    }
+                    copiePom(pom, projetDto);
                 }
                 listeResultat.add(projetDto);
             } catch (Exception e) {
@@ -406,15 +401,33 @@ public class ProjetService {
 
     private List<ProjetDto> convert(List<ProjetPom> projetPomEnfants) {
         List<ProjetDto> projetEnfants;
-        projetEnfants=new ArrayList<>();
-        for(ProjetPom pom:projetPomEnfants){
-            ProjetDto projet=new ProjetDto();
-            projet.setParent(convert(pom.getParent()));
-            projet.setArtifact(convert(pom.getArtifact()));
+        projetEnfants = new ArrayList<>();
+        for (ProjetPom pom : projetPomEnfants) {
+            ProjetDto projet = new ProjetDto();
+            projet.setNom(pom.getNom());
+            copiePom(pom, projet);
             projetEnfants.add(projet);
         }
 
         return projetEnfants;
+    }
+
+    private void copiePom(ProjetPom pom, ProjetDto projet) {
+        if (pom.getParent() != null) {
+            projet.setParent(convert(pom.getParent()));
+        }
+        if (pom.getArtifact() != null) {
+            projet.setArtifact(convert(pom.getArtifact()));
+        }
+        if (pom.getProjetPomEnfants() != null) {
+            projet.setProjetEnfants(convert(pom.getProjetPomEnfants()));
+        }
+        if (pom.getProperties() != null) {
+            projet.setProperties(pom.getProperties());
+        }
+        if (pom.getDependencies() != null) {
+            projet.setDependencies(pom.getDependencies());
+        }
     }
 
     private ArtifactDto convert(ArtefactMaven artifact) {
@@ -539,7 +552,9 @@ public class ProjetService {
 
                 if (model != null) {
                     projet.setDescription(model.getDescription());
-                    projetPom.setNom(model.getName());
+                    if(model.getName()!=null) {
+                        projetPom.setNom(model.getName());
+                    }
                     Parent parent = model.getParent();
                     if (parent != null) {
 //                        String s = parent.getGroupId() + ":" + parent.getArtifactId() + ":" + parent.getVersion();
@@ -600,10 +615,14 @@ public class ProjetService {
                     if (Files.exists(f2)) {
 //                        resultat.append("* enfant ").append(f.getFileName()).append(" :").append("\n");
                         Projet projetEnfant = new Projet();
+                        projetEnfant.setNom(f.getFileName().toString());
                         analysePom(f2, projetEnfant);
                         if (projetEnfant.getProjetPom() != null) {
                             if (projetPom.getProjetPomEnfants() == null) {
                                 projetPom.setProjetPomEnfants(new ArrayList<>());
+                            }
+                            if(projetEnfant.getNom()!=null&&projetEnfant.getProjetPom().getNom()==null) {
+                                projetEnfant.getProjetPom().setNom(projetEnfant.getNom());
                             }
                             projetPom.getProjetPomEnfants().add(projetEnfant.getProjetPom());
                         }

@@ -2,13 +2,11 @@ package org.projectcontrol.server.controler;
 
 import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.service.ProjetService;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("api/projet")
 public class ProjetControler {
@@ -19,10 +17,20 @@ public class ProjetControler {
         this.projetService = projetService;
     }
 
-    @CrossOrigin(origins = "http://localhost:4200")
+
     @GetMapping(path = "", produces = "application/json")
-    public List<ProjetDto> getProjet() {
-        return projetService.getProjetDto();
+    public List<ProjetDto> getListProjet() {
+        return projetService.getProjetDto(null);
+    }
+
+    @GetMapping(path = "/{nomProjet}", produces = "application/json")
+    public ProjetDto getProjet(@PathVariable String nomProjet) {
+        var liste= projetService.getProjetDto(nomProjet);
+        if(liste!=null && !liste.isEmpty()){
+            return liste.getFirst();
+        } else {
+            return null;
+        }
     }
 
 }
