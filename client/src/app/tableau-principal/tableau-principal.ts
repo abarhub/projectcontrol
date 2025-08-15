@@ -14,12 +14,14 @@ import {RouterLink} from '@angular/router';
 export class TableauPrincipal {
 
   listeProjet: Projet[] = [];
+  chargement = false;
 
   constructor(private projetService: ProjetService) {
   }
 
 
-  public test() {
+  public recharger() {
+    this.chargement=true;
     this.projetService.getProjets().subscribe({
         next: (data) => {
           console.log(data);
@@ -27,7 +29,10 @@ export class TableauPrincipal {
         },
         error: (error) => {
           console.error(error);
-        }
+        },
+      complete: () => {
+          this.chargement=false;
+      }
       }
     )
   }

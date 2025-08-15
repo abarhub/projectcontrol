@@ -377,6 +377,7 @@ public class ProjetService {
         }
         List<ProjetDto> listeResultat = new ArrayList<>();
         for (Projet projet : liste) {
+            LOGGER.info("Analyse du projet {}", projet.getNom());
             try {
                 var projetDto = new ProjetDto();
                 analyseProjet(projet);
