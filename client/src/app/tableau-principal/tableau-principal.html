@@ -1,1 +1,61 @@
 <p>tableau-principal works!</p>
+
+<button (click)="test()" class="btn">test</button>
+
+<button type="button" class="btn">Base class</button>
+
+
+<hr>
+
+<button type="button" class="btn btn-primary">Primary</button>
+<button type="button" class="btn btn-secondary">Secondary</button>
+<button type="button" class="btn btn-success">Success</button>
+<button type="button" class="btn btn-danger">Danger</button>
+<button type="button" class="btn btn-warning">Warning</button>
+<button type="button" class="btn btn-info">Info</button>
+<button type="button" class="btn btn-light">Light</button>
+<button type="button" class="btn btn-dark">Dark</button>
+
+<button type="button" class="btn btn-link">Link</button>
+
+
+@if (listeProjet) {
+
+  <table class="table">
+    <thead>
+    <tr>
+      <th scope="col">Nom</th>
+      <th scope="col">Version</th>
+      <th scope="col">Parent</th>
+      <th scope="col">Description</th>
+    </tr>
+    </thead>
+    <tbody>
+      @for (projet of listeProjet; track projet.nom) {
+
+        <tr>
+          <th>{{ projet.nom }}</th>
+          <td>
+            @if (projet.artifact) {
+              <!--              {{ projet.artifact.groupId }}:{{ projet.artifact.artefactId }}:{{ projet.artifact.version }}-->
+              {{ projet.artifact.version }}
+            }
+          </td>
+          <td>
+            @if (projet.parent) {
+              @if (projet.parent.artefactId == 'spring-boot-starter-parent') {
+                Spring boot {{ projet.parent.version }}
+              } @else {
+                {{ projet.parent.groupId }}:{{ projet.parent.artefactId }}:{{ projet.parent.version }}
+              }
+
+            }
+          </td>
+          <td>{{ projet.description }}</td>
+        </tr>
+      }
+
+    </tbody>
+  </table>
+
+}
