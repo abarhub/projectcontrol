@@ -1,9 +1,11 @@
 package org.projectcontrol.server.dto;
 
+import org.projectcontrol.server.enumeration.ModuleProjetEnum;
 import org.projectcontrol.server.vo.ArtefactMaven;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ProjetDto {
 
@@ -19,6 +21,9 @@ public class ProjetDto {
     private Map<String,String> properties;
     private List<ArtefactMaven> dependencies;
     private List<ProjetDto> projetEnfants;
+    private Set<ModuleProjetEnum> modules;
+    private InfoNodeDto infoNode;
+    private InfoGitDto infoGit;
 
     public String getNom() {
         return nom;
@@ -114,5 +119,29 @@ public class ProjetDto {
 
     public void setProjetEnfants(List<ProjetDto> projetEnfants) {
         this.projetEnfants = projetEnfants;
+    }
+
+    public Set<ModuleProjetEnum> getModules() {
+        return modules;
+    }
+
+    public void setModules(Set<ModuleProjetEnum> modules) {
+        this.modules = modules;
+    }
+
+    public InfoNodeDto getInfoNode() {
+        return infoNode;
+    }
+
+    public void setInfoNode(InfoNodeDto infoNode) {
+        this.infoNode = infoNode;
+    }
+
+    public InfoGitDto getInfoGit() {
+        return infoGit;
+    }
+
+    public void setInfoGit(InfoGitDto infoGit) {
+        this.infoGit = infoGit;
     }
 }

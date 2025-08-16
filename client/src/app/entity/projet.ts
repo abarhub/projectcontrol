@@ -1,4 +1,8 @@
-class Projet {
+import {Artifact} from './artifact';
+import {ProjetNode} from './projet-node';
+import {ProjetGit} from './projet-git';
+
+export class Projet {
 
   nom: string = '';
   description: string = '';
@@ -12,4 +16,8 @@ class Projet {
   properties: Map<string, string> = new Map<string, string>();
   dependencies: Artifact[] = [];
   projetEnfants: Projet[] = [];
+  modules: string[] = [];
+  projetNode: ProjetNode | null = null;
+  projetGit: ProjetGit | null = null;
+
 }

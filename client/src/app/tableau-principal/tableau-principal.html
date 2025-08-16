@@ -1,6 +1,20 @@
-<p>tableau-principal works!</p>
+<!--<p>tableau-principal works!</p>-->
+<form [formGroup]="formGrouId">
 
-<button (click)="recharger()" class="btn">Recharger</button>
+  <select class="form-select" aria-label="Default select example" formControlName="groupeId">
+    @for (groupeId of groupeProjet.groupeId  | keyvalue; track groupeId.key) {
+      @if (groupeId.key == groupeProjet.groupeIdDefaut) {
+        <option value="{{ groupeId.key }}" selected>{{ groupeId.value }}</option>
+      } @else {
+        <option value="{{ groupeId.key }}">{{ groupeId.value }}</option>
+      }
+    }
+  </select>
+
+
+  <button (click)="recharger($event)" class="btn">Recharger</button>
+
+</form>
 
 <!--<button type="button" class="btn">Base class</button>-->
 
@@ -18,57 +32,57 @@
 
 <!--<button type="button" class="btn btn-link">Link</button>-->
 
-@if(chargement){
+@if (chargement) {
   <div class="spinner-border" role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
 } @else {
 
-@if (listeProjet) {
+  @if (listeProjet) {
 
-  <table class="table">
-    <thead>
-    <tr>
-      <th scope="col">Nom</th>
-      <th scope="col">Version</th>
-      <th scope="col">Parent</th>
-      <th scope="col">Description</th>
-    </tr>
-    </thead>
-    <tbody>
-      @for (projet of listeProjet; track projet.nom) {
+    <table class="table">
+      <thead>
+      <tr>
+        <th scope="col">Nom</th>
+        <th scope="col">Version</th>
+        <th scope="col">Parent</th>
+        <th scope="col">Description</th>
+      </tr>
+      </thead>
+      <tbody>
+        @for (projet of listeProjet; track projet.nom) {
 
-        <tr>
-          <th>
-            @if(projet.nom){
-              <a [routerLink]="['details', projet.nom]">{{ projet.nom }}</a>
-            } @else {
-              {{ projet.nom }}
-            }
-          </th>
-          <td>
-            @if (projet.artifact) {
-              <!--              {{ projet.artifact.groupId }}:{{ projet.artifact.artefactId }}:{{ projet.artifact.version }}-->
-              {{ projet.artifact.version }}
-            }
-          </td>
-          <td>
-            @if (projet.parent) {
-              @if (projet.parent.artefactId == 'spring-boot-starter-parent') {
-                Spring boot {{ projet.parent.version }}
+          <tr>
+            <th>
+              @if (projet.nom && this.formGrouId.value) {
+                <a [routerLink]="['details',this.groupeIdSelected(), projet.nom]">{{ projet.nom }}</a>
               } @else {
-                {{ projet.parent.groupId }}:{{ projet.parent.artefactId }}:{{ projet.parent.version }}
+                {{ projet.nom }}
               }
+            </th>
+            <td>
+              @if (projet.artifact) {
+                <!--              {{ projet.artifact.groupId }}:{{ projet.artifact.artefactId }}:{{ projet.artifact.version }}-->
+                {{ projet.artifact.version }}
+              }
+            </td>
+            <td>
+              @if (projet.parent) {
+                @if (projet.parent.artefactId == 'spring-boot-starter-parent') {
+                  Spring boot {{ projet.parent.version }}
+                } @else {
+                  {{ projet.parent.groupId }}:{{ projet.parent.artefactId }}:{{ projet.parent.version }}
+                }
 
-            }
-          </td>
-          <td>{{ projet.description }}</td>
-        </tr>
-      }
+              }
+            </td>
+            <td>{{ projet.description }}</td>
+          </tr>
+        }
 
-    </tbody>
-  </table>
+      </tbody>
+    </table>
 
-}
+  }
 
 }

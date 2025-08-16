@@ -1,5 +1,9 @@
 package org.projectcontrol.server.vo;
 
+import org.projectcontrol.server.enumeration.ModuleProjetEnum;
+
+import java.util.Set;
+
 public class Projet {
 
     private String id;
@@ -11,6 +15,9 @@ public class Projet {
     private String goMod;
     private String cargoToml;
     private ProjetPom projetPom;
+    private Set<ModuleProjetEnum> modules;
+    private ProjetNode projetNode;
+    private ProjetGit projetGit;
 
     public String getId() {
         return id;
@@ -82,5 +89,29 @@ public class Projet {
 
     public void setProjetPom(ProjetPom projetPom) {
         this.projetPom = projetPom;
+    }
+
+    public Set<ModuleProjetEnum> getModules() {
+        return modules;
+    }
+
+    public void setModules(Set<ModuleProjetEnum> modules) {
+        this.modules = modules;
+    }
+
+    public ProjetNode getProjetNode() {
+        return projetNode;
+    }
+
+    public void setProjetNode(ProjetNode projetNode) {
+        this.projetNode = projetNode;
+    }
+
+    public ProjetGit getProjetGit() {
+        return projetGit;
+    }
+
+    public void setProjetGit(ProjetGit projetGit) {
+        this.projetGit = projetGit;
     }
 }

@@ -1,4 +1,4 @@
-class Artifact {
+export class Artifact {
 
   groupId: string = '';
   artefactId: string = '';

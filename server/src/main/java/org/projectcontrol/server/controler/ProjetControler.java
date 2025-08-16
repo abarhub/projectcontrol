@@ -1,5 +1,6 @@
 package org.projectcontrol.server.controler;
 
+import org.projectcontrol.server.dto.GroupeProjetDto;
 import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.service.ProjetService;
 import org.springframework.web.bind.annotation.*;
@@ -18,19 +19,25 @@ public class ProjetControler {
     }
 
 
-    @GetMapping(path = "", produces = "application/json")
-    public List<ProjetDto> getListProjet() {
-        return projetService.getProjetDto(null);
+    @GetMapping(path = "/from-groupId/{groupId}", produces = "application/json")
+    public List<ProjetDto> getListProjet(@PathVariable String groupId) {
+        return projetService.getProjetDtoFromGroupId(groupId);
     }
 
-    @GetMapping(path = "/{nomProjet}", produces = "application/json")
-    public ProjetDto getProjet(@PathVariable String nomProjet) {
-        var liste= projetService.getProjetDto(nomProjet);
-        if(liste!=null && !liste.isEmpty()){
+    @GetMapping(path = "/{groupId}/{nomProjet}", produces = "application/json")
+    public ProjetDto getProjet(@PathVariable String groupId,
+                               @PathVariable String nomProjet) {
+        var liste = projetService.getProjetDto(groupId, nomProjet);
+        if (liste != null && !liste.isEmpty()) {
             return liste.getFirst();
         } else {
             return null;
         }
+    }
+
+    @GetMapping(path = "groupe-projets", produces = "application/json")
+    public GroupeProjetDto getGroupeProjets() {
+        return projetService.getGroupeProjets();
     }
 
 }

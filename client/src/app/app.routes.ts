@@ -4,5 +4,5 @@ import {Details} from './details/details';
 
 export const routes: Routes = [
   { path: '', component: Home },
-  { path: 'details/:nomProjet', component: Details }
+  { path: 'details/:groupeProjet/:nomProjet', component: Details }
 ];

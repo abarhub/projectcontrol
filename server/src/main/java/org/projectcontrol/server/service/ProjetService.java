@@ -3,17 +3,23 @@ package org.projectcontrol.server.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryBuilder;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.projectcontrol.core.service.PomParserService;
 import org.projectcontrol.core.service.XmlParserService;
 import org.projectcontrol.server.dto.ArtifactDto;
+import org.projectcontrol.server.dto.GroupeProjetDto;
 import org.projectcontrol.server.dto.ProjetDto;
-import org.projectcontrol.server.vo.ArtefactMaven;
-import org.projectcontrol.server.vo.Projet;
-import org.projectcontrol.server.vo.ProjetPom;
+import org.projectcontrol.server.mapper.ProjetMapper;
+import org.projectcontrol.server.properties.ApplicationProperties;
+import org.projectcontrol.server.vo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +30,11 @@ import org.springframework.util.CollectionUtils;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toMap;
 
 @Service
 public class ProjetService {
@@ -50,8 +58,14 @@ public class ProjetService {
     @Autowired
     private PomParserService pomParserService;
 
-    public ProjetService() {
+    private final ApplicationProperties applicationProperties;
+
+    private final ProjetMapper projetMapper;
+
+    public ProjetService(ApplicationProperties applicationProperties, ProjetMapper projetMapper) {
+        this.projetMapper = projetMapper;
         LOGGER.info("creation repertoireProjet: {}", repertoireProjet);
+        this.applicationProperties = applicationProperties;
     }
 
     @PostConstruct
@@ -68,23 +82,71 @@ public class ProjetService {
     }
 
     public List<Projet> getProjets() {
-        LOGGER.info("répertoire: {}", repertoireProjet);
-        if (repertoireProjet == null || repertoireProjet.isEmpty()) {
+        String rep = this.applicationProperties.getListeProjets()
+                .entrySet()
+                .stream()
+                .filter(x -> x.getValue().isDefaut())
+                .map(x -> x.getValue().getRepertoires().getFirst())
+                .findAny().orElse(null);
+        LOGGER.info("répertoire: {}", rep);
+        if (rep == null || rep.isEmpty()) {
             throw new RuntimeException("Répertoire vide");
         }
-        return listePom(repertoireProjet);
+        return listePom(rep);
     }
 
 
+    public List<Projet> getProjets2(String groupId) {
+        var groupeOpt = this.applicationProperties.getListeProjets()
+                .entrySet()
+                .stream()
+                .filter(x -> Objects.equals(x.getKey(), groupId))
+                .findAny();
+        if (groupeOpt.isEmpty()) {
+            throw new RuntimeException("Impossible de trouver le groupe " + groupId);
+        }
+        var groupe = groupeOpt.get();
+        List<String> rep = List.of();
+        if (!CollectionUtils.isEmpty(groupe.getValue().getRepertoires())) {
+            rep = groupe.getValue().getRepertoires();
+        }
+        LOGGER.info("répertoire: {}", rep);
+        if (rep == null || rep.isEmpty()) {
+            throw new RuntimeException("Répertoire vide");
+        }
+
+        Set<String> directoriesExclude = null;
+        if (groupe.getValue().getExclusions() != null && !groupe.getValue().getExclusions().isEmpty()) {
+            directoriesExclude = new HashSet<>(groupe.getValue().getExclusions());
+        }
+
+        return listePom(rep, directoriesExclude);
+    }
+
     private List<Projet> listePom(String directoryPath) {
+        return listePom(List.of(directoryPath), null);
+    }
+
+    private List<Projet> listePom(List<String> directoryPath, Set<String> directoriesExclude) {
         //String directoryPath = repertoireProjet; // Remplacez par le chemin de votre répertoire
-        Path p = Paths.get(directoryPath).toAbsolutePath().normalize();
+//        Path p = Paths.get(directoryPath).toAbsolutePath().normalize();
 
 
         try {
 //            List<Path> pomFiles = findPomFiles(directoryPath);
             LOGGER.info("récupération des fichiers pom ...");
-            List<Projet> pomFiles = findPomFiles(p);
+            List<Projet> pomFiles = new ArrayList<>();
+            for (String path : directoryPath) {
+                Path p = Paths.get(path).toAbsolutePath().normalize();
+                List<Projet> pomFiles2 = findPomFiles(p, directoriesExclude);
+                for (var pom : pomFiles2) {
+                    if (pomFiles.stream()
+                            .noneMatch(x -> Objects.equals(x.getFichierPom(), pom.getFichierPom()))) {
+                        pomFiles.add(pom);
+                    }
+                }
+            }
+
             LOGGER.info("récupération des fichiers pom ok");
             if (pomFiles.isEmpty()) {
                 LOGGER.info("Aucun fichier pom.xml trouvé (en ignorant target et node_modules) dans : {}", directoryPath);
@@ -101,15 +163,20 @@ public class ProjetService {
         return null;
     }
 
-    public static List<Projet> findPomFiles(Path startDir) throws IOException {
+    public static List<Projet> findPomFiles(Path startDir, Set<String> directoriesExclude) throws IOException {
         List<Projet> pomFiles = new ArrayList<>();
+
+        Set<String> directoriesExclude2 = new HashSet<>(SET_DIR);
+        if (directoriesExclude != null && !directoriesExclude.isEmpty() && directoriesExclude.size() > 0) {
+            directoriesExclude2.addAll(directoriesExclude);
+        }
 
         Files.walkFileTree(startDir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 String dirName = dir.getFileName().toString();
                 // Ignorer les répertoires node_modules et target
-                if (Files.isDirectory(dir) && (SET_DIR.contains(dirName))) {
+                if (Files.isDirectory(dir) && (directoriesExclude2.contains(dirName))) {
                     LOGGER.debug("preVisitDirectory: skip dir");
                     return FileVisitResult.SKIP_SUBTREE; // Ne pas visiter ce répertoire ni ses sous-répertoires
                 }
@@ -220,29 +287,29 @@ public class ProjetService {
         }
     }
 
-    public static List<Path> findPomFiles(String directoryPath) throws IOException {
-        Path startPath = Paths.get(directoryPath);
+//    public static List<Path> findPomFiles(String directoryPath) throws IOException {
+//        Path startPath = Paths.get(directoryPath);
+//
+//        try (Stream<Path> walk = Files.walk(startPath)) {
+//            return walk
+//                    .filter(Files::isRegularFile) // Ne traiter que les fichiers réguliers
+//                    .filter(path -> path.getFileName().toString().equals("pom.xml")) // Chercher les fichiers nommés pom.xml
+//                    .filter(ProjetService::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
+//                    .collect(Collectors.toList());
+//        }
+//    }
 
-        try (Stream<Path> walk = Files.walk(startPath)) {
-            return walk
-                    .filter(Files::isRegularFile) // Ne traiter que les fichiers réguliers
-                    .filter(path -> path.getFileName().toString().equals("pom.xml")) // Chercher les fichiers nommés pom.xml
-                    .filter(ProjetService::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
-                    .collect(Collectors.toList());
-        }
-    }
-
-    private static boolean isNotIgnoredDirectory(Path path) {
-        // Vérifier si le chemin contient "target" ou "node_modules" comme nom de répertoire
-        // Cela permet de s'assurer que même si un pom.xml se trouve dans un sous-sous-répertoire d'un répertoire ignoré, il est bien ignoré.
-        for (Path segment : path) {
-            String segmentName = segment.getFileName().toString();
-            if (segmentName.equals("target") || segmentName.equals("node_modules")) {
-                return false; // Le chemin contient un répertoire à ignorer
-            }
-        }
-        return true; // Le chemin ne contient pas de répertoire à ignorer
-    }
+//    private static boolean isNotIgnoredDirectory(Path path) {
+//        // Vérifier si le chemin contient "target" ou "node_modules" comme nom de répertoire
+//        // Cela permet de s'assurer que même si un pom.xml se trouve dans un sous-sous-répertoire d'un répertoire ignoré, il est bien ignoré.
+//        for (Path segment : path) {
+//            String segmentName = segment.getFileName().toString();
+//            if (segmentName.equals("target") || segmentName.equals("node_modules")) {
+//                return false; // Le chemin contient un répertoire à ignorer
+//            }
+//        }
+//        return true; // Le chemin ne contient pas de répertoire à ignorer
+//    }
 
 //    public void updateProject(Projet selectedProduct) throws Exception {
 //        updateProject4(selectedProduct);
@@ -370,8 +437,8 @@ public class ProjetService {
         return listeVersions;
     }
 
-    public List<ProjetDto> getProjetDto(String nomProjet) {
-        var liste = getProjets();
+    public List<ProjetDto> getProjetDto(String groupId, String nomProjet) {
+        var liste = getProjets2(groupId);
         if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) && liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
             liste = liste.stream().filter(p -> p.getNom().equals(nomProjet)).toList();
         }
@@ -392,6 +459,7 @@ public class ProjetService {
                     var pom = projet.getProjetPom();
                     copiePom(pom, projetDto);
                 }
+                this.projetMapper.projetToProjetDto(projet,projetDto);
                 listeResultat.add(projetDto);
             } catch (Exception e) {
                 LOGGER.error("Erreur lors de l'analyse du projet {}", projet.getNom(), e);
@@ -446,19 +514,49 @@ public class ProjetService {
             analysePom(pomFile, projet);
         }
 
-//        if (StringUtils.isNotBlank(projet.getPackageJson())) {
-//            Path jsonFile = Path.of(projet.getPackageJson());
-//
-//            analysePackageJson(jsonFile, resultat);
-//        }
-//
+        if (StringUtils.isNotBlank(projet.getPackageJson())) {
+            Path jsonFile = Path.of(projet.getPackageJson());
+
+            ProjetNode resultat = new ProjetNode();
+            analysePackageJson(jsonFile, resultat);
+            projet.setProjetNode(resultat);
+        }
+
 //        if (StringUtils.isNotBlank(projet.getGoMod())) {
 //            analyseGoMod(projet.getGoMod(), resultat);
 //        }
-//
+
 //        if (StringUtils.isNotBlank(projet.getCargoToml())) {
 //            analyseCargo(projet.getCargoToml(), resultat);
 //        }
+        Path pathGit = Path.of(projet.getRepertoire()).resolve(".git");
+        if (Files.exists(pathGit)) {
+            ProjetGit resultat = new ProjetGit();
+            analyseGit(pathGit, resultat);
+            projet.setProjetGit(resultat);
+        }
+    }
+
+    private void analyseGit(Path pathGit, ProjetGit resultat) {
+        try (Repository repository = new RepositoryBuilder().setGitDir(pathGit.toFile()).readEnvironment().findGitDir().build()) {
+
+            RevCommit latestCommit = new Git(repository).
+                    log().
+                    setMaxCount(1).
+                    call().
+                    iterator().
+                    next();
+
+            String latestCommitHash = latestCommit.getName();
+            resultat.setIdCommitComplet(latestCommitHash);
+            resultat.setIdCommit(latestCommitHash.substring(0, 7));
+            resultat.setMessage(latestCommit.getFullMessage());
+            resultat.setBranche(repository.getFullBranch());
+            var date = Instant.ofEpochSecond(latestCommit.getCommitTime());
+            resultat.setDate(LocalDateTime.from(date));
+        } catch (Exception e) {
+            LOGGER.error("Erreur lors de l'analyse du projet {}", pathGit, e);
+        }
     }
 
     private void analyseCargo(String cargoToml, StringBuilder resultat) throws IOException {
@@ -487,7 +585,7 @@ public class ProjetService {
         }
     }
 
-    private void analysePackageJson(Path jsonFile, StringBuilder resultat) throws IOException {
+    private void analysePackageJson(Path jsonFile, ProjetNode resultat) throws IOException {
 
         if (Files.exists(jsonFile)) {
 
@@ -496,39 +594,50 @@ public class ProjetService {
             try (var reader = Files.newBufferedReader(jsonFile)) {
                 JsonNode node = mapper.reader().readTree(reader);
 
-                resultat.append("fichier ").append(jsonFile).append("\n");
+//                resultat.append("fichier ").append(jsonFile).append("\n");
                 if (node.has("name")) {
-                    resultat.append("nom:").append(node.get("name")).append("\n");
+//                    resultat.append("nom:").append(node.get("name")).append("\n");
+                    resultat.setNom(node.get("name").asText());
                 }
                 if (node.has("version")) {
-                    resultat.append("version:").append(node.get("version")).append("\n");
+//                    resultat.append("version:").append(node.get("version")).append("\n");
+                    resultat.setVersion(node.get("version").asText());
                 }
                 if (node.has("scripts")) {
-                    resultat.append("script:").append("\n");
-                    List<String> liste = new ArrayList<>();
+//                    resultat.append("script:").append("\n");
+//                    List<String> liste = new ArrayList<>();
+                    Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("scripts").properties()) {
-                        liste.add(script.getKey() + ":" + script.getValue().toString());
+//                        liste.add(script.getKey() + ":" + script.getValue().toString());
+                        map.put(script.getKey(), script.getValue().toString());
                     }
-                    Collections.sort(liste);
-                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
+//                    Collections.sort(liste);
+//                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
+                    resultat.setScript(map);
                 }
                 if (node.has("dependencies")) {
-                    resultat.append("dependencies:").append("\n");
-                    List<String> liste = new ArrayList<>();
+//                    resultat.append("dependencies:").append("\n");
+//                    List<String> liste = new ArrayList<>();
+                    Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("dependencies").properties()) {
-                        liste.add(script.getKey() + ":" + script.getValue().toString());
+//                        liste.add(script.getKey() + ":" + script.getValue().toString());
+                        map.put(script.getKey(), script.getValue().toString());
                     }
-                    Collections.sort(liste);
-                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
+//                    Collections.sort(liste);
+//                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
+                    resultat.setDependencies(map);
                 }
                 if (node.has("devDependencies")) {
-                    resultat.append("devDependencies:").append("\n");
-                    List<String> liste = new ArrayList<>();
+//                    resultat.append("devDependencies:").append("\n");
+//                    List<String> liste = new ArrayList<>();
+                    Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("devDependencies").properties()) {
-                        liste.add(script.getKey() + ":" + script.getValue().toString());
+//                        liste.add(script.getKey() + ":" + script.getValue().toString());
+                        map.put(script.getKey(), script.getValue().toString());
                     }
-                    Collections.sort(liste);
-                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
+//                    Collections.sort(liste);
+//                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
+                    resultat.setDevDependencies(map);
                 }
             }
 
@@ -553,7 +662,7 @@ public class ProjetService {
 
                 if (model != null) {
                     projet.setDescription(model.getDescription());
-                    if(model.getName()!=null) {
+                    if (model.getName() != null) {
                         projetPom.setNom(model.getName());
                     }
                     Parent parent = model.getParent();
@@ -622,22 +731,56 @@ public class ProjetService {
                             if (projetPom.getProjetPomEnfants() == null) {
                                 projetPom.setProjetPomEnfants(new ArrayList<>());
                             }
-                            if(projetEnfant.getNom()!=null&&projetEnfant.getProjetPom().getNom()==null) {
+                            if (projetEnfant.getNom() != null && projetEnfant.getProjetPom().getNom() == null) {
                                 projetEnfant.getProjetPom().setNom(projetEnfant.getNom());
                             }
                             projetPom.getProjetPomEnfants().add(projetEnfant.getProjetPom());
                         }
 
 //
-//                        var f3 = f.resolve("package.json");
-//                        if (Files.exists(f3)) {
-//                            analysePackageJson(f3, resultat);
-//                        }
+                        var f3 = f.resolve("package.json");
+                        if (Files.exists(f3)) {
+                            ProjetNode resultat2 = new ProjetNode();
+                            analysePackageJson(f3, resultat2);
+                            projetEnfant.setProjetNode(resultat2);
+                        }
                     }
                 }
 
             }
         }
+    }
+
+    public GroupeProjetDto getGroupeProjets() {
+
+        Map<String, String> liste;
+        String defaut = null;
+
+        if (MapUtils.isNotEmpty(this.applicationProperties.getListeProjets())) {
+            liste = this.applicationProperties.getListeProjets()
+                    .entrySet()
+                    .stream()
+                    .collect(toMap(Map.Entry::getKey, e -> e.getValue().getNom()));
+            defaut = this.applicationProperties.getListeProjets()
+                    .entrySet()
+                    .stream()
+                    .filter(x -> x.getValue().isDefaut())
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+        } else {
+            liste = Map.of();
+        }
+
+        GroupeProjetDto resultat = new GroupeProjetDto();
+        resultat.setGroupeId(liste);
+        resultat.setGroupeIdDefaut(defaut);
+
+        return resultat;
+    }
+
+    public List<ProjetDto> getProjetDtoFromGroupId(String groupId) {
+        return getProjetDto(groupId, null);
     }
 
 //    public void updateProject4(Projet selectedProduct) throws Exception {

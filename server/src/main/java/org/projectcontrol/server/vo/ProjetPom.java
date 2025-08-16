@@ -11,6 +11,7 @@ public class ProjetPom {
     private Map<String,String> properties;
     private List<ArtefactMaven> dependencies;
     private List<ProjetPom> projetPomEnfants;
+    private ProjetNode projetNode;
 
     public String getNom() {
         return nom;
@@ -58,5 +59,13 @@ public class ProjetPom {
 
     public void setProjetPomEnfants(List<ProjetPom> projetPomEnfants) {
         this.projetPomEnfants = projetPomEnfants;
+    }
+
+    public ProjetNode getProjetNode() {
+        return projetNode;
+    }
+
+    public void setProjetNode(ProjetNode projetNode) {
+        this.projetNode = projetNode;
     }
 }
