@@ -32,6 +32,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static java.util.stream.Collectors.toMap;
@@ -553,7 +554,7 @@ public class ProjetService {
             resultat.setMessage(latestCommit.getFullMessage());
             resultat.setBranche(repository.getFullBranch());
             var date = Instant.ofEpochSecond(latestCommit.getCommitTime());
-            resultat.setDate(LocalDateTime.from(date));
+            resultat.setDate(LocalDateTime.ofInstant(date, ZoneOffset.systemDefault()));
         } catch (Exception e) {
             LOGGER.error("Erreur lors de l'analyse du projet {}", pathGit, e);
         }
