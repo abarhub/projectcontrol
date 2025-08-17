@@ -5,7 +5,7 @@ import {Home} from './home/home';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, TableauPrincipal, Home],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

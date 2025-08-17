@@ -47,7 +47,7 @@
       </tr>
       <tr>
         <th>Modules</th>
-        <td>{{projet()?.modules}}</td>
+        <td>{{ projet()?.modules }}</td>
       </tr>
       <tr>
         <th>Propriétés</th>
@@ -101,19 +101,19 @@
               <tbody>
               <tr>
                 <th>Date du commit</th>
-                <td>{{projet()?.infoGit?.date | date: 'dd/MM/yyyy H:mm:ss'}}</td>
+                <td>{{ projet()?.infoGit?.date | date: 'dd/MM/yyyy H:mm:ss' }}</td>
               </tr>
               <tr>
                 <th>Id commit</th>
-                <td>{{projet()?.infoGit?.idCommit}}</td>
+                <td>{{ projet()?.infoGit?.idCommit }}</td>
               </tr>
               <tr>
                 <th>Branche</th>
-                <td>{{projet()?.infoGit?.branche}}</td>
+                <td>{{ projet()?.infoGit?.branche }}</td>
               </tr>
               <tr>
                 <th>Message</th>
-                <td>{{projet()?.infoGit?.message}}</td>
+                <td>{{ projet()?.infoGit?.message }}</td>
               </tr>
               </tbody>
             </table>
@@ -172,7 +172,7 @@
           </tr>
           <tr>
             <th>Modules</th>
-            <td>{{projet?.modules}}</td>
+            <td>{{ projet?.modules }}</td>
           </tr>
           <tr>
             <th>Propriétés</th>
@@ -216,6 +216,72 @@
               }
             </td>
           </tr>
+          @if (projet?.infoNode) {
+
+            <tr>
+              <th>Nom module Node JS</th>
+              <td>{{ projet?.infoNode?.nom }}</td>
+            </tr>
+            <tr>
+              <th>Version</th>
+              <td>{{ projet?.infoNode?.version }}</td>
+            </tr>
+            <tr>
+              <th>Script</th>
+              <td>
+                @if (projet?.infoNode?.script) {
+                  <table class="table">
+                    <tbody>
+                      @for (property of projet?.infoNode?.script | keyvalue; track property.key) {
+                        <tr>
+                          <th>{{ property.key }}</th>
+                          <td>{{ property.value }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+
+                }
+              </td>
+            </tr>
+            <tr>
+              <th>dependances</th>
+              <td>
+                @if (projet?.infoNode?.dependencies) {
+                  <table class="table">
+                    <tbody>
+                      @for (property of projet?.infoNode?.dependencies | keyvalue; track property.key) {
+                        <tr>
+                          <th>{{ property.key }}</th>
+                          <td>{{ property.value }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+
+                }
+              </td>
+            </tr>
+            <tr>
+              <th>dependances dev</th>
+              <td>
+                @if (projet?.infoNode?.devDependencies) {
+                  <table class="table">
+                    <tbody>
+                      @for (property of projet?.infoNode?.devDependencies | keyvalue; track property.key) {
+                        <tr>
+                          <th>{{ property.key }}</th>
+                          <td>{{ property.value }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+
+                }
+              </td>
+            </tr>
+
+          }
           </tbody>
         </table>
 
@@ -224,3 +290,83 @@
   }
 }
 
+
+@if (projet()?.infoNode) {
+
+  <div class="card">
+
+    <div class="card-body">
+
+      <p class="card-title">
+        Module {{ projet()?.infoNode?.nom }}
+      </p>
+      <table class="table">
+        <tbody>
+        <tr>
+          <th>Nom</th>
+          <td>{{ projet()?.infoNode?.nom }}</td>
+        </tr>
+        <tr>
+          <th>Version</th>
+          <td>{{ projet()?.infoNode?.version }}</td>
+        </tr>
+        <tr>
+          <th>Script</th>
+          <td>
+            @if (projet()?.infoNode?.script) {
+              <table class="table">
+                <tbody>
+                  @for (property of projet()?.infoNode?.script | keyvalue; track property.key) {
+                    <tr>
+                      <th>{{ property.key }}</th>
+                      <td>{{ property.value }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+            }
+          </td>
+        </tr>
+        <tr>
+          <th>dependances</th>
+          <td>
+            @if (projet()?.infoNode?.dependencies) {
+              <table class="table">
+                <tbody>
+                  @for (property of projet()?.infoNode?.dependencies | keyvalue; track property.key) {
+                    <tr>
+                      <th>{{ property.key }}</th>
+                      <td>{{ property.value }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+            }
+          </td>
+        </tr>
+        <tr>
+          <th>dependances dev</th>
+          <td>
+            @if (projet()?.infoNode?.devDependencies) {
+              <table class="table">
+                <tbody>
+                  @for (property of projet()?.infoNode?.devDependencies | keyvalue; track property.key) {
+                    <tr>
+                      <th>{{ property.key }}</th>
+                      <td>{{ property.value }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+            }
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+}

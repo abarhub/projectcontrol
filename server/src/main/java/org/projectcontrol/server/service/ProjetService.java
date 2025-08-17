@@ -463,7 +463,8 @@ public class ProjetService {
 
     public List<ProjetDto> getProjetDto(String groupId, String nomProjet) {
         var liste = getProjets2(groupId);
-        if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) && liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
+        if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) &&
+                liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
             liste = liste.stream().filter(p -> p.getNom().equals(nomProjet)).toList();
         }
         List<ProjetDto> listeResultat = new ArrayList<>();
@@ -639,7 +640,7 @@ public class ProjetService {
                     Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("scripts").properties()) {
 //                        liste.add(script.getKey() + ":" + script.getValue().toString());
-                        map.put(script.getKey(), script.getValue().toString());
+                        map.put(script.getKey(), script.getValue().asText());
                     }
 //                    Collections.sort(liste);
 //                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
@@ -651,7 +652,7 @@ public class ProjetService {
                     Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("dependencies").properties()) {
 //                        liste.add(script.getKey() + ":" + script.getValue().toString());
-                        map.put(script.getKey(), script.getValue().toString());
+                        map.put(script.getKey(), script.getValue().asText());
                     }
 //                    Collections.sort(liste);
 //                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
@@ -663,7 +664,7 @@ public class ProjetService {
                     Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("devDependencies").properties()) {
 //                        liste.add(script.getKey() + ":" + script.getValue().toString());
-                        map.put(script.getKey(), script.getValue().toString());
+                        map.put(script.getKey(), script.getValue().asText());
                     }
 //                    Collections.sort(liste);
 //                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
@@ -756,7 +757,9 @@ public class ProjetService {
 //                        resultat.append("* enfant ").append(f.getFileName()).append(" :").append("\n");
                         Projet projetEnfant = new Projet();
                         projetEnfant.setNom(f.getFileName().toString());
+                        completeProjet(f, projetEnfant);
                         analysePom(f2, projetEnfant);
+                        ProjetPom projetPom2=null;
                         if (projetEnfant.getProjetPom() != null) {
                             if (projetPom.getProjetPomEnfants() == null) {
                                 projetPom.setProjetPomEnfants(new ArrayList<>());
@@ -764,7 +767,8 @@ public class ProjetService {
                             if (projetEnfant.getNom() != null && projetEnfant.getProjetPom().getNom() == null) {
                                 projetEnfant.getProjetPom().setNom(projetEnfant.getNom());
                             }
-                            projetPom.getProjetPomEnfants().add(projetEnfant.getProjetPom());
+                            projetPom2=projetEnfant.getProjetPom();
+                            projetPom.getProjetPomEnfants().add(projetPom2);
                         }
 
 //
@@ -773,6 +777,12 @@ public class ProjetService {
                             ProjetNode resultat2 = new ProjetNode();
                             analysePackageJson(f3, resultat2);
                             projetEnfant.setProjetNode(resultat2);
+                            if(projetPom2==null){
+                                projetPom2=new ProjetPom();
+                                projetPom2.setNom(projetEnfant.getNom());
+                                projetPom2.getProjetPomEnfants().add(projetPom2);
+                            }
+                            projetPom2.setProjetNode(resultat2);
                         }
                     }
                 }

@@ -8,7 +8,6 @@ import {DatePipe} from '@angular/common';
 @Component({
   selector: 'colour-cell',
   imports: [
-    RouterLink,
     DatePipe
   ],
   // template: `@if (params.data.groupeId && params.value) {

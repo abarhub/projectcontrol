@@ -5,6 +5,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.vo.Projet;
+import org.projectcontrol.server.vo.ProjetPom;
 
 @Mapper(componentModel = "spring")
 public interface ProjetMapper {
@@ -18,4 +19,8 @@ public interface ProjetMapper {
     @Mapping(target="infoNode",source = "projetNode")
     @Mapping(target="infoGit",source = "projetGit")
     void projetToProjetDto(Projet projet, @MappingTarget ProjetDto projetDto);
+
+    @Mapping(target="infoNode",source = "projetNode")
+    ProjetDto projetPomToProjetDto(ProjetPom projet);
+
 }
