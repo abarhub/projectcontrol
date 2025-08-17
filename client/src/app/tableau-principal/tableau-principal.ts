@@ -6,9 +6,10 @@ import {GroupeProjet} from '../entity/groupe-projet';
 import {DatePipe, KeyValuePipe} from '@angular/common';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {LigneTableauPrincipal} from './ligne-tableau-principal';
-import { AgGridAngular } from 'ag-grid-angular'; // Angular Data Grid Component
-import type { ColDef } from 'ag-grid-community';
-import {LinkCellAgGrid} from './link-cell-aggrid'; // Column Definition Type Interface
+import {AgGridAngular} from 'ag-grid-angular'; // Angular Data Grid Component
+import type {ColDef} from 'ag-grid-community';
+import {LinkCellAgGrid} from './link-cell-aggrid';
+import {GitCellAgGrid} from './git-cell-aggrid'; // Column Definition Type Interface
 
 
 @Component({
@@ -39,30 +40,44 @@ export class TableauPrincipal {
 
   // Column Definitions: Defines the columns to be displayed.
   colDefs: ColDef[] = [
-    { field: "nom",
+    {
+      field: "nom",
       cellRenderer: LinkCellAgGrid,
       cellRendererParams: {
         groupId: this.groupeIdSelected()
       }
     },
-    { field: "version" },
-    { field: "parent" },
-    { field: "description" }
+    {field: "version"},
+    {field: "parent"},
+    {field: "description"},
+    {
+      field: "git",
+      cellRenderer: GitCellAgGrid
+    }
   ];
+
+  gridOptions = {
+    columnDefs: this.colDefs,
+    rowData: this.listeProjet,
+    pagination: this.pagination,
+    paginationPageSize: this.paginationPageSize,
+    paginationPageSizeSelector: this.paginationPageSizeSelector,
+    rowHeight: 150
+  };
 
   // Row Data: The data to be displayed.
   rowData = [
-    { make: "Tesla", model: "Model Y", price: 64950, electric: true },
-    { make: "Ford", model: "F-Series", price: 33850, electric: false },
-    { make: "Toyota", model: "Corolla", price: 29600, electric: false },
+    {make: "Tesla", model: "Model Y", price: 64950, electric: true},
+    {make: "Ford", model: "F-Series", price: 33850, electric: false},
+    {make: "Toyota", model: "Corolla", price: 29600, electric: false},
   ];
 
   // Column Definitions: Defines the columns to be displayed.
   colDefs2: ColDef[] = [
-    { field: "make" },
-    { field: "model" },
-    { field: "price" },
-    { field: "electric" }
+    {field: "make"},
+    {field: "model"},
+    {field: "price"},
+    {field: "electric"}
   ];
 
   constructor(private projetService: ProjetService) {
@@ -108,12 +123,12 @@ export class TableauPrincipal {
 
   private calculTableau(data: Projet[], groupeId: string) {
     if (data && data.length > 0) {
-      let listeLignes: LigneTableauPrincipal[]=[];
+      let listeLignes: LigneTableauPrincipal[] = [];
       for (let i = 0; i < data.length; i++) {
         let projet = data[i];
         let ligne: LigneTableauPrincipal = new LigneTableauPrincipal();
         ligne.nom = projet.nom;
-        ligne.groupeId=groupeId;
+        ligne.groupeId = groupeId;
         if (projet.artifact) {
           ligne.version = projet.artifact.version;
         }
@@ -127,13 +142,14 @@ export class TableauPrincipal {
         ligne.description = projet.description;
         if (projet.infoGit) {
           ligne.infoGitDate = projet.infoGit.date;
+          ligne.infoGitIdCommit = projet.infoGit.idCommit;
           ligne.infoGitBranche = projet.infoGit.branche;
           ligne.infoGitMessage = projet.infoGit.message;
         }
         listeLignes.push(ligne);
       }
       this.tableau = listeLignes;
-      console.log('tableau 2 :',this.tableau);
+      console.log('tableau 2 :', this.tableau);
     }
   }
 }

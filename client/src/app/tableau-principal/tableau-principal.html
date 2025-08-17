@@ -40,71 +40,73 @@
 
   @if (listeProjet) {
 
-    <table class="table">
-      <thead>
-      <tr>
-        <th scope="col">Nom</th>
-        <th scope="col">Version</th>
-        <th scope="col">Parent</th>
-        <th scope="col">Description</th>
-        <th scope="col">Git</th>
-      </tr>
-      </thead>
-      <tbody>
-        @for (projet of listeProjet; track projet.nom) {
+<!--    <table class="table">-->
+<!--      <thead>-->
+<!--      <tr>-->
+<!--        <th scope="col">Nom</th>-->
+<!--        <th scope="col">Version</th>-->
+<!--        <th scope="col">Parent</th>-->
+<!--        <th scope="col">Description</th>-->
+<!--        <th scope="col">Git</th>-->
+<!--      </tr>-->
+<!--      </thead>-->
+<!--      <tbody>-->
+<!--        @for (projet of listeProjet; track projet.nom) {-->
 
-          <tr>
-            <th>
-              @if (projet.nom && this.formGrouId.value) {
-                <a [routerLink]="['details',this.groupeIdSelected(), projet.nom]">{{ projet.nom }}</a>
-              } @else {
-                {{ projet.nom }}
-              }
-            </th>
-            <td>
-              @if (projet.artifact) {
-                <!--              {{ projet.artifact.groupId }}:{{ projet.artifact.artefactId }}:{{ projet.artifact.version }}-->
-                {{ projet.artifact.version }}
-              }
-            </td>
-            <td>
-              @if (projet.parent) {
-                @if (projet.parent.artefactId == 'spring-boot-starter-parent' && projet.parent.groupId == 'org.springframework.boot') {
-                  Spring boot {{ projet.parent.version }}
-                } @else {
-                  {{ projet.parent.groupId }}:{{ projet.parent.artefactId }}:{{ projet.parent.version }}
-                }
+<!--          <tr>-->
+<!--            <th>-->
+<!--              @if (projet.nom && this.formGrouId.value) {-->
+<!--                <a [routerLink]="['details',this.groupeIdSelected(), projet.nom]">{{ projet.nom }}</a>-->
+<!--              } @else {-->
+<!--                {{ projet.nom }}-->
+<!--              }-->
+<!--            </th>-->
+<!--            <td>-->
+<!--              @if (projet.artifact) {-->
+<!--                &lt;!&ndash;              {{ projet.artifact.groupId }}:{{ projet.artifact.artefactId }}:{{ projet.artifact.version }}&ndash;&gt;-->
+<!--                {{ projet.artifact.version }}-->
+<!--              }-->
+<!--            </td>-->
+<!--            <td>-->
+<!--              @if (projet.parent) {-->
+<!--                @if (projet.parent.artefactId == 'spring-boot-starter-parent' && projet.parent.groupId == 'org.springframework.boot') {-->
+<!--                  Spring boot {{ projet.parent.version }}-->
+<!--                } @else {-->
+<!--                  {{ projet.parent.groupId }}:{{ projet.parent.artefactId }}:{{ projet.parent.version }}-->
+<!--                }-->
 
-              }
-            </td>
-            <td>{{ projet.description }}</td>
-            <td>
-              @if (projet.infoGit) {
-              <div class="d-flex flex-column  mb-3">
-                <div>date : {{ projet.infoGit?.date | date: 'dd/MM/yyyy' }}</div>
-                <div>hash : {{ projet.infoGit?.idCommit }}</div>
-                <div>branche : {{ projet.infoGit?.branche }}</div>
-                <div>message : {{ projet.infoGit?.message }}</div>
-              </div>
-              }
-            </td>
-          </tr>
-        }
+<!--              }-->
+<!--            </td>-->
+<!--            <td>{{ projet.description }}</td>-->
+<!--            <td>-->
+<!--              @if (projet.infoGit) {-->
+<!--              <div class="d-flex flex-column  mb-3">-->
+<!--                <div>date : {{ projet.infoGit?.date | date: 'dd/MM/yyyy' }}</div>-->
+<!--                <div>hash : {{ projet.infoGit?.idCommit }}</div>-->
+<!--                <div>branche : {{ projet.infoGit?.branche }}</div>-->
+<!--                <div>message : {{ projet.infoGit?.message }}</div>-->
+<!--              </div>-->
+<!--              }-->
+<!--            </td>-->
+<!--          </tr>-->
+<!--        }-->
 
-      </tbody>
-    </table>
+<!--      </tbody>-->
+<!--    </table>-->
 
     tableau 2 :
     <ag-grid-angular
       [rowData]="tableau"
       [columnDefs]="colDefs"
+      domLayout="autoHeight"
+      [gridOptions]="gridOptions"
     />
 
   }
 
-  tableau 3 :
-  <ag-grid-angular
-    [rowData]="rowData"
-    [columnDefs]="colDefs2" />
+<!--  tableau 3 :-->
+<!--  <ag-grid-angular-->
+<!--    [rowData]="rowData"-->
+<!--    [columnDefs]="colDefs2" />-->
 
 }

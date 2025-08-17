@@ -7,6 +7,7 @@ export class LigneTableauPrincipal {
   parent: string = '';
   description: string = '';
   infoGitDate: Date | null = null;
+  infoGitIdCommit: string = '';
   infoGitBranche: string = '';
   infoGitMessage: string = '';
 

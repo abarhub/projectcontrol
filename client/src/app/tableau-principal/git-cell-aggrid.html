@@ -1,0 +1,8 @@
+@if (data) {
+  <div class="d-flex flex-column  mb-3">
+    <div>date : {{ data.infoGitDate | date: 'dd/MM/yyyy' }}</div>
+    <div>hash : {{ data.infoGitIdCommit }}</div>
+    <div>branche : {{ data.infoGitBranche }}</div>
+    <div>message : {{ data.infoGitMessage }}</div>
+  </div>
+}
