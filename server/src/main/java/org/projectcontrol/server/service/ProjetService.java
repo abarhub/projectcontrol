@@ -196,10 +196,10 @@ public class ProjetService {
                         try {
                             FileTime dateModif = Files.getLastModifiedTime(dir);
                             if (dateModif != null) {
-                                var date=dateModif.toInstant();
+                                var date = dateModif.toInstant();
                                 projet.setDateModification(LocalDateTime.ofInstant(date, ZoneId.systemDefault()));
                             }
-                        }catch (IOException e) {
+                        } catch (IOException e) {
                             LOGGER.error("Erreur lors de la lecture du fichier {} : {}", nom, e.getMessage(), e);
                         }
                         completeProjet(dir, projet);
@@ -484,7 +484,12 @@ public class ProjetService {
                     var pom = projet.getProjetPom();
                     copiePom(pom, projetDto);
                 }
-                this.projetMapper.projetToProjetDto(projet,projetDto);
+                var properties = projetDto.getProperties();
+                if(properties!=null){
+                    properties=new TreeMap<>(properties);
+                }
+                this.projetMapper.projetToProjetDto(projet, projetDto);
+                projetDto.setProperties(properties);
                 listeResultat.add(projetDto);
             } catch (Exception e) {
                 LOGGER.error("Erreur lors de l'analyse du projet {}", projet.getNom(), e);

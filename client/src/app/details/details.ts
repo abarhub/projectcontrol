@@ -1,13 +1,14 @@
 import {Component, effect, inject, signal} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {ProjetService} from '../service/projet.service';
-import {KeyValuePipe} from '@angular/common';
+import {DatePipe, KeyValuePipe} from '@angular/common';
 import {Projet} from '../entity/projet';
 
 @Component({
   selector: 'app-details',
   imports: [
-    KeyValuePipe
+    KeyValuePipe,
+    DatePipe
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
