@@ -486,17 +486,79 @@ public class ProjetService {
                     copiePom(pom, projetDto);
                 }
                 var properties = projetDto.getProperties();
-                if(properties!=null){
-                    properties=new TreeMap<>(properties);
+                if (properties != null) {
+                    properties = new TreeMap<>(properties);
                 }
                 this.projetMapper.projetToProjetDto(projet, projetDto);
                 projetDto.setProperties(properties);
+                completeProjetDto(projetDto);
                 listeResultat.add(projetDto);
             } catch (Exception e) {
                 LOGGER.error("Erreur lors de l'analyse du projet {}", projet.getNom(), e);
             }
         }
         return listeResultat;
+    }
+
+    private void completeProjetDto(ProjetDto projetDto) {
+        if (projetDto.getModules() == null) {
+            projetDto.setModules(new HashSet<>());
+        }
+        if (projetDto.getDetailModules() == null) {
+            projetDto.setDetailModules(new HashMap<>());
+        }
+        if(projetDto.getProperties() != null) {
+            if(projetDto.getProperties().containsKey("java")){
+                projetDto.getModules().add(ModuleProjetEnum.JAVA);
+                projetDto.getDetailModules().put("java", projetDto.getProperties().get("java"));
+            } else if(projetDto.getProperties().containsKey("maven.compiler.target")) {
+                projetDto.getModules().add(ModuleProjetEnum.JAVA);
+                projetDto.getDetailModules().put("java", projetDto.getProperties().get("maven.compiler.target"));
+            }
+        }
+        if (projetDto.getArtifact() != null || projetDto.getParent() != null) {
+            projetDto.getModules().add(ModuleProjetEnum.POM);
+            if (projetDto.getParent() != null) {
+                if (Objects.equals(projetDto.getParent().getGroupId(), "org.springframework.boot")) {
+                    projetDto.getModules().add(ModuleProjetEnum.SPRING_BOOT);
+                    var versionSpringBoot = projetDto.getParent().getVersion();
+                    if (StringUtils.isNotBlank(versionSpringBoot)) {
+                        projetDto.getDetailModules().put("spring-boot", versionSpringBoot);
+                    }
+                }
+            }
+            if (!projetDto.getModules().contains(ModuleProjetEnum.SPRING_BOOT)) {
+                if (projetDto.getDependencies() != null) {
+                    var springPresent = projetDto.getDependencies().stream()
+                            .filter(x -> Objects.equals(x.groupId(), "org.springframework.boot"))
+                            .findAny();
+                    if (springPresent.isPresent()) {
+                        projetDto.getModules().add(ModuleProjetEnum.SPRING_BOOT);
+                        var versionSpringBoot = springPresent.get().version();
+                        if (StringUtils.isNotBlank(versionSpringBoot)) {
+                            projetDto.getDetailModules().put("spring-boot", versionSpringBoot);
+                        }
+                    }
+                }
+            }
+        }
+        if (projetDto.getInfoGit() != null) {
+            projetDto.getModules().add(ModuleProjetEnum.GIT);
+        }
+        if (projetDto.getInfoNode() != null) {
+            projetDto.getModules().add(ModuleProjetEnum.NODEJS);
+            if (projetDto.getInfoNode().getDependencies() != null) {
+                if (projetDto.getInfoNode().getDependencies().containsKey("@angular/core")) {
+                    projetDto.getModules().add(ModuleProjetEnum.ANGULAR);
+                    projetDto.getDetailModules().put("angular", projetDto.getInfoNode().getDependencies().get("@angular/core"));
+                }
+            }
+        }
+        if (projetDto.getProjetEnfants() != null) {
+            for (var enfant : projetDto.getProjetEnfants()) {
+                completeProjetDto(enfant);
+            }
+        }
     }
 
     private List<ProjetDto> convert(List<ProjetPom> projetPomEnfants) {
@@ -759,7 +821,7 @@ public class ProjetService {
                         projetEnfant.setNom(f.getFileName().toString());
                         completeProjet(f, projetEnfant);
                         analysePom(f2, projetEnfant);
-                        ProjetPom projetPom2=null;
+                        ProjetPom projetPom2 = null;
                         if (projetEnfant.getProjetPom() != null) {
                             if (projetPom.getProjetPomEnfants() == null) {
                                 projetPom.setProjetPomEnfants(new ArrayList<>());
@@ -767,7 +829,7 @@ public class ProjetService {
                             if (projetEnfant.getNom() != null && projetEnfant.getProjetPom().getNom() == null) {
                                 projetEnfant.getProjetPom().setNom(projetEnfant.getNom());
                             }
-                            projetPom2=projetEnfant.getProjetPom();
+                            projetPom2 = projetEnfant.getProjetPom();
                             projetPom.getProjetPomEnfants().add(projetPom2);
                         }
 
@@ -777,8 +839,8 @@ public class ProjetService {
                             ProjetNode resultat2 = new ProjetNode();
                             analysePackageJson(f3, resultat2);
                             projetEnfant.setProjetNode(resultat2);
-                            if(projetPom2==null){
-                                projetPom2=new ProjetPom();
+                            if (projetPom2 == null) {
+                                projetPom2 = new ProjetPom();
                                 projetPom2.setNom(projetEnfant.getNom());
                                 projetPom2.getProjetPomEnfants().add(projetPom2);
                             }

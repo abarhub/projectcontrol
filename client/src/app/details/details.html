@@ -13,6 +13,25 @@
 
 <!--<hr/>-->
 
+
+<div class="container">
+
+
+  <form [formGroup]="choixForm">
+
+<div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+  <input type="radio" class="btn-check" name="choix" id="btnradio1" autocomplete="off" formControlName="choix" value="1">
+  <label class="btn btn-outline-primary" for="btnradio1">Radio 1</label>
+
+  <input type="radio" class="btn-check" name="choix" id="btnradio2" autocomplete="off" formControlName="choix" value="2">
+  <label class="btn btn-outline-primary" for="btnradio2">Radio 2</label>
+
+  <input type="radio" class="btn-check" name="choix" id="btnradio3" autocomplete="off" formControlName="choix"  value="3">
+  <label class="btn btn-outline-primary" for="btnradio3">Radio 3</label>
+</div>
+
+</form>
+
 <div class="card">
 
   <div class="card-body">
@@ -48,6 +67,28 @@
       <tr>
         <th>Modules</th>
         <td>{{ projet()?.modules }}</td>
+      </tr>
+      <tr>
+        <th>Modules détails</th>
+        <td>
+          @if (projet()?.detailModules) {
+
+            <table class="table">
+              <tbody>
+
+                @for (property of projet()?.detailModules | keyvalue; track property.key) {
+                  <tr>
+                    <th>{{ property.key }}</th>
+                    <td>{{ property.value }}</td>
+                  </tr>
+
+                }
+
+              </tbody>
+            </table>
+
+          }
+        </td>
       </tr>
       <tr>
         <th>Propriétés</th>
@@ -370,3 +411,6 @@
   </div>
 
 }
+
+
+</div>

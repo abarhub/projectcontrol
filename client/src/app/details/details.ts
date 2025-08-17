@@ -3,12 +3,14 @@ import {ActivatedRoute} from '@angular/router';
 import {ProjetService} from '../service/projet.service';
 import {DatePipe, KeyValuePipe} from '@angular/common';
 import {Projet} from '../entity/projet';
+import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-details',
   imports: [
     KeyValuePipe,
-    DatePipe
+    DatePipe,
+    ReactiveFormsModule
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
@@ -20,6 +22,10 @@ export class Details {
   groupeProjet = signal('');
   private projetService = inject(ProjetService);
   projet = signal<Projet | null>(null);
+
+  choixForm = new FormGroup({
+    choix: new FormControl('1')
+  });
 
   constructor() {
     //Access route parameters
@@ -44,6 +50,11 @@ export class Details {
             }
           });
       }
+    });
+
+    this.choixForm.get('choix')?.valueChanges.subscribe(value => {
+      console.log('Choix sélectionné :', value);
+      // tu peux réagir ici : appeler une API, changer un affichage, etc.
     });
 
   }
