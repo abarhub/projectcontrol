@@ -17,6 +17,7 @@ import org.projectcontrol.core.service.XmlParserService;
 import org.projectcontrol.server.dto.ArtifactDto;
 import org.projectcontrol.server.dto.GroupeProjetDto;
 import org.projectcontrol.server.dto.ProjetDto;
+import org.projectcontrol.server.enumeration.ModuleProjetEnum;
 import org.projectcontrol.server.mapper.ProjetMapper;
 import org.projectcontrol.server.properties.ApplicationProperties;
 import org.projectcontrol.server.vo.*;
@@ -30,8 +31,10 @@ import org.springframework.util.CollectionUtils;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 
@@ -190,6 +193,15 @@ public class ProjetService {
                         if (Objects.equals(nom, POM_XML)) {
                             projet.setFichierPom(file.toAbsolutePath().toString());
                         }
+                        try {
+                            FileTime dateModif = Files.getLastModifiedTime(dir);
+                            if (dateModif != null) {
+                                var date=dateModif.toInstant();
+                                projet.setDateModification(LocalDateTime.ofInstant(date, ZoneId.systemDefault()));
+                            }
+                        }catch (IOException e) {
+                            LOGGER.error("Erreur lors de la lecture du fichier {} : {}", nom, e.getMessage(), e);
+                        }
                         completeProjet(dir, projet);
                         pomFiles.add(projet);
                         LOGGER.debug("preVisitDirectory: skip from project file");
@@ -273,19 +285,30 @@ public class ProjetService {
         if (Files.exists(dir.resolve(POM_XML))) {
             var file = dir.resolve(POM_XML);
             projet.setFichierPom(file.toAbsolutePath().toString());
+            ajouteModule(projet, ModuleProjetEnum.POM);
         }
         if (Files.exists(dir.resolve(PACKAGE_JSON))) {
             var file = dir.resolve(PACKAGE_JSON);
             projet.setPackageJson(file.toAbsolutePath().toString());
+            ajouteModule(projet, ModuleProjetEnum.NODEJS);
         }
         if (Files.exists(dir.resolve(GO_MOD))) {
             var file = dir.resolve(GO_MOD);
             projet.setGoMod(file.toAbsolutePath().toString());
+            ajouteModule(projet, ModuleProjetEnum.GO);
         }
         if (Files.exists(dir.resolve(CARGO_TOML))) {
             var file = dir.resolve(CARGO_TOML);
             projet.setCargoToml(file.toAbsolutePath().toString());
+            ajouteModule(projet, ModuleProjetEnum.RUST);
         }
+    }
+
+    private static void ajouteModule(Projet projet, ModuleProjetEnum moduleProjetEnum) {
+        if (projet.getModules() == null) {
+            projet.setModules(new HashSet<>());
+        }
+        projet.getModules().add(moduleProjetEnum);
     }
 
 //    public static List<Path> findPomFiles(String directoryPath) throws IOException {
@@ -450,12 +473,13 @@ public class ProjetService {
                 var projetDto = new ProjetDto();
                 analyseProjet(projet);
                 projetDto.setNom(projet.getNom());
-                projetDto.setDescription(projet.getDescription());
-                projetDto.setFichierPom(projet.getFichierPom());
-                projetDto.setPackageJson(projet.getPackageJson());
-                projetDto.setGoMod(projet.getGoMod());
-                projetDto.setCargoToml(projet.getCargoToml());
-                projetDto.setRepertoire(projet.getRepertoire());
+//                projetDto.setDescription(projet.getDescription());
+//                projetDto.setFichierPom(projet.getFichierPom());
+//                projetDto.setPackageJson(projet.getPackageJson());
+//                projetDto.setGoMod(projet.getGoMod());
+//                projetDto.setCargoToml(projet.getCargoToml());
+//                projetDto.setRepertoire(projet.getRepertoire());
+//                projetDto.setDateModification(projet.getDateModification());
                 if (projet.getProjetPom() != null) {
                     var pom = projet.getProjetPom();
                     copiePom(pom, projetDto);

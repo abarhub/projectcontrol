@@ -2,6 +2,7 @@ package org.projectcontrol.server.vo;
 
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 public class Projet {
@@ -18,6 +19,7 @@ public class Projet {
     private Set<ModuleProjetEnum> modules;
     private ProjetNode projetNode;
     private ProjetGit projetGit;
+    private LocalDateTime dateModification;
 
     public String getId() {
         return id;
@@ -113,5 +115,13 @@ public class Projet {
 
     public void setProjetGit(ProjetGit projetGit) {
         this.projetGit = projetGit;
+    }
+
+    public LocalDateTime getDateModification() {
+        return dateModification;
+    }
+
+    public void setDateModification(LocalDateTime dateModification) {
+        this.dateModification = dateModification;
     }
 }

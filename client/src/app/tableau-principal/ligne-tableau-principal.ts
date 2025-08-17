@@ -10,5 +10,8 @@ export class LigneTableauPrincipal {
   infoGitIdCommit: string = '';
   infoGitBranche: string = '';
   infoGitMessage: string = '';
+  dateModification: Date | null = null;
+  modules: string[] = [];
+  detailModules: Map<string, string> = new Map<string, string>();
 
 }

@@ -3,6 +3,7 @@ package org.projectcontrol.server.dto;
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
 import org.projectcontrol.server.vo.ArtefactMaven;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +25,8 @@ public class ProjetDto {
     private Set<ModuleProjetEnum> modules;
     private InfoNodeDto infoNode;
     private InfoGitDto infoGit;
+    private LocalDateTime dateModification;
+    private Map<String, String> detailModules;
 
     public String getNom() {
         return nom;
@@ -143,5 +146,21 @@ public class ProjetDto {
 
     public void setInfoGit(InfoGitDto infoGit) {
         this.infoGit = infoGit;
+    }
+
+    public LocalDateTime getDateModification() {
+        return dateModification;
+    }
+
+    public void setDateModification(LocalDateTime dateModification) {
+        this.dateModification = dateModification;
+    }
+
+    public Map<String, String> getDetailModules() {
+        return detailModules;
+    }
+
+    public void setDetailModules(Map<String, String> detailModules) {
+        this.detailModules = detailModules;
     }
 }

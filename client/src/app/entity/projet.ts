@@ -19,5 +19,7 @@ export class Projet {
   modules: string[] = [];
   projetNode: ProjetNode | null = null;
   infoGit: ProjetGit | null = null;
+  dateModification: Date | null = null;
+  detailModules: Map<string, string> = new Map<string, string>();
 
 }

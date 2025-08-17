@@ -1,9 +1,8 @@
 import {Component, signal} from '@angular/core';
 import {ProjetService} from '../service/projet.service';
-import {RouterLink} from '@angular/router';
 import {Projet} from '../entity/projet';
 import {GroupeProjet} from '../entity/groupe-projet';
-import {DatePipe, KeyValuePipe} from '@angular/common';
+import {KeyValuePipe} from '@angular/common';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {LigneTableauPrincipal} from './ligne-tableau-principal';
 import {AgGridAngular} from 'ag-grid-angular'; // Angular Data Grid Component
@@ -15,10 +14,8 @@ import {GitCellAgGrid} from './git-cell-aggrid'; // Column Definition Type Inter
 @Component({
   selector: 'app-tableau-principal',
   imports: [
-    RouterLink,
     KeyValuePipe,
     ReactiveFormsModule,
-    DatePipe,
     AgGridAngular
   ],
   templateUrl: './tableau-principal.html',
@@ -53,7 +50,13 @@ export class TableauPrincipal {
     {
       field: "git",
       cellRenderer: GitCellAgGrid
-    }
+    },
+    {
+      field: "dateModification",
+      headerName: "date derniere modification",
+      cellDataType: 'dateTime'
+    },
+    {field: "modules"}
   ];
 
   gridOptions = {
@@ -146,6 +149,11 @@ export class TableauPrincipal {
           ligne.infoGitBranche = projet.infoGit.branche;
           ligne.infoGitMessage = projet.infoGit.message;
         }
+        if (projet.dateModification) {
+          ligne.dateModification = new Date(projet.dateModification);
+        }
+        ligne.modules = projet.modules;
+        ligne.detailModules = projet.detailModules;
         listeLignes.push(ligne);
       }
       this.tableau = listeLignes;
