@@ -3,7 +3,7 @@ import {ProjetService} from '../service/projet.service';
 import {RouterLink} from '@angular/router';
 import {Projet} from '../entity/projet';
 import {GroupeProjet} from '../entity/groupe-projet';
-import {KeyValuePipe} from '@angular/common';
+import {DatePipe, KeyValuePipe} from '@angular/common';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 
 
@@ -12,7 +12,8 @@ import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
   imports: [
     RouterLink,
     KeyValuePipe,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    DatePipe
   ],
   templateUrl: './tableau-principal.html',
   styleUrl: './tableau-principal.scss'

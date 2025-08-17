@@ -18,6 +18,6 @@ export class Projet {
   projetEnfants: Projet[] = [];
   modules: string[] = [];
   projetNode: ProjetNode | null = null;
-  projetGit: ProjetGit | null = null;
+  infoGit: ProjetGit | null = null;
 
 }
