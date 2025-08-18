@@ -43,6 +43,7 @@ export class Details {
           .subscribe({
             next: (data) => {
               console.log('projet' + nomProjet, data);
+              this.complete(data);
               this.projet.set(data);
             },
             error: (error) => {
@@ -57,5 +58,22 @@ export class Details {
       // tu peux réagir ici : appeler une API, changer un affichage, etc.
     });
 
+  }
+
+  private complete(data: Projet) {
+    if (data.dependencies) {
+      for (let i = 0; i < data.dependencies.length; i++) {
+        const element = data.dependencies[i];
+        element.id = i + 1;
+      }
+    }
+    if (data.projetEnfants) {
+      for (let i = 0; i < data.projetEnfants.length; i++) {
+        let projetEnfant = data.projetEnfants[i];
+        if (projetEnfant.dependencies) {
+          this.complete(projetEnfant);
+        }
+      }
+    }
   }
 }

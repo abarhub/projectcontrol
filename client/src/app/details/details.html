@@ -65,8 +65,18 @@
         </td>
       </tr>
       <tr>
+        <th>Répertoire</th>
+        <td>{{ projet()?.repertoire }}</td>
+      </tr>
+      <tr>
         <th>Modules</th>
-        <td>{{ projet()?.modules }}</td>
+        <td>
+          @if (projet()?.modules) {
+            @for(module of projet()?.modules; track module) {
+              <span class="badge rounded-pill text-bg-primary">{{module}}</span>
+            }
+          }
+        </td>
       </tr>
       <tr>
         <th>Modules détails</th>
@@ -120,7 +130,7 @@
             <table class="table">
               <tbody>
 
-                @for (dependance of projet()?.dependencies; track dependance.groupId) {
+                @for (dependance of projet()?.dependencies; track dependance.id) {
 
                   <tr>
                     <td>{{ dependance.groupId }} : {{ dependance.artefactId }} : {{ dependance.version }}</td>
@@ -244,7 +254,7 @@
                 <table class="table">
                   <tbody>
 
-                    @for (dependance of projet?.dependencies; track dependance.groupId) {
+                    @for (dependance of projet?.dependencies; track dependance.id) {
 
                       <tr>
                         <td>{{ dependance.groupId }} : {{ dependance.artefactId }} : {{ dependance.version }}</td>

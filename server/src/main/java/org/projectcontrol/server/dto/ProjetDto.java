@@ -13,10 +13,10 @@ public class ProjetDto {
     private String nom;
     private String description;
     private String repertoire;
-    private String fichierPom;
-    private String packageJson;
-    private String goMod;
-    private String cargoToml;
+//    private String fichierPom;
+//    private String packageJson;
+//    private String goMod;
+//    private String cargoToml;
     private ArtifactDto parent;
     private ArtifactDto artifact;
     private Map<String,String> properties;
@@ -52,37 +52,37 @@ public class ProjetDto {
         this.repertoire = repertoire;
     }
 
-    public String getFichierPom() {
-        return fichierPom;
-    }
-
-    public void setFichierPom(String fichierPom) {
-        this.fichierPom = fichierPom;
-    }
-
-    public String getPackageJson() {
-        return packageJson;
-    }
-
-    public void setPackageJson(String packageJson) {
-        this.packageJson = packageJson;
-    }
-
-    public String getGoMod() {
-        return goMod;
-    }
-
-    public void setGoMod(String goMod) {
-        this.goMod = goMod;
-    }
-
-    public String getCargoToml() {
-        return cargoToml;
-    }
-
-    public void setCargoToml(String cargoToml) {
-        this.cargoToml = cargoToml;
-    }
+//    public String getFichierPom() {
+//        return fichierPom;
+//    }
+//
+//    public void setFichierPom(String fichierPom) {
+//        this.fichierPom = fichierPom;
+//    }
+//
+//    public String getPackageJson() {
+//        return packageJson;
+//    }
+//
+//    public void setPackageJson(String packageJson) {
+//        this.packageJson = packageJson;
+//    }
+//
+//    public String getGoMod() {
+//        return goMod;
+//    }
+//
+//    public void setGoMod(String goMod) {
+//        this.goMod = goMod;
+//    }
+//
+//    public String getCargoToml() {
+//        return cargoToml;
+//    }
+//
+//    public void setCargoToml(String cargoToml) {
+//        this.cargoToml = cargoToml;
+//    }
 
     public ArtifactDto getParent() {
         return parent;
