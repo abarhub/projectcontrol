@@ -1,7 +1,7 @@
 import {Component, signal} from '@angular/core';
-import {ProjetService} from '../service/projet.service';
-import {Projet} from '../entity/projet';
-import {GroupeProjet} from '../entity/groupe-projet';
+import {ProjetService} from '../../service/projet.service';
+import {Projet} from '../../entity/projet';
+import {GroupeProjet} from '../../entity/groupe-projet';
 import {KeyValuePipe} from '@angular/common';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {LigneTableauPrincipal} from './ligne-tableau-principal';

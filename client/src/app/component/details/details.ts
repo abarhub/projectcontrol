@@ -1,16 +1,18 @@
 import {Component, effect, inject, signal} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {ProjetService} from '../service/projet.service';
+import {ProjetService} from '../../service/projet.service';
 import {DatePipe, KeyValuePipe} from '@angular/common';
-import {Projet} from '../entity/projet';
+import {Projet} from '../../entity/projet';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {DetailsProjet} from '../details-projet/details-projet';
 
 @Component({
   selector: 'app-details',
   imports: [
     KeyValuePipe,
     DatePipe,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    DetailsProjet
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
