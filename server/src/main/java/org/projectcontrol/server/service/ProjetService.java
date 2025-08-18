@@ -12,8 +12,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.projectcontrol.core.service.PomParserService;
-import org.projectcontrol.core.service.XmlParserService;
 import org.projectcontrol.server.dto.ArtifactDto;
 import org.projectcontrol.server.dto.GroupeProjetDto;
 import org.projectcontrol.server.dto.ProjetDto;
@@ -23,20 +21,19 @@ import org.projectcontrol.server.properties.ApplicationProperties;
 import org.projectcontrol.server.vo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -53,21 +50,28 @@ public class ProjetService {
     public static final String CARGO_TOML = "Cargo.toml";
     private static final Set<String> FICHIER_PROJET = Set.of(POM_XML, PACKAGE_JSON, GO_MOD, CARGO_TOML);
 
+    private Map<String, Map<String, ProjetGroupe>> listeGroupes = new HashMap<>();
+
+    private AtomicLong idProjet = new AtomicLong(1);
+
     @Value("${repertoireProjet:}")
     private String repertoireProjet;
 
-    @Autowired
-    private XmlParserService XmlParserService;
-
-    @Autowired
-    private PomParserService pomParserService;
+//    @Autowired
+//    private XmlParserService XmlParserService;
+//
+//    @Autowired
+//    private PomParserService pomParserService;
 
     private final ApplicationProperties applicationProperties;
 
     private final ProjetMapper projetMapper;
 
-    public ProjetService(ApplicationProperties applicationProperties, ProjetMapper projetMapper) {
+    private final RechercheRepertoireService rechercheRepertoireService;
+
+    public ProjetService(ApplicationProperties applicationProperties, ProjetMapper projetMapper, RechercheRepertoireService rechercheRepertoireService) {
         this.projetMapper = projetMapper;
+        this.rechercheRepertoireService = rechercheRepertoireService;
         LOGGER.info("creation repertoireProjet: {}", repertoireProjet);
         this.applicationProperties = applicationProperties;
     }
@@ -77,27 +81,27 @@ public class ProjetService {
         LOGGER.info("init repertoireProjet: {}", repertoireProjet);
     }
 
-    public List<Projet> getProjets(String directoryPath) {
-        LOGGER.info("répertoire: {}", directoryPath);
-        if (directoryPath == null || directoryPath.isEmpty()) {
-            throw new RuntimeException("Répertoire vide");
-        }
-        return listePom(directoryPath);
-    }
+//    public List<Projet> getProjets(String directoryPath) {
+//        LOGGER.info("répertoire: {}", directoryPath);
+//        if (directoryPath == null || directoryPath.isEmpty()) {
+//            throw new RuntimeException("Répertoire vide");
+//        }
+//        return listePom(directoryPath);
+//    }
 
-    public List<Projet> getProjets() {
-        String rep = this.applicationProperties.getListeProjets()
-                .entrySet()
-                .stream()
-                .filter(x -> x.getValue().isDefaut())
-                .map(x -> x.getValue().getRepertoires().getFirst())
-                .findAny().orElse(null);
-        LOGGER.info("répertoire: {}", rep);
-        if (rep == null || rep.isEmpty()) {
-            throw new RuntimeException("Répertoire vide");
-        }
-        return listePom(rep);
-    }
+//    public List<Projet> getProjets() {
+//        String rep = this.applicationProperties.getListeProjets()
+//                .entrySet()
+//                .stream()
+//                .filter(x -> x.getValue().isDefaut())
+//                .map(x -> x.getValue().getRepertoires().getFirst())
+//                .findAny().orElse(null);
+//        LOGGER.info("répertoire: {}", rep);
+//        if (rep == null || rep.isEmpty()) {
+//            throw new RuntimeException("Répertoire vide");
+//        }
+//        return listePom(rep);
+//    }
 
 
     public List<Projet> getProjets2(String groupId) {
@@ -110,6 +114,11 @@ public class ProjetService {
             throw new RuntimeException("Impossible de trouver le groupe " + groupId);
         }
         var groupe = groupeOpt.get();
+
+        if (!listeGroupes.containsKey(groupId)) {
+            listeGroupes.put(groupId, new HashMap<>());
+        }
+
         List<String> rep = List.of();
         if (!CollectionUtils.isEmpty(groupe.getValue().getRepertoires())) {
             rep = groupe.getValue().getRepertoires();
@@ -124,29 +133,45 @@ public class ProjetService {
             directoriesExclude = new HashSet<>(groupe.getValue().getExclusions());
         }
 
-        return listePom(rep, directoriesExclude);
+        var mapProjets = listeGroupes.get(groupId);
+
+        return listePom(rep, directoriesExclude, mapProjets, groupId);
     }
 
-    private List<Projet> listePom(String directoryPath) {
-        return listePom(List.of(directoryPath), null);
-    }
+//    private List<Projet> listePom(String directoryPath) {
+//        return listePom(List.of(directoryPath), null);
+//    }
 
-    private List<Projet> listePom(List<String> directoryPath, Set<String> directoriesExclude) {
-        //String directoryPath = repertoireProjet; // Remplacez par le chemin de votre répertoire
-//        Path p = Paths.get(directoryPath).toAbsolutePath().normalize();
-
-
+    private List<Projet> listePom(List<String> directoryPath, Set<String> directoriesExclude,
+                                  Map<String, ProjetGroupe> mapProjets, String groupId) {
         try {
-//            List<Path> pomFiles = findPomFiles(directoryPath);
             LOGGER.info("récupération des fichiers pom ...");
             List<Projet> pomFiles = new ArrayList<>();
             for (String path : directoryPath) {
                 Path p = Paths.get(path).toAbsolutePath().normalize();
-                List<Projet> pomFiles2 = findPomFiles(p, directoriesExclude);
+                List<Projet> pomFiles2 = rechercheRepertoireService.findPomFiles(p, directoriesExclude);
                 for (var pom : pomFiles2) {
                     if (pomFiles.stream()
-                            .noneMatch(x -> Objects.equals(x.getFichierPom(), pom.getFichierPom()))) {
+                            .noneMatch(x -> Objects.equals(x.getRepertoire(), pom.getRepertoire()))) {
                         pomFiles.add(pom);
+                        var tmp = mapProjets.entrySet().stream()
+                                .filter(x -> Objects.equals(x.getValue().getRepertoire(),
+                                        pom.getRepertoire()))
+                                .findAny();
+                        if (tmp.isPresent()) {
+                            pom.setId(tmp.get().getKey());
+                            tmp.get().getValue().setProjet(pom);
+                        } else {
+                            var id = "" + idProjet.getAndIncrement();
+                            pom.setId(id);
+                            ProjetGroupe projetGroupe = new ProjetGroupe();
+                            projetGroupe.setNomProjet(pom.getNom());
+                            projetGroupe.setId(id);
+                            projetGroupe.setRepertoire(pom.getRepertoire());
+                            projetGroupe.setIdGroupe(groupId);
+                            projetGroupe.setProjet(pom);
+                            mapProjets.put(id, projetGroupe);
+                        }
                     }
                 }
             }
@@ -167,149 +192,6 @@ public class ProjetService {
         return null;
     }
 
-    public static List<Projet> findPomFiles(Path startDir, Set<String> directoriesExclude) throws IOException {
-        List<Projet> pomFiles = new ArrayList<>();
-
-        Set<String> directoriesExclude2 = new HashSet<>(SET_DIR);
-        if (directoriesExclude != null && !directoriesExclude.isEmpty() && directoriesExclude.size() > 0) {
-            directoriesExclude2.addAll(directoriesExclude);
-        }
-
-        Files.walkFileTree(startDir, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                String dirName = dir.getFileName().toString();
-                // Ignorer les répertoires node_modules et target
-                if (Files.isDirectory(dir) && (directoriesExclude2.contains(dirName))) {
-                    LOGGER.debug("preVisitDirectory: skip dir");
-                    return FileVisitResult.SKIP_SUBTREE; // Ne pas visiter ce répertoire ni ses sous-répertoires
-                }
-                for (var nom : FICHIER_PROJET) {
-                    if (Files.exists(dir.resolve(nom))) {
-                        Path file = dir.resolve(nom);
-                        Projet projet = new Projet();
-                        projet.setNom(file.getParent().getFileName().toString());
-                        projet.setRepertoire(file.getParent().toAbsolutePath().toString());
-                        if (Objects.equals(nom, POM_XML)) {
-                            projet.setFichierPom(file.toAbsolutePath().toString());
-                        }
-                        try {
-                            FileTime dateModif = Files.getLastModifiedTime(dir);
-                            if (dateModif != null) {
-                                var date = dateModif.toInstant();
-                                projet.setDateModification(LocalDateTime.ofInstant(date, ZoneId.systemDefault()));
-                            }
-                        } catch (IOException e) {
-                            LOGGER.error("Erreur lors de la lecture du fichier {} : {}", nom, e.getMessage(), e);
-                        }
-                        completeProjet(dir, projet);
-                        pomFiles.add(projet);
-                        LOGGER.debug("preVisitDirectory: skip from project file");
-                        //return FileVisitResult.SKIP_SIBLINGS;
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-                }
-                return FileVisitResult.CONTINUE; // Continuer la visite
-            }
-
-//            @Override
-//            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//                LOGGER.info("visiteFile: {}", file.toString());
-//                if (Objects.equals(file.getFileName().toString(), "pom.xml")) {
-//                    Projet projet = new Projet();
-//                    projet.setNom(file.getParent().getFileName().toString());
-//                    projet.setRepertoire(file.getParent().toAbsolutePath().toString());
-//                    projet.setFichierPom(file.toAbsolutePath().toString());
-//                    pomFiles.add(projet);
-//                    // Si un pom.xml est trouvé, nous ne voulons pas regarder dans les sous-répertoires
-//                    // Ici, cela signifie qu'on a trouvé un pom.xml dans le répertoire courant,
-//                    // donc on peut sauter les autres fichiers dans ce même répertoire,
-//                    // mais cela ne signifie pas que l'on doit arrêter de chercher ailleurs
-//                    // car le SimpleFileVisitor parcourt l'arbre de manière hiérarchique.
-//                    // L'arrêt de la recherche dans les sous-répertoires est géré par la logique
-//                    // de `postVisitDirectory` ou par l'idée que `pom.xml` est souvent à la racine d'un module.
-//                    // Pour le cas "Si je trouve un fichier pom, je ne veux pas regarder dans les sous répertoire",
-//                    // cela s'applique plus à une structure de module où un pom.xml marque le début d'un module.
-//                    // Si le pom.xml est trouvé dans un dossier, on considèrera que ce dossier est un module
-//                    // et on ne cherchera pas de pom.xml dans les sous-dossiers de ce même module.
-//                    LOGGER.debug("visiteFile: skip");
-
-            ////                    return FileVisitResult.SKIP_SUBTREE;
-//                    return FileVisitResult.SKIP_SIBLINGS;
-//                }
-//                return FileVisitResult.CONTINUE; // Continuer la visite
-//            }
-
-//            @Override
-//            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-//                // Cette partie est cruciale pour l'exigence "Si je trouve un fichier pom, je ne veux pas regarder dans les sous répertoire."
-//                // Si un pom.xml a été ajouté à la liste et que le répertoire courant contient ce pom.xml,
-//                // alors nous voulons "sauter" la suite de ce répertoire (si d'autres fichiers ou sous-dossiers étaient encore à visiter dans ce même dossier après le pom.xml).
-//                // Cependant, le `SimpleFileVisitor` visite d'abord les fichiers et ensuite seulement appelle `postVisitDirectory`.
-//                // L'idée est plutôt que si `dir` est un répertoire et qu'il contient un `pom.xml`, nous avons déjà trouvé ce `pom.xml` dans `visitFile`.
-//                // Ce que l'on veut, c'est que si `dir` est un module Maven (identifié par un pom.xml à sa racine),
-//                // alors on ne descende pas dans les sous-répertoires de `dir` pour chercher d'autres `pom.xml`.
-//                // Le `preVisitDirectory` gère déjà l'exclusion des répertoires `node_modules` et `target`.
-//                // Pour l'exigence "Si je trouve un fichier pom, je ne veux pas regarder dans les sous répertoire",
-//                // la meilleure façon de l'implémenter est de ne pas visiter les sous-répertoires d'un répertoire qui *contient* un pom.xml.
-//                // Cela signifie qu'il faut vérifier l'existence de `pom.xml` dans `preVisitDirectory` pour décider si on continue de descendre.
-//
-//                // Pour implémenter "Si je trouve un fichier pom, je ne veux pas regarder dans les sous répertoire",
-//                // nous devons modifier `preVisitDirectory` pour vérifier l'existence de `pom.xml` dans le répertoire courant.
-//                // Cela est un peu plus complexe car `preVisitDirectory` est appelé avant que nous ayons visité les fichiers du répertoire courant.
-//                // Une approche serait de maintenir un ensemble de répertoires déjà traités ou de modifier la logique de `preVisitDirectory`.
-//                // La solution la plus simple qui respecte l'esprit "trouver le pom.xml le plus haut dans la hiérarchie pour un module"
-//                // est de s'assurer que si un `pom.xml` est trouvé dans un répertoire, on n'ajoute pas les `pom.xml` des sous-répertoires de ce même répertoire.
-//                // La liste `pomFiles` contient déjà les chemins complets, donc si nous trouvons `A/pom.xml` et `A/B/pom.xml`, les deux seront ajoutés.
-//                // Pour respecter l'exigence, il faudrait post-filtrer ou adapter la logique de visite.
-//
-//                // Refactorisons pour l'exigence "Si je trouve un fichier pom, je ne veux pas regarder dans les sous répertoire."
-//                // Cela signifie que si `dir` contient un `pom.xml`, nous ne voulons pas continuer à chercher dans les sous-dossiers de `dir`.
-//                // Le `SKIP_SUBTREE` dans `preVisitDirectory` est la clé pour cela.
-//                // Nous devons donc détecter la présence d'un `pom.xml` avant d'entrer dans les sous-répertoires.
-//                // La manière la plus propre serait de vérifier si le répertoire contient un `pom.xml`
-//                // *avant* d'appeler `CONTINUE` dans `preVisitDirectory`.
-//
-//                return FileVisitResult.CONTINUE; // Continuer
-//            }
-            @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                LOGGER.error("Erreur lors de la visite du fichier {}: {}", file, exc.getMessage());
-                return FileVisitResult.CONTINUE; // Continuer même en cas d'erreur sur un fichier
-            }
-        });
-        return pomFiles;
-    }
-
-    private static void completeProjet(Path dir, Projet projet) {
-        if (Files.exists(dir.resolve(POM_XML))) {
-            var file = dir.resolve(POM_XML);
-            projet.setFichierPom(file.toAbsolutePath().toString());
-            ajouteModule(projet, ModuleProjetEnum.POM);
-        }
-        if (Files.exists(dir.resolve(PACKAGE_JSON))) {
-            var file = dir.resolve(PACKAGE_JSON);
-            projet.setPackageJson(file.toAbsolutePath().toString());
-            ajouteModule(projet, ModuleProjetEnum.NODEJS);
-        }
-        if (Files.exists(dir.resolve(GO_MOD))) {
-            var file = dir.resolve(GO_MOD);
-            projet.setGoMod(file.toAbsolutePath().toString());
-            ajouteModule(projet, ModuleProjetEnum.GO);
-        }
-        if (Files.exists(dir.resolve(CARGO_TOML))) {
-            var file = dir.resolve(CARGO_TOML);
-            projet.setCargoToml(file.toAbsolutePath().toString());
-            ajouteModule(projet, ModuleProjetEnum.RUST);
-        }
-    }
-
-    private static void ajouteModule(Projet projet, ModuleProjetEnum moduleProjetEnum) {
-        if (projet.getModules() == null) {
-            projet.setModules(new HashSet<>());
-        }
-        projet.getModules().add(moduleProjetEnum);
-    }
 
 //    public static List<Path> findPomFiles(String directoryPath) throws IOException {
 //        Path startPath = Paths.get(directoryPath);
@@ -462,10 +344,16 @@ public class ProjetService {
     }
 
     public List<ProjetDto> getProjetDto(String groupId, String nomProjet) {
-        var liste = getProjets2(groupId);
-        if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) &&
-                liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
-            liste = liste.stream().filter(p -> p.getNom().equals(nomProjet)).toList();
+        List<Projet> liste;
+        if (nomProjet != null && listeGroupes.containsKey(groupId) && listeGroupes.get(groupId).containsKey(nomProjet) &&
+                listeGroupes.get(groupId).get(nomProjet).getProjet() != null) {
+            liste = rechercheProjet(groupId, nomProjet);
+        } else {
+            liste = getProjets2(groupId);
+            if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) &&
+                    liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
+                liste = liste.stream().filter(p -> p.getNom().equals(nomProjet)).toList();
+            }
         }
         List<ProjetDto> listeResultat = new ArrayList<>();
         for (Projet projet : liste) {
@@ -500,6 +388,20 @@ public class ProjetService {
         return listeResultat;
     }
 
+    private List<Projet> rechercheProjet(String groupId, String nomProjet) {
+        List<Projet> liste = new ArrayList<>();
+        if (listeGroupes.containsKey(groupId)) {
+            var map = listeGroupes.get(groupId);
+            if (map.containsKey(nomProjet)) {
+                var groupeProjet = map.get(nomProjet);
+                if (groupeProjet != null && groupeProjet.getProjet() != null) {
+                    liste.add(groupeProjet.getProjet());
+                }
+            }
+        }
+        return liste;
+    }
+
     private void completeProjetDto(ProjetDto projetDto) {
         if (projetDto.getModules() == null) {
             projetDto.setModules(new HashSet<>());
@@ -507,11 +409,11 @@ public class ProjetService {
         if (projetDto.getDetailModules() == null) {
             projetDto.setDetailModules(new HashMap<>());
         }
-        if(projetDto.getProperties() != null) {
-            if(projetDto.getProperties().containsKey("java")){
+        if (projetDto.getProperties() != null) {
+            if (projetDto.getProperties().containsKey("java")) {
                 projetDto.getModules().add(ModuleProjetEnum.JAVA);
                 projetDto.getDetailModules().put("java", projetDto.getProperties().get("java"));
-            } else if(projetDto.getProperties().containsKey("maven.compiler.target")) {
+            } else if (projetDto.getProperties().containsKey("maven.compiler.target")) {
                 projetDto.getModules().add(ModuleProjetEnum.JAVA);
                 projetDto.getDetailModules().put("java", projetDto.getProperties().get("maven.compiler.target"));
             }
@@ -819,7 +721,7 @@ public class ProjetService {
 //                        resultat.append("* enfant ").append(f.getFileName()).append(" :").append("\n");
                         Projet projetEnfant = new Projet();
                         projetEnfant.setNom(f.getFileName().toString());
-                        completeProjet(f, projetEnfant);
+                        rechercheRepertoireService.completeProjet(f, projetEnfant);
                         analysePom(f2, projetEnfant);
                         ProjetPom projetPom2 = null;
                         if (projetEnfant.getProjetPom() != null) {

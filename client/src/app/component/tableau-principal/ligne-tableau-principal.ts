@@ -1,5 +1,6 @@
 export class LigneTableauPrincipal {
 
+  id: string = '';
   nom: string = '';
   groupeId: string = '';
   version: string = '';

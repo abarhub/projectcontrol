@@ -35,7 +35,7 @@ export class TableauPrincipal {
   groupeIdSelected = signal('');
   pagination = true;
   paginationPageSize = 15;
-  paginationPageSizeSelector = [15, 20, 30];
+  paginationPageSizeSelector = [15, 50, 100, 300];
 
   // Column Definitions: Defines the columns to be displayed.
   colDefs: ColDef[] = [
@@ -141,6 +141,7 @@ export class TableauPrincipal {
       for (let i = 0; i < data.length; i++) {
         let projet = data[i];
         let ligne: LigneTableauPrincipal = new LigneTableauPrincipal();
+        ligne.id=projet.id;
         ligne.nom = projet.nom;
         ligne.groupeId = groupeId;
         if (projet.artifact) {

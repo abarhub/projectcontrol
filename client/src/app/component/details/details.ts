@@ -1,5 +1,5 @@
 import {Component, effect, inject, signal} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {ProjetService} from '../../service/projet.service';
 import {DatePipe, KeyValuePipe} from '@angular/common';
 import {Projet} from '../../entity/projet';
@@ -12,7 +12,8 @@ import {DetailsProjet} from '../details-projet/details-projet';
     KeyValuePipe,
     DatePipe,
     ReactiveFormsModule,
-    DetailsProjet
+    DetailsProjet,
+    RouterLink
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'

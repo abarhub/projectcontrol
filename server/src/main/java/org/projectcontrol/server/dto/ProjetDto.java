@@ -10,6 +10,7 @@ import java.util.Set;
 
 public class ProjetDto {
 
+    private String id;
     private String nom;
     private String description;
     private String repertoire;
@@ -27,6 +28,14 @@ public class ProjetDto {
     private InfoGitDto infoGit;
     private LocalDateTime dateModification;
     private Map<String, String> detailModules;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getNom() {
         return nom;

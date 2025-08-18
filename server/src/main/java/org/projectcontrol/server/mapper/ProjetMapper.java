@@ -18,6 +18,7 @@ public interface ProjetMapper {
     @Mapping(target="modules",source = "modules")
     @Mapping(target="infoNode",source = "projetNode")
     @Mapping(target="infoGit",source = "projetGit")
+    @Mapping(target="id",source = "id")
     void projetToProjetDto(Projet projet, @MappingTarget ProjetDto projetDto);
 
     @Mapping(target="infoNode",source = "projetNode")

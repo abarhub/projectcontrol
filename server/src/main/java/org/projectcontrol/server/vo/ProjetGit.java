@@ -1,6 +1,7 @@
 package org.projectcontrol.server.vo;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ProjetGit {
     private LocalDateTime date;
@@ -8,6 +9,8 @@ public class ProjetGit {
     private String idCommitComplet;
     private String branche;
     private String message;
+    private boolean fichiersNonCommite;
+    private List<String> listeBranchesCommit;
 
     public LocalDateTime getDate() {
         return date;
@@ -47,5 +50,21 @@ public class ProjetGit {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public boolean isFichiersNonCommite() {
+        return fichiersNonCommite;
+    }
+
+    public void setFichiersNonCommite(boolean fichiersNonCommite) {
+        this.fichiersNonCommite = fichiersNonCommite;
+    }
+
+    public List<String> getListeBranchesCommit() {
+        return listeBranchesCommit;
+    }
+
+    public void setListeBranchesCommit(List<String> listeBranchesCommit) {
+        this.listeBranchesCommit = listeBranchesCommit;
     }
 }

@@ -4,6 +4,7 @@ import {ProjetGit} from './projet-git';
 
 export class Projet {
 
+  id: string = '';
   nom: string = '';
   description: string = '';
   repertoire: string = '';
