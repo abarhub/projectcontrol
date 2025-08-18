@@ -3,12 +3,6 @@
   <div class="card-body">
 
     <table class="table">
-      <!--  <thead>-->
-      <!--  <tr>-->
-      <!--    <th>Nom</th>-->
-      <!--    <th>Valeur</th>-->
-      <!--  </tr>-->
-      <!--  </thead>-->
       <tbody>
 
         @if (moduleEnfant()) {
@@ -20,22 +14,28 @@
         <th>Nom</th>
         <td>{{ projet()?.nom }}</td>
       </tr>
-      <tr>
-        <th>Description</th>
-        <td>{{ projet()?.description }}</td>
-      </tr>
-      <tr>
-        <th>Parent</th>
-        <td>
-          {{ projet()?.parent?.groupId }}:{{ projet()?.parent?.artefactId }}:{{ projet()?.parent?.version }}
-        </td>
-      </tr>
-      <tr>
-        <th>Artifact</th>
-        <td>
-          {{ projet()?.artifact?.groupId }}:{{ projet()?.artifact?.artefactId }}:{{ projet()?.artifact?.version }}
-        </td>
-      </tr>
+        @if (projet()?.description) {
+          <tr>
+            <th>Description</th>
+            <td>{{ projet()?.description }}</td>
+          </tr>
+        }
+        @if (projet()?.parent) {
+          <tr>
+            <th>Parent</th>
+            <td>
+              {{ projet()?.parent?.groupId }}:{{ projet()?.parent?.artefactId }}:{{ projet()?.parent?.version }}
+            </td>
+          </tr>
+        }
+        @if (projet()?.artifact) {
+          <tr>
+            <th>Artifact</th>
+            <td>
+              {{ projet()?.artifact?.groupId }}:{{ projet()?.artifact?.artefactId }}:{{ projet()?.artifact?.version }}
+            </td>
+          </tr>
+        }
       <tr>
         <th>Répertoire</th>
         <td>{{ projet()?.repertoire }}</td>
@@ -72,49 +72,45 @@
           }
         </td>
       </tr>
-      <tr>
-        <th>Propriétés</th>
-        <td>
-          @if (projet()?.properties) {
+        @if (projet()?.properties) {
+          <tr>
+            <th>Propriétés</th>
+            <td>
 
-            <table class="table">
-              <tbody>
 
-                @for (property of projet()?.properties | keyvalue; track property.key) {
-                  <tr>
-                    <th>{{ property.key }}</th>
-                    <td>{{ property.value }}</td>
-                  </tr>
+              <table class="table">
+                <tbody>
 
-                }
+                  @for (property of projet()?.properties | keyvalue; track property.key) {
+                    <tr>
+                      <th>{{ property.key }}</th>
+                      <td>{{ property.value }}</td>
+                    </tr>
 
-              </tbody>
-            </table>
+                  }
 
-          }
-        </td>
-      </tr>
-      <tr>
-        <th>Dépendances</th>
-        <td>
-          @if (projet()?.dependencies) {
+                </tbody>
+              </table>
 
-            <table class="table">
-              <tbody>
-
-                @for (dependance of projet()?.dependencies; track dependance.id) {
-
-                  <tr>
-                    <td>{{ dependance.groupId }} : {{ dependance.artefactId }} : {{ dependance.version }}</td>
-                  </tr>
-                }
-
-              </tbody>
-            </table>
-
-          }
-        </td>
-      </tr>
+            </td>
+          </tr>
+        }
+        @if (projet()?.dependencies) {
+          <tr>
+            <th>Dépendances</th>
+            <td>
+              <table class="table">
+                <tbody>
+                  @for (dependance of projet()?.dependencies; track dependance.id) {
+                    <tr>
+                      <td>{{ dependance.groupId }} : {{ dependance.artefactId }} : {{ dependance.version }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        }
 
         @if (projet()?.infoNode) {
 
@@ -144,10 +140,10 @@
               }
             </td>
           </tr>
-          <tr>
-            <th>dependances</th>
-            <td>
-              @if (projet()?.infoNode?.dependencies) {
+          @if (projet()?.infoNode?.dependencies) {
+            <tr>
+              <th>dependances</th>
+              <td>
                 <table class="table">
                   <tbody>
                     @for (property of projet()?.infoNode?.dependencies | keyvalue; track property.key) {
@@ -158,14 +154,13 @@
                     }
                   </tbody>
                 </table>
-
-              }
-            </td>
-          </tr>
-          <tr>
-            <th>dependances dev</th>
-            <td>
-              @if (projet()?.infoNode?.devDependencies) {
+              </td>
+            </tr>
+          }
+          @if (projet()?.infoNode?.devDependencies) {
+            <tr>
+              <th>dependances dev</th>
+              <td>
                 <table class="table">
                   <tbody>
                     @for (property of projet()?.infoNode?.devDependencies | keyvalue; track property.key) {
@@ -176,10 +171,9 @@
                     }
                   </tbody>
                 </table>
-
-              }
-            </td>
-          </tr>
+              </td>
+            </tr>
+          }
 
         }
 
