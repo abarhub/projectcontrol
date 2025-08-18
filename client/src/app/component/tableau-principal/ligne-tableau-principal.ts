@@ -4,7 +4,6 @@ export class LigneTableauPrincipal {
   nom: string = '';
   groupeId: string = '';
   version: string = '';
-  date: Date | null = null;
   parent: string = '';
   description: string = '';
   infoGitDate: Date | null = null;
@@ -14,5 +13,6 @@ export class LigneTableauPrincipal {
   dateModification: Date | null = null;
   modules: string[] = [];
   detailModules: Map<string, string> = new Map<string, string>();
+  repertoire: string = '';
 
 }

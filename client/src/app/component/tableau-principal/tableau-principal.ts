@@ -7,8 +7,8 @@ import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {LigneTableauPrincipal} from './ligne-tableau-principal';
 import {AgGridAngular} from 'ag-grid-angular'; // Angular Data Grid Component
 import type {ColDef} from 'ag-grid-community';
-import {LinkCellAgGrid} from './link-cell-aggrid';
-import {GitCellAgGrid} from './git-cell-aggrid';
+import {LinkCellAgGrid} from './cell/link-cell-aggrid';
+import {GitCellAgGrid} from './cell/git-cell-aggrid';
 import {ModuleCellAgGrid} from './cell/module-cell-aggrid';
 import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid'; // Column Definition Type Interface
 
@@ -67,7 +67,8 @@ export class TableauPrincipal {
       field: "detailModules",
       cellRenderer: ModuleDetailsCellAgGrid,
       autoHeight: true
-    }
+    },
+    {field: "repertoire"},
   ];
 
   gridOptions = {
@@ -79,20 +80,20 @@ export class TableauPrincipal {
     // rowHeight: 150
   };
 
-  // Row Data: The data to be displayed.
-  rowData = [
-    {make: "Tesla", model: "Model Y", price: 64950, electric: true},
-    {make: "Ford", model: "F-Series", price: 33850, electric: false},
-    {make: "Toyota", model: "Corolla", price: 29600, electric: false},
-  ];
-
-  // Column Definitions: Defines the columns to be displayed.
-  colDefs2: ColDef[] = [
-    {field: "make"},
-    {field: "model"},
-    {field: "price"},
-    {field: "electric"}
-  ];
+  // // Row Data: The data to be displayed.
+  // rowData = [
+  //   {make: "Tesla", model: "Model Y", price: 64950, electric: true},
+  //   {make: "Ford", model: "F-Series", price: 33850, electric: false},
+  //   {make: "Toyota", model: "Corolla", price: 29600, electric: false},
+  // ];
+  //
+  // // Column Definitions: Defines the columns to be displayed.
+  // colDefs2: ColDef[] = [
+  //   {field: "make"},
+  //   {field: "model"},
+  //   {field: "price"},
+  //   {field: "electric"}
+  // ];
 
   constructor(private projetService: ProjetService) {
 
@@ -144,6 +145,7 @@ export class TableauPrincipal {
         ligne.id=projet.id;
         ligne.nom = projet.nom;
         ligne.groupeId = groupeId;
+        ligne.repertoire = projet.repertoire;
         if (projet.artifact) {
           ligne.version = projet.artifact.version;
         }

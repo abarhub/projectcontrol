@@ -2,7 +2,7 @@ import {ICellRendererAngularComp} from 'ag-grid-angular';
 import {ICellRendererParams} from 'ag-grid-community';
 import {Component} from '@angular/core';
 import {RouterLink} from '@angular/router';
-import {LigneTableauPrincipal} from './ligne-tableau-principal';
+import {LigneTableauPrincipal} from '../ligne-tableau-principal';
 
 @Component({
   selector: 'colour-cell',
