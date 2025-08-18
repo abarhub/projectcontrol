@@ -1,0 +1,16 @@
+# exemple de configuration
+
+app:
+  liste-projets:
+    liste1:
+      nom: liste projet1
+      repertoires: /home/user/projets
+      exclusions:
+      defaut: true
+    liste2:
+      nom: autres projets
+      repertoires: /home/user/autres-projets
+      exclusions:
+      defaut: false
+
+
