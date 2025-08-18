@@ -49,7 +49,8 @@ export class TableauPrincipal {
     {field: "description"},
     {
       field: "git",
-      cellRenderer: GitCellAgGrid
+      cellRenderer: GitCellAgGrid,
+      autoHeight: true
     },
     {
       field: "dateModification",
@@ -65,7 +66,7 @@ export class TableauPrincipal {
     pagination: this.pagination,
     paginationPageSize: this.paginationPageSize,
     paginationPageSizeSelector: this.paginationPageSizeSelector,
-    rowHeight: 150
+    // rowHeight: 150
   };
 
   // Row Data: The data to be displayed.
