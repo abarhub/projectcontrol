@@ -1,0 +1,5 @@
+@if (data && data.detailModules) {
+  @for (module of data?.detailModules | keyvalue; track module.key) {
+    <span>{{ module.key }} : {{module.value}}</span>
+  }
+}

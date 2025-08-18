@@ -8,7 +8,9 @@ import {LigneTableauPrincipal} from './ligne-tableau-principal';
 import {AgGridAngular} from 'ag-grid-angular'; // Angular Data Grid Component
 import type {ColDef} from 'ag-grid-community';
 import {LinkCellAgGrid} from './link-cell-aggrid';
-import {GitCellAgGrid} from './git-cell-aggrid'; // Column Definition Type Interface
+import {GitCellAgGrid} from './git-cell-aggrid';
+import {ModuleCellAgGrid} from './cell/module-cell-aggrid';
+import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid'; // Column Definition Type Interface
 
 
 @Component({
@@ -57,7 +59,15 @@ export class TableauPrincipal {
       headerName: "date derniere modification",
       cellDataType: 'dateTime'
     },
-    {field: "modules"}
+    {
+      field: "modules",
+      cellRenderer: ModuleCellAgGrid
+    },
+    {
+      field: "detailModules",
+      cellRenderer: ModuleDetailsCellAgGrid,
+      autoHeight: true
+    }
   ];
 
   gridOptions = {

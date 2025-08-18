@@ -1,0 +1,5 @@
+@if (data && data.modules) {
+  @for (module of data?.modules; track module) {
+    <span class="badge rounded-pill text-bg-primary">{{ module }}</span>
+  }
+}
