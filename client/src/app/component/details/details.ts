@@ -18,7 +18,7 @@ import {ToasterService} from '../../service/toaster.service';
   templateUrl: './details.html',
   styleUrl: './details.scss'
 })
-export class Details implements AfterViewInit {
+export class Details {
 
   private activatedRoute = inject(ActivatedRoute);
   nomProjet = signal('');
@@ -26,10 +26,6 @@ export class Details implements AfterViewInit {
   private projetService = inject(ProjetService);
   projet = signal<Projet | null>(null);
   private toasterService = inject(ToasterService);
-
-  @ViewChild('toastEl', { static: false }) maDiv: ElementRef | undefined;
-
-  private toast?: Toast;
 
   choixForm = new FormGroup({
     choix: new FormControl('1')
@@ -51,15 +47,6 @@ export class Details implements AfterViewInit {
       // tu peux réagir ici : appeler une API, changer un affichage, etc.
     });
 
-  }
-
-  ngAfterViewInit(): void {
-    console.log('init toast ...');
-    if(this.maDiv){
-      console.log('init toast ');
-      this.toast = new Toast(this.maDiv?.nativeElement, { delay: 3000 });
-      console.log('init toast ok', this.toast);
-    }
   }
 
   private complete(data: Projet) {
@@ -107,28 +94,13 @@ export class Details implements AfterViewInit {
           },
           error: (error) => {
             console.error(error);
-            this.alerte("Erreur");
+            this.alerte("Erreur pour charger le projet");
           }
         });
     }
   }
 
   private alerte(message: string) {
-    // alert(message);
-    console.log('message alerte ', message, this.toast);
-    // if(this.toast){
-    //   console.log('alerte');
-    //   this.toast.show();
-    //   console.log('alerte2');
-    // } else {
-    //   console.log('init toast2 ...');
-    //   if(this.maDiv){
-    //     console.log('init toast2 ');
-    //     this.toast = new Toast(this.maDiv?.nativeElement, { delay: 3000 });
-    //     console.log('init toast2 ok', this.toast);
-    //
-    //   }
-    // }
     this.toasterService.show("message : " + message);
   }
 }
