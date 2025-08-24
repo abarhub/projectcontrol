@@ -59,7 +59,7 @@ class PomParserServiceTest {
 
 
         // ACT
-        pomParserService.updateVersion(pomFile, version);
+        pomParserService.updateVersion(pomFile, version, false, null);
 
         // ASSERT
         var s2 = Files.readString(pomFile);

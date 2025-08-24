@@ -83,7 +83,7 @@ public class UpdateVersionCli implements Callable<Integer> {
                     break;
                 } else if (choix > 0 && choix <= liste2.size()) {
                     var version = map.get(liste2.get(choix - 1));
-                    pomParserService.updateVersion(pomFile, version);
+                    pomParserService.updateVersion(pomFile, version, true, null);
                 }
             }
         }

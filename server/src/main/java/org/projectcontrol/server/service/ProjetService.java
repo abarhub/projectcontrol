@@ -830,7 +830,8 @@ public class ProjetService {
                 var versionPom = projet.getProjetPom().getArtifact().version();
                 var pomFile = projet.getFichierPom();
                 LOGGER.info("mise à jour de {} pour la version {} -> {}", pomFile, versionPom, version);
-                //pomParserService.updateVersion(Path.of(pomFile), version);
+                pomParserService.updateVersion(Path.of(pomFile), version,
+                        majVersion.isCommit(), majVersion.getMessageCommit());
             }
         }
     }

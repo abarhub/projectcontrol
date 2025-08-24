@@ -38,7 +38,7 @@ public class PomParserService {
         var resultat = xmlParserService.parse(file, List.of(PROJET_VERSION, PROJET_ARTIFACTID, PROJET_GROUPEID));
     }
 
-    public void updateVersion(final Path file, final String version) throws Exception {
+    public void updateVersion(final Path file, final String version, boolean commit, String messageCommit) throws Exception {
         var resultat = xmlParserService.parse(file, List.of(PROJET_VERSION, PROJET_ARTIFACTID, PROJET_GROUPEID));
         if (!resultat.isEmpty()) {
             var versionOpt = resultat.stream().filter(x -> Objects.equals(x.balises(), PROJET_VERSION)).findFirst();
@@ -47,7 +47,7 @@ public class PomParserService {
                 LOGGER.info("version: {} <> {} (fichier: {})", versionOld.valeur(), version, file);
                 xmlParserService.modifierFichier2(file.toString(), versionOld.positionDebut(), versionOld.positionFin(), version);
                 var repoDir = file.getParent().resolve(".git");
-                if (Files.exists(repoDir)) {
+                if (commit&&Files.exists(repoDir)) {
                     FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
                     Repository repository = repositoryBuilder.setGitDir(repoDir.toFile())
                             .readEnvironment() // Lire GIT_DIR et d'autres variables d'environnement
@@ -60,7 +60,11 @@ public class PomParserService {
 
                         updateEnfantPom(resultat, file, version, git);
 
-                        git.commit().setMessage("chore(version): préparation de la version " + version).call();
+                        String message="chore(version): préparation de la version " + version;
+                        if(messageCommit!=null){
+                            message=messageCommit;
+                        }
+                        git.commit().setMessage(message).call();
                     }
                 } else {
                     updateEnfantPom(resultat, file, version, null);
