@@ -146,11 +146,16 @@ export class MajVersion implements OnDestroy {
     let version = this.getVersion(this.myForm.controls['choixVersion'].value);
     if (version) {
       majVersion.version = version;
+      majVersion.commit = !!this.myForm.controls['commitActive'].value;
+      if (majVersion.commit) {
+        majVersion.messageCommit = this.myForm.controls['commitMessage'].value;
+      }
       this.majVersionService.majVersions(this.groupeId, this.nomProjet, majVersion)
         .subscribe({
           next: (data) => {
             console.info("majVersion", data);
             this.toasterService.show("majVersion OK");
+            this.majVersionModal.hide();
           },
           error: (error) => {
             console.error(error);
