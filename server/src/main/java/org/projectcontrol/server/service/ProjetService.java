@@ -14,6 +14,7 @@ import org.eclipse.jgit.lib.RepositoryBuilder;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.projectcontrol.server.dto.ArtifactDto;
 import org.projectcontrol.server.dto.GroupeProjetDto;
+import org.projectcontrol.server.dto.ListVersionDto;
 import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
 import org.projectcontrol.server.mapper.ProjetMapper;
@@ -312,6 +313,28 @@ public class ProjetService {
 //        primaryStage.setScene(scene);
 //        primaryStage.show();
 //    }
+    public ListVersionDto getListeVersion(String groupId, String nomProjet) {
+        LOGGER.info("LisiteVersion");
+        List<Projet> liste = getProjets(groupId, nomProjet);
+        if (liste != null && liste.size() == 1) {
+            Projet projet = liste.getFirst();
+
+            if (projet.getProjetPom() != null &&
+                    projet.getProjetPom().getArtifact() != null) {
+                var version = projet.getProjetPom().getArtifact().version();
+                if (StringUtils.isNotBlank(version)) {
+                    List<String> listeVersion = getListeVersion(version);
+                    ListVersionDto listVersionDto = new ListVersionDto();
+                    listVersionDto.setVersionActuelle(version);
+                    listVersionDto.setListeVersions(listeVersion);
+                    listVersionDto.setMessageCommit("commit version VERSION");
+                    return listVersionDto;
+                }
+            }
+        }
+        return null;
+    }
+
     private List<String> getListeVersion(String versionActuelle) {
         List<String> listeVersions = new ArrayList<>();
         String snapshotSuffix = "-SNAPSHOT";
@@ -344,17 +367,7 @@ public class ProjetService {
     }
 
     public List<ProjetDto> getProjetDto(String groupId, String nomProjet) {
-        List<Projet> liste;
-        if (nomProjet != null && listeGroupes.containsKey(groupId) && listeGroupes.get(groupId).containsKey(nomProjet) &&
-                listeGroupes.get(groupId).get(nomProjet).getProjet() != null) {
-            liste = rechercheProjet(groupId, nomProjet);
-        } else {
-            liste = getProjets2(groupId);
-            if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) &&
-                    liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
-                liste = liste.stream().filter(p -> p.getNom().equals(nomProjet)).toList();
-            }
-        }
+        List<Projet> liste = getProjets(groupId, nomProjet);
         List<ProjetDto> listeResultat = new ArrayList<>();
         for (Projet projet : liste) {
             LOGGER.info("Analyse du projet {}", projet.getNom());
@@ -386,6 +399,21 @@ public class ProjetService {
             }
         }
         return listeResultat;
+    }
+
+    private List<Projet> getProjets(String groupId, String nomProjet) {
+        List<Projet> liste;
+        if (nomProjet != null && listeGroupes.containsKey(groupId) && listeGroupes.get(groupId).containsKey(nomProjet) &&
+                listeGroupes.get(groupId).get(nomProjet).getProjet() != null) {
+            liste = rechercheProjet(groupId, nomProjet);
+        } else {
+            liste = getProjets2(groupId);
+            if (liste != null && !liste.isEmpty() && StringUtils.isNotBlank(nomProjet) &&
+                    liste.stream().anyMatch(p -> p.getNom().equals(nomProjet))) {
+                liste = liste.stream().filter(p -> p.getNom().equals(nomProjet)).toList();
+            }
+        }
+        return liste;
     }
 
     private List<Projet> rechercheProjet(String groupId, String nomProjet) {

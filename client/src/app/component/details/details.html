@@ -34,7 +34,7 @@
 
 
     <div class="btn-group" role="group" aria-label="Basic example">
-      <button type="button" class="btn btn-primary" (click)="majVersion($event)">Mise à jour version</button>
+      <button type="button" class="btn btn-primary" (click)="majVersion2($event)">Mise à jour version</button>
       <button type="button" class="btn btn-primary" (click)="listConfig($event)">Liste configuration</button>
       <button type="button" class="btn btn-primary" (click)="recharger($event)">Recharger</button>
     </div>
@@ -439,5 +439,6 @@
 
 <!--}-->
 
+  <app-maj-version #majVersion id="majVersionId"></app-maj-version>
 
 </div>

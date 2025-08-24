@@ -1,24 +1,25 @@
-import {AfterViewInit, Component, effect, ElementRef, inject, signal, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, effect, inject, signal, ViewChild} from '@angular/core';
 import {ActivatedRoute, RouterLink} from '@angular/router';
 import {ProjetService} from '../../service/projet.service';
 import {Projet} from '../../entity/projet';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {DetailsProjet} from '../details-projet/details-projet';
-import { Toast } from 'bootstrap';
-import {Toaster} from '../toaster/toaster';
+import {Modal} from 'bootstrap';
 import {ToasterService} from '../../service/toaster.service';
+import {MajVersion} from '../maj-version/maj-version';
 
 @Component({
   selector: 'app-details',
   imports: [
     ReactiveFormsModule,
     DetailsProjet,
-    RouterLink
+    RouterLink,
+    MajVersion
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
 })
-export class Details {
+export class Details implements AfterViewInit {
 
   private activatedRoute = inject(ActivatedRoute);
   nomProjet = signal('');
@@ -26,6 +27,11 @@ export class Details {
   private projetService = inject(ProjetService);
   projet = signal<Projet | null>(null);
   private toasterService = inject(ToasterService);
+
+  // @ViewChild('majVersion', {static: true}) majVersionEl!: ElementRef;
+  @ViewChild(MajVersion) majVersionEl!: MajVersion;
+
+  private majVersionModal?: Modal;
 
   choixForm = new FormGroup({
     choix: new FormControl('1')
@@ -49,6 +55,12 @@ export class Details {
 
   }
 
+  ngAfterViewInit(): void {
+    // if(this.majVersionEl) {
+    //   this.majVersionModal = new Modal(this.majVersionEl.nativeElement);
+    // }
+  }
+
   private complete(data: Projet) {
     if (data.dependencies) {
       for (let i = 0; i < data.dependencies.length; i++) {
@@ -66,8 +78,25 @@ export class Details {
     }
   }
 
-  majVersion($event: MouseEvent) {
+  majVersion2($event: MouseEvent) {
     $event.preventDefault();
+    // if (this.majVersionEl) {
+    //   this.majVersionModal = new Modal(this.majVersionEl.nativeElement);
+    //   if (this.majVersionModal) {
+    //     this.majVersionModal.show();
+    //   }
+    // }
+    // const modalElement = document.getElementById('majVersionId');
+    // if (modalElement) {
+    //   this.majVersionModal = new Modal(modalElement);
+    //   this.majVersionModal.show();
+    // }
+    let nomProjet = this.nomProjet();
+    let groupeProjet = this.groupeProjet();
+    if (groupeProjet && nomProjet) {
+      this.majVersionEl.show(groupeProjet, nomProjet);
+    }
+
   }
 
   listConfig($event: MouseEvent) {
