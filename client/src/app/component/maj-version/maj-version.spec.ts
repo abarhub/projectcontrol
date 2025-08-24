@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { MajVersion } from './maj-version';
 
-describe('MajVersion', () => {
+describe('MajVersionApi', () => {
   let component: MajVersion;
   let fixture: ComponentFixture<MajVersion>;
 

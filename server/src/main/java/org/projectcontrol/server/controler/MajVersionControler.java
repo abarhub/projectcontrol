@@ -1,6 +1,7 @@
 package org.projectcontrol.server.controler;
 
 import org.projectcontrol.server.dto.ListVersionDto;
+import org.projectcontrol.server.dto.MajVersionDto;
 import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.service.ProjetService;
 import org.springframework.web.bind.annotation.*;
@@ -20,5 +21,12 @@ public class MajVersionControler {
     public ListVersionDto getListeVersions(@PathVariable String groupId,
                                            @PathVariable String nomProjet) {
         return projetService.getListeVersion(groupId, nomProjet);
+    }
+
+    @PostMapping(path = "/{groupId}/{nomProjet}", produces = "application/json")
+    public void updateVersions(@PathVariable String groupId,
+                                           @PathVariable String nomProjet,
+                                         @RequestBody MajVersionDto majVersion) throws Exception {
+        projetService.updateVersion(groupId, nomProjet, majVersion);
     }
 }

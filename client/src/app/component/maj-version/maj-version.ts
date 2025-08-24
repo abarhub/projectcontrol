@@ -1,9 +1,11 @@
-import {Component, ElementRef, OnDestroy, ViewChild} from '@angular/core';
+import {Component, ElementRef, inject, OnDestroy, ViewChild} from '@angular/core';
 import {Modal} from 'bootstrap';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {KeyValuePipe} from '@angular/common';
 import {MajVersionService} from '../../service/maj-version.service';
 import {Subscription} from 'rxjs';
+import {MajVersionApi} from '../../entity/maj-version-api';
+import {ToasterService} from '../../service/toaster.service';
 
 @Component({
   selector: 'app-maj-version',
@@ -26,6 +28,9 @@ export class MajVersion implements OnDestroy {
   versionActuelle: string = "";
   messageCommitTemplate: string = "";
   versionAutre: string = "-1";
+  private groupeId: string = "";
+  private nomProjet: string = "";
+  private toasterService = inject(ToasterService);
 
   changes: Subscription | undefined;
   changes2: Subscription | undefined;
@@ -87,6 +92,9 @@ export class MajVersion implements OnDestroy {
   }
 
   public show(groupeId: string, nomProjet: string) {
+    this.groupeId = groupeId;
+    this.nomProjet = nomProjet;
+
     if (this.majVersionEl) {
       this.majVersionModal = new Modal(this.majVersionEl.nativeElement);
       if (this.majVersionModal) {
@@ -122,6 +130,7 @@ export class MajVersion implements OnDestroy {
 
             }, error: (error) => {
               console.error(error);
+              this.toasterService.show("Erreur pour charger les versions");
             }
           }
         );
@@ -133,6 +142,22 @@ export class MajVersion implements OnDestroy {
 
   enregistrer($event: MouseEvent) {
     $event.preventDefault();
+    let majVersion: MajVersionApi = new MajVersionApi();
+    let version = this.getVersion(this.myForm.controls['choixVersion'].value);
+    if (version) {
+      majVersion.version = version;
+      this.majVersionService.majVersions(this.groupeId, this.nomProjet, majVersion)
+        .subscribe({
+          next: (data) => {
+            console.info("majVersion", data);
+            this.toasterService.show("majVersion OK");
+          },
+          error: (error) => {
+            console.error(error);
+            this.toasterService.show("Erreur pour majVersion");
+          }
+        });
+    }
   }
 
   private getVersion(changes: string): string {

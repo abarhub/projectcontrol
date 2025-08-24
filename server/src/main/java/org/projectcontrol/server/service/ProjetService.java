@@ -12,10 +12,8 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.projectcontrol.server.dto.ArtifactDto;
-import org.projectcontrol.server.dto.GroupeProjetDto;
-import org.projectcontrol.server.dto.ListVersionDto;
-import org.projectcontrol.server.dto.ProjetDto;
+import org.projectcontrol.core.service.PomParserService;
+import org.projectcontrol.server.dto.*;
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
 import org.projectcontrol.server.mapper.ProjetMapper;
 import org.projectcontrol.server.properties.ApplicationProperties;
@@ -70,9 +68,14 @@ public class ProjetService {
 
     private final RechercheRepertoireService rechercheRepertoireService;
 
-    public ProjetService(ApplicationProperties applicationProperties, ProjetMapper projetMapper, RechercheRepertoireService rechercheRepertoireService) {
+    private final PomParserService pomParserService;
+
+    public ProjetService(ApplicationProperties applicationProperties, ProjetMapper projetMapper,
+                         RechercheRepertoireService rechercheRepertoireService,
+                         PomParserService pomParserService) {
         this.projetMapper = projetMapper;
         this.rechercheRepertoireService = rechercheRepertoireService;
+        this.pomParserService = pomParserService;
         LOGGER.info("creation repertoireProjet: {}", repertoireProjet);
         this.applicationProperties = applicationProperties;
     }
@@ -813,6 +816,23 @@ public class ProjetService {
 
     public List<ProjetDto> getProjetDtoFromGroupId(String groupId) {
         return getProjetDto(groupId, null);
+    }
+
+    public void updateVersion(String groupId, String nomProjet, MajVersionDto majVersion) throws Exception {
+        String version = majVersion.getVersion();
+        List<Projet> liste = getProjets(groupId, nomProjet);
+        if (liste != null && liste.size() == 1) {
+            Projet projet = liste.getFirst();
+
+            if (StringUtils.isNotBlank(projet.getFichierPom()) &&
+                    projet.getProjetPom() != null &&
+                    projet.getProjetPom().getArtifact() != null) {
+                var versionPom = projet.getProjetPom().getArtifact().version();
+                var pomFile = projet.getFichierPom();
+                LOGGER.info("mise à jour de {} pour la version {} -> {}", pomFile, versionPom, version);
+                //pomParserService.updateVersion(Path.of(pomFile), version);
+            }
+        }
     }
 
 //    public void updateProject4(Projet selectedProduct) throws Exception {
