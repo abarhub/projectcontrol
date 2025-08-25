@@ -70,12 +70,15 @@ public class ProjetService {
 
     private final PomParserService pomParserService;
 
+    private final ChangementConfigService changementConfigService;
+
     public ProjetService(ApplicationProperties applicationProperties, ProjetMapper projetMapper,
                          RechercheRepertoireService rechercheRepertoireService,
-                         PomParserService pomParserService) {
+                         PomParserService pomParserService, ChangementConfigService changementConfigService) {
         this.projetMapper = projetMapper;
         this.rechercheRepertoireService = rechercheRepertoireService;
         this.pomParserService = pomParserService;
+        this.changementConfigService = changementConfigService;
         LOGGER.info("creation repertoireProjet: {}", repertoireProjet);
         this.applicationProperties = applicationProperties;
     }
@@ -834,6 +837,30 @@ public class ProjetService {
                         majVersion.isCommit(), majVersion.getMessageCommit());
             }
         }
+    }
+
+    public ChangementConfigDto getChangementConfig(String groupId, String nomProjet, String commitInitial, String commitFinal) throws Exception {
+
+        ChangementConfigDto resultat = new ChangementConfigDto();
+        resultat.setResultat(List.of());
+        if (StringUtils.isNotBlank(commitInitial) && StringUtils.isNotBlank(commitFinal)) {
+            List<Projet> liste = getProjets(groupId, nomProjet);
+            if (liste != null && liste.size() == 1) {
+                Projet projet = liste.getFirst();
+                if (projet.getRepertoire() != null) {
+                    Path path = Path.of(projet.getRepertoire());
+                    String s = changementConfigService.calculDifference(path, commitInitial, commitFinal);
+                    LOGGER.info("changement de config : {}", s);
+                    if (s != null) {
+                        String[] lines = s.split("\\r?\\n");
+                        if (lines != null && lines.length > 0) {
+                            resultat.setResultat(Arrays.asList(lines));
+                        }
+                    }
+                }
+            }
+        }
+        return resultat;
     }
 
 //    public void updateProject4(Projet selectedProduct) throws Exception {

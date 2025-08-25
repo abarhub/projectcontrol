@@ -7,6 +7,9 @@ import {DetailsProjet} from '../details-projet/details-projet';
 import {Modal} from 'bootstrap';
 import {ToasterService} from '../../service/toaster.service';
 import {MajVersion} from '../maj-version/maj-version';
+import {MajVersionService} from '../../service/maj-version.service';
+import {ChangementConfigService} from '../../service/changement-config.service';
+import {ChangementConfig} from '../changement-config/changement-config';
 
 @Component({
   selector: 'app-details',
@@ -14,7 +17,8 @@ import {MajVersion} from '../maj-version/maj-version';
     ReactiveFormsModule,
     DetailsProjet,
     RouterLink,
-    MajVersion
+    MajVersion,
+    ChangementConfig
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
@@ -27,9 +31,13 @@ export class Details implements AfterViewInit {
   private projetService = inject(ProjetService);
   projet = signal<Projet | null>(null);
   private toasterService = inject(ToasterService);
+  private changementConfigService = inject(ChangementConfigService);
 
   // @ViewChild('majVersion', {static: true}) majVersionEl!: ElementRef;
   @ViewChild(MajVersion) majVersionEl!: MajVersion;
+
+  @ViewChild(ChangementConfig) changementConfig!: ChangementConfig;
+
 
   private majVersionModal?: Modal;
 
@@ -101,6 +109,11 @@ export class Details implements AfterViewInit {
 
   listConfig($event: MouseEvent) {
     $event.preventDefault();
+    let nomProjet = this.nomProjet();
+    let groupeProjet = this.groupeProjet();
+    if (groupeProjet && nomProjet) {
+      this.changementConfig.show(groupeProjet, nomProjet);
+    }
   }
 
   recharger($event: MouseEvent) {
