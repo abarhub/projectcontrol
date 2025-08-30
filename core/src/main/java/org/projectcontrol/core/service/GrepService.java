@@ -1,10 +1,8 @@
 package org.projectcontrol.core.service;
 
-import io.reactivex.rxjava3.core.Flowable;
+import com.google.common.base.Splitter;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.ObservableEmitter;
-import io.reactivex.rxjava3.processors.PublishProcessor;
-import io.reactivex.rxjava3.processors.ReplayProcessor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.io.FilenameUtils;
@@ -28,16 +26,29 @@ import java.util.stream.Stream;
 @Service
 public class GrepService {
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(GrepService.class);
+
+    public static final String REPERTOIRES_EXCLUSION_STR = "node_modules,target,.git,vite";
+
+    public static final List<String> REPERTOIRES_EXCLUSION;
+
+    public static final String EXTENSIONS_FICHIERS_DEFAULT_STR = "java,ts,xml,html,css,scss,js,json,md,htm,py,go,rs,txt";
+    public static final List<String> EXTENSIONS_FICHIERS_DEFAULT;
+
+    private static final Splitter SPLITTER = Splitter.on(',')
+            .omitEmptyStrings()
+            .trimResults();
+
+    static {
+        REPERTOIRES_EXCLUSION = SPLITTER.splitToList(REPERTOIRES_EXCLUSION_STR);
+        EXTENSIONS_FICHIERS_DEFAULT = SPLITTER.splitToList(EXTENSIONS_FICHIERS_DEFAULT_STR);
+    }
 
     public Observable<LignesRecherche> search(GrepParam grepParam) throws IOException {
         if (StringUtils.isBlank(grepParam.getTexte())) {
             LOGGER.debug("pas de texte à chercher");
             return Observable.empty();
         }
-
-        ReplayProcessor<LignesRecherche> processor = ReplayProcessor.create();
 
         return Observable.create(emitter -> {
 
@@ -52,36 +63,13 @@ public class GrepService {
             } catch (Exception e) {
                 emitter.onError(e);
             } finally {
-                emitter.onComplete();
+                if (!emitter.isDisposed()) {
+                    emitter.onComplete();
+                }
             }
 
         });
-        //return processor;
     }
-
-//    public Flowable<LignesRecherche> search2(GrepParam grepParam) throws IOException {
-//        if (StringUtils.isBlank(grepParam.getTexte())) {
-//            LOGGER.debug("pas de texte à chercher");
-//            return Flowable.empty();
-//        }
-//
-//        ReplayProcessor<LignesRecherche> processor = ReplayProcessor.create();
-//
-//        try {
-//            String texte = grepParam.getTexte();
-//            List<String> repertoires = grepParam.getRepertoires();
-//            for (String repertoire : repertoires) {
-//                if (StringUtils.isNotBlank(repertoire)) {
-//                    search(texte, repertoire, processor, grepParam);
-//                }
-//            }
-//        } catch (Exception e) {
-//            processor.onError(e);
-//        } finally {
-//            processor.onComplete();
-//        }
-//        return processor;
-//    }
 
     private void search(String texte, String repertoire, ObservableEmitter<LignesRecherche> processor,
                         GrepParam grepParam) throws IOException {
@@ -99,7 +87,7 @@ public class GrepService {
                 if (Files.isDirectory(dir) && repertoireExclu.contains(dirName)) {
                     return FileVisitResult.SKIP_SUBTREE; // on ignore
                 }
-                return FileVisitResult.CONTINUE;//dirName.equals("node_modules") || dirName.equals("target")
+                return FileVisitResult.CONTINUE;
             }
 
             @Override
@@ -108,26 +96,6 @@ public class GrepService {
                     return FileVisitResult.CONTINUE;
                 }
 
-                /*try {
-                    List<String> lines = Files.readAllLines(file);
-
-                    for (int i = 0; i < lines.size(); i++) {
-                        if (lines.get(i).contains(searchText)) {
-                            System.out.println("\n=== Fichier : " + file.toAbsolutePath() + " ===");
-
-                            // bornes de lignes à afficher
-                            int start = Math.max(0, i - 3);
-                            int end = Math.min(lines.size() - 1, i + 3);
-
-                            for (int j = start; j <= end; j++) {
-                                String prefix = (j == i ? ">> " : "   "); // mettre en évidence la ligne trouvée
-                                System.out.printf("%s[%d] %s%n", prefix, j + 1, lines.get(j));
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    System.err.println("Erreur lecture fichier: " + file + " : " + e.getMessage());
-                }*/
                 if (!bonneExtention(file, grepParam)) {
                     return FileVisitResult.CONTINUE;
                 }
@@ -177,9 +145,10 @@ public class GrepService {
                         List<Integer> listeNoLigne = new ArrayList<>();
                         listeNoLigne.add(noLigne);
                         LignesRecherche l = new LignesRecherche(noLigne, listeLigne, file, listeNoLigne);
-                        //liste.add(l);
-                        LOGGER.info("ajout de {}",l);
-                        processor.onNext(l);
+                        LOGGER.debug("ajout de {}", l);
+                        if (!processor.isDisposed()) {
+                            processor.onNext(l);
+                        }
                     });
         } catch (Exception e) {
             LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);

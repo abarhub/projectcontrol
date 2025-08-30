@@ -4,20 +4,12 @@ import java.util.List;
 
 public class GrepParam {
 
-    public static final List<String> REPERTOIRES_EXCLUSION = List.of("node_modules", "target", ".git");
-
-    public static final List<String> EXTENSIONS_FICHIERS_DEFAULT = List.of("java", "ts", "xml", "html",
-            "css", "scss", "js", "json", "md", "htm", "py", "go", "rs","txt");
 
     private String texte;
     private List<String> repertoires;
     private List<String> exclusions;
     private List<String> extensionsFichiers;
-
-    public GrepParam() {
-        exclusions = REPERTOIRES_EXCLUSION;
-        extensionsFichiers = EXTENSIONS_FICHIERS_DEFAULT;
-    }
+    private int nbLignesAutour;
 
     public String getTexte() {
         return texte;
@@ -49,5 +41,13 @@ public class GrepParam {
 
     public void setExtensionsFichiers(List<String> extensionsFichiers) {
         this.extensionsFichiers = extensionsFichiers;
+    }
+
+    public int getNbLignesAutour() {
+        return nbLignesAutour;
+    }
+
+    public void setNbLignesAutour(int nbLignesAutour) {
+        this.nbLignesAutour = nbLignesAutour;
     }
 }

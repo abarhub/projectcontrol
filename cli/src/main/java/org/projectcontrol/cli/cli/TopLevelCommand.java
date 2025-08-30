@@ -8,6 +8,7 @@ import picocli.CommandLine;
         SearchCli.class,
         MailCommand.class,
         UpdateVersionCli.class,
+        CommandLine.HelpCommand.class
 })
 public class TopLevelCommand {
 

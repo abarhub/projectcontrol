@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="Console"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <Pattern>
+                %white(%d{ISO8601}) %highlight(%-5level) [%blue(%t)] %yellow(%C): %msg%n%throwable
+            </Pattern>
+            <!--<Pattern>
+                %d{ISO8601} %-5level [%t] %C: %msg%n%throwable
+            </Pattern>-->
+        </encoder>
+    </appender>
+
+    <appender name="Console_Sans_Format" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="ConsoleSansFormat" level="INFO" additivity="false">
+        <appender-ref ref="Console_Sans_Format" />
+    </logger>
+
+    <!-- LOG everything at INFO level -->
+    <root level="info">
+        <appender-ref ref="Console" />
+    </root>
+
+    <!-- LOG "com.baeldung*" at TRACE level -->
+    <!--<logger name="com.baeldung" level="trace" additivity="false">
+        <appender-ref ref="RollingFile" />
+        <appender-ref ref="Console" />
+    </logger>-->
+
+</configuration>
