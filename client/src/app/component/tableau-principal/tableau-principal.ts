@@ -30,6 +30,11 @@ export class TableauPrincipal {
   AFFICHAGE_TABLEAU = 'tableau';
   AFFICHAGE_RECHERCHE = 'recherche';
 
+  TYPE_RECHERCHE_TEXTE = 'texte';
+  TYPE_RECHERCHE_REGEXP = 'regexp';
+  TYPE_RECHERCHE_CHEMIN = 'chemin';
+  TYPE_RECHERCHE_XPATH = 'xpath';
+
   listeProjet: Projet[] = [];
   tableau: LigneTableauPrincipal[] = [];
   chargement = false;
@@ -41,7 +46,8 @@ export class TableauPrincipal {
     affichage: new FormControl(this.AFFICHAGE_TABLEAU)
   });
   formGrouId3 = new FormGroup({
-    recherche: new FormControl('')
+    recherche: new FormControl(''),
+    typeRecherche: new FormControl(this.TYPE_RECHERCHE_TEXTE)
   });
   groupeIdSelected = signal('');
   pagination = true;
@@ -178,10 +184,11 @@ export class TableauPrincipal {
     $event.preventDefault();
     const {groupeId} = this.formGrouId.value;
     let texte = this.formGrouId3.value.recherche;
+    let typeRecherche = this.formGrouId3.value.typeRecherche;
 
-    if (groupeId && texte) {
+    if (groupeId && texte && typeRecherche) {
       this.chargementRecherche = true;
-      this.rechercheService.getRecherche(groupeId, texte).subscribe({
+      this.rechercheService.getRecherche(groupeId, texte, typeRecherche).subscribe({
         next: (data) => {
           console.log('resultat', data);
           let tableau: Map<number, LigneResultat> = new Map<number, LigneResultat>();

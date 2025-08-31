@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,24 +27,40 @@ public class RechercheService {
         this.projetService = projetService;
     }
 
-    public List<LigneResultatDto> recherche(String groupId, String texte) throws IOException {
+    public List<LigneResultatDto> recherche(String groupId, String texte, String typeRecherche) throws IOException {
         List<LigneResultatDto> resultat = new ArrayList<>();
 
         LOGGER.info("recherche groupe : {} - {} ...", groupId, texte);
-        List<ProjetDto> listeGroupe=projetService.getProjetDto(groupId,null);
+        List<ProjetDto> listeGroupe = projetService.getProjetDto(groupId, null);
         LOGGER.info("recherche groupe : {} - {} OK", groupId, texte);
 
-        if(listeGroupe==null || listeGroupe.size()!=1){
+        if (listeGroupe == null || listeGroupe.size() != 1) {
             return resultat;
         }
-        ProjetDto projet=listeGroupe.getFirst();
+        ProjetDto projet = listeGroupe.getFirst();
 
+        String repertoire = projet.getRepertoire();
         GrepParam grepParam = new GrepParam();
         grepParam.setExclusions(GrepService.REPERTOIRES_EXCLUSION);
         grepParam.setExtensionsFichiers(GrepService.EXTENSIONS_FICHIERS_DEFAULT);
-        grepParam.setRepertoires(List.of(projet.getRepertoire()));
+        grepParam.setRepertoires(List.of(repertoire));
         GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
-        criteresRecherche.setTexte(List.of(texte));
+        switch (typeRecherche) {
+            case "xpath":
+                criteresRecherche.setXpath(List.of(texte));
+                break;
+            case "chemin":
+                criteresRecherche.setChamps(List.of(texte));
+                break;
+            case "texte":
+                criteresRecherche.setTexte(List.of(texte));
+                break;
+            case "regex":
+                criteresRecherche.setRegex(List.of(texte));
+            default:
+                throw new IllegalArgumentException("typeRecherche inconnu : " + typeRecherche);
+        }
+
         grepParam.setCriteresRecherche(criteresRecherche);
 
         LOGGER.info("search : {} - {} ...", groupId, texte);
@@ -51,11 +68,14 @@ public class RechercheService {
                 .blockingIterable();
         LOGGER.info("search : {} - {} OK", groupId, texte);
 
+        Path repertoireProjet = Path.of(repertoire);
         for (org.projectcontrol.core.utils.LignesRecherche ligne : res) {
             var ligneResultatDto = new LigneResultatDto();
             ligneResultatDto.setNoLigne(ligne.noLigneDebut());
             ligneResultatDto.setLigne(ligne.lignes().getFirst());
-            ligneResultatDto.setFichier(ligne.ficher().toString());
+            Path path = ligne.ficher();
+            ligneResultatDto.setFichier(repertoireProjet.relativize(path).toString());
+            ligneResultatDto.setRepertoireParent(repertoire);
             resultat.add(ligneResultatDto);
         }
         LOGGER.info("nb resultat : {}", resultat.size());

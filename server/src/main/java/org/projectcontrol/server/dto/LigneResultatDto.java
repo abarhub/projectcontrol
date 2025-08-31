@@ -5,6 +5,7 @@ public class LigneResultatDto {
     private int noLigne;
     private String ligne;
     private String fichier;
+    private String repertoireParent;
 
     public int getNoLigne() {
         return noLigne;
@@ -28,5 +29,13 @@ public class LigneResultatDto {
 
     public void setFichier(String fichier) {
         this.fichier = fichier;
+    }
+
+    public String getRepertoireParent() {
+        return repertoireParent;
+    }
+
+    public void setRepertoireParent(String repertoireParent) {
+        this.repertoireParent = repertoireParent;
     }
 }

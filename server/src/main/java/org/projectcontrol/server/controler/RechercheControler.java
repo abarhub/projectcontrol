@@ -25,8 +25,9 @@ public class RechercheControler {
 
     @GetMapping(path = "/{groupId}", produces = "application/json")
     public List<LigneResultatDto> getListProjet(@PathVariable String groupId,
-                                                @RequestParam String texte) throws IOException {
+                                                @RequestParam String texte,
+                                                @RequestParam String typeRecherche) throws IOException {
         LOGGER.info("recherche : {} - {}", groupId, texte);
-        return rechercheService.recherche(groupId, texte);
+        return rechercheService.recherche(groupId, texte, typeRecherche);
     }
 }

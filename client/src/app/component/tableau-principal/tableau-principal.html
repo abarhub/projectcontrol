@@ -55,11 +55,17 @@
         <div>
           <div>Recherche</div>
 
-
-          <div>
+          <div class="input-group">
             <form [formGroup]="formGrouId3">
-            <input type="text" [value]="critereRecherche" formControlName="recherche">
-            <button (click)="rechercher($event)">Rechercher</button>
+              <input type="text" [value]="critereRecherche" formControlName="recherche">
+              <select class="form-select" aria-label="Default select example" formControlName="typeRecherche">
+                <option selected>Open this select menu</option>
+                <option [value]="TYPE_RECHERCHE_TEXTE">Texte</option>
+                <option [value]="TYPE_RECHERCHE_REGEXP">Regex</option>
+                <option [value]="TYPE_RECHERCHE_CHEMIN">Chemin</option>
+                <option [value]="TYPE_RECHERCHE_XPATH">XPath</option>
+              </select>
+              <button (click)="rechercher($event)">Rechercher</button>
             </form>
           </div>
 
@@ -69,10 +75,16 @@
             </div>
           } @else {
             @if (resultatRecherche) {
-              <table>
+              <table class="table table-hover table-striped">
+                <thead>
+                <tr>
+                  <th>Fichier</th>
+                  <th>Ligne</th>
+                </tr>
+                </thead>
                 @for (ligne of resultatRecherche | keyvalue; track ligne.key) {
                   <tr>
-                    <td>{{ ligne.value.fichier }} : {{ligne.value.noLigne}}</td>
+                    <td>{{ ligne.value.fichier }} : {{ ligne.value.noLigne }}</td>
                     <td>{{ ligne.value.ligne }}</td>
                   </tr>
                 }
