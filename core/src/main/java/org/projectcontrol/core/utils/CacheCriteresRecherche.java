@@ -9,9 +9,10 @@ import java.util.regex.Pattern;
 
 public class CacheCriteresRecherche {
 
-    private String[] texte2;
-    private List<Pattern> regexes2;
-    private List<List<String>> listeChemins;
+    private final String[] texte2;
+    private final List<Pattern> regexes2;
+    private final List<List<String>> listeChemins;
+    private final List<String> cheminXPath;
     Splitter splitter = Splitter.on(".").trimResults().omitEmptyStrings();
 
     public CacheCriteresRecherche(GrepParam grepParam) {
@@ -23,14 +24,14 @@ public class CacheCriteresRecherche {
         var champs = grepParam.getCriteresRecherche().getChamps();
         listeChemins = champs == null ? null : champs.stream()
                 .map(x -> splitter.splitToList(x)).toList();
-
+        cheminXPath = grepParam.getCriteresRecherche().getXpath();
     }
 
     public boolean contientTexte(String ligne) {
         return contientTexte(ligne, texte2, regexes2);
     }
 
-    public boolean rechercheTextuel() {
+    public boolean isRechercheTextuel() {
         return texte2 != null || regexes2 != null;
     }
 
@@ -48,11 +49,19 @@ public class CacheCriteresRecherche {
         return false;
     }
 
-    public boolean rechercheChamps() {
+    public boolean isRechercheChamps() {
         return listeChemins != null;
     }
 
     public List<List<String>> getListeChemins() {
         return listeChemins;
+    }
+
+    public boolean isRechercheXPath() {
+        return cheminXPath != null;
+    }
+
+    public List<String> getCheminXPath() {
+        return cheminXPath;
     }
 }

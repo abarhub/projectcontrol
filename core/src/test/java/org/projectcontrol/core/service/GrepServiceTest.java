@@ -266,7 +266,6 @@ class GrepServiceTest {
 
     }
 
-
     @Nested
     class SearchYml {
 
@@ -278,18 +277,18 @@ class GrepServiceTest {
             grepParam.setCriteresRecherche(criteresRecherche);
 
             String s1 = """
-                     champ1: value1
-                     champ2: value2
-                     champ3:
-                       champ31: value31
-                       champ32: value32
-                       champ33: value33
-                     champ4: value4
-                     champ5: value5
-                     champ6:
-                       champ61: value61
-                       champ62: value62
-                       champ63: [ value631, value632]""";
+                    champ1: value1
+                    champ2: value2
+                    champ3:
+                      champ31: value31
+                      champ32: value32
+                      champ33: value33
+                    champ4: value4
+                    champ5: value5
+                    champ6:
+                      champ61: value61
+                      champ62: value62
+                      champ63: [ value631, value632]""";
 
             Files.writeString(rep1.resolve("file6.yml"), s1);
 
@@ -315,18 +314,18 @@ class GrepServiceTest {
             grepParam.setCriteresRecherche(criteresRecherche);
 
             String s1 = """
-                     champ1: value1
-                     champ2: value2
-                     champs3:
-                       champ31: value31
-                       champ32: value32
-                       champ33: value33
-                     champ4: value4
-                     champ5: value5
-                     champ6:
-                       champ61: value61
-                       champ62: value62
-                       champ63: [ value631, value632]""";
+                    champ1: value1
+                    champ2: value2
+                    champs3:
+                      champ31: value31
+                      champ32: value32
+                      champ33: value33
+                    champ4: value4
+                    champ5: value5
+                    champ6:
+                      champ61: value61
+                      champ62: value62
+                      champ63: [ value631, value632]""";
 
             Files.writeString(rep1.resolve("file6.yml"), s1);
 
@@ -352,18 +351,18 @@ class GrepServiceTest {
             grepParam.setCriteresRecherche(criteresRecherche);
 
             String s1 = """
-                     champ1: value1
-                     champ2: value2
-                     champs3:
-                       champ31: value31
-                       champ32: value32
-                       champ33: value33
-                     champ4: value4
-                     champ5: value5
-                     champ6:
-                       champ61: value61
-                       champ62: value62
-                       champ63: [ value631, value632]""";
+                    champ1: value1
+                    champ2: value2
+                    champs3:
+                      champ31: value31
+                      champ32: value32
+                      champ33: value33
+                    champ4: value4
+                    champ5: value5
+                    champ6:
+                      champ61: value61
+                      champ62: value62
+                      champ63: [ value631, value632]""";
 
             Files.writeString(rep1.resolve("file6.yml"), s1);
 
@@ -389,18 +388,18 @@ class GrepServiceTest {
             grepParam.setCriteresRecherche(criteresRecherche);
 
             String s1 = """
-                     champ1: value1
-                     champ2: value2
-                     champs3:
-                       champ31: value31
-                       champ32: value32
-                       champ33: value33
-                     champ4: value4
-                     champ5: value5
-                     champ6:
-                       champ61: value61
-                       champ62: value62
-                       champ63: [ value631, value632]""";
+                    champ1: value1
+                    champ2: value2
+                    champs3:
+                      champ31: value31
+                      champ32: value32
+                      champ33: value33
+                    champ4: value4
+                    champ5: value5
+                    champ6:
+                      champ61: value61
+                      champ62: value62
+                      champ63: [ value631, value632]""";
 
             Files.writeString(rep1.resolve("file6.yml"), s1);
 
@@ -420,7 +419,60 @@ class GrepServiceTest {
 
     }
 
-        // méthodes utilitaires
+
+    @Nested
+    class SearchXml {
+
+        @Test
+        void search() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setXpath(List.of("/project/version"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <project xmlns="http://maven.apache.org/POM/4.0.0"
+                             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                        <modelVersion>4.0.0</modelVersion>
+
+                        <parent>
+                            <groupId>org.projectcontrol</groupId>
+                            <artifactId>projectcontrol-parent</artifactId>
+                            <version>0.0.1-SNAPSHOT</version>
+                        </parent>
+
+                        <artifactId>core</artifactId>
+                        <version>0.0.2-SNAPSHOT</version>
+
+                        <dependencies>
+
+                            <dependency>
+                                <groupId>org.springframework.boot</groupId>
+                                <artifactId>spring-boot-starter</artifactId>
+                            </dependency>
+                        </dependencies>
+                    </project>""";
+
+            Files.writeString(rep1.resolve("file7.xml"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("/project/version: 0.0.2-SNAPSHOT"), "file7.xml"));
+        }
+    }
+
+    // méthodes utilitaires
 
     private String getChemin(Path rep, LignesRecherche lignesRecherche) {
         if (lignesRecherche == null || lignesRecherche.ficher() == null) {

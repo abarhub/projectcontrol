@@ -14,8 +14,15 @@ import org.projectcontrol.core.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
@@ -40,6 +47,7 @@ public class GrepService {
 
     private static List<String> EXTENSION_JSON = List.of("json");
     private static List<String> EXTENSION_YAML = List.of("yml", "yaml");
+    private static List<String> EXTENSION_XML = List.of("xml");
 
     private static final Splitter SPLITTER = Splitter.on(',')
             .omitEmptyStrings()
@@ -155,7 +163,7 @@ public class GrepService {
     private List<LignesRecherche> searchInFile(Path file, ObservableEmitter<LignesRecherche> processor,
                                                CacheCriteresRecherche cacheCriteresRecherche, String extension) throws IOException {
         List<LignesRecherche> liste = new ArrayList<>();
-        if (cacheCriteresRecherche.rechercheTextuel()) {
+        if (cacheCriteresRecherche.isRechercheTextuel()) {
             CircularFifoQueue<LigneRecherche> queue = new CircularFifoQueue<>(6);
             try (Stream<String> stream = Files.lines(file)) {
                 int[] tab = new int[1];
@@ -181,7 +189,7 @@ public class GrepService {
                 LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);
             }
         }
-        if (cacheCriteresRecherche.rechercheChamps()) {
+        if (cacheCriteresRecherche.isRechercheChamps()) {
             if (CollectionUtils.containsAny(EXTENSION_JSON, extension)) {
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
@@ -240,6 +248,49 @@ public class GrepService {
                     LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);
                 }
 
+            }
+        }
+
+        if (cacheCriteresRecherche.isRechercheXPath()) {
+            if (CollectionUtils.containsAny(EXTENSION_XML, extension)) {
+
+                try (InputStream xmlFile = Files.newInputStream(file)) {
+                    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder db = dbf.newDocumentBuilder();
+                    Document xml = db.parse(xmlFile);
+                    xml.getDocumentElement().normalize();
+
+                    XPathFactory xpf = XPathFactory.newInstance();
+                    XPath xpath = xpf.newXPath();
+
+                    for (var chemin : cacheCriteresRecherche.getCheminXPath()) {
+
+                        NodeList nodeList = (NodeList) xpath.evaluate(chemin, xml, XPathConstants.NODESET);
+                        if (nodeList!=null && nodeList.getLength()>0) {
+                            String texte="";
+                            if(nodeList.getLength()==1){
+                                texte=nodeList.item(0).getTextContent();
+                            } else {
+                                for (int i = 0; i < nodeList.getLength(); i++) {
+                                    if(i>0){
+                                        texte+=";";
+                                    }
+                                    texte+=nodeList.item(i).getTextContent();
+                                }
+                            }
+                            String name = chemin + ": " + texte;
+                            LignesRecherche l = new LignesRecherche(0, List.of(name), file, List.of(0));
+                            LOGGER.debug("ajout de {}", l);
+                            if (!processor.isDisposed()) {
+                                processor.onNext(l);
+                            }
+                        }
+                    }
+
+
+                } catch (Exception e) {
+                    LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);
+                }
             }
         }
 
