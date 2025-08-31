@@ -4,19 +4,18 @@ import java.util.List;
 
 public class GrepParam {
 
-
-    private String texte;
+    private GrepCriteresRecherche criteresRecherche;
     private List<String> repertoires;
     private List<String> exclusions;
     private List<String> extensionsFichiers;
     private int nbLignesAutour;
 
-    public String getTexte() {
-        return texte;
+    public GrepCriteresRecherche getCriteresRecherche() {
+        return criteresRecherche;
     }
 
-    public void setTexte(String texte) {
-        this.texte = texte;
+    public void setCriteresRecherche(GrepCriteresRecherche criteresRecherche) {
+        this.criteresRecherche = criteresRecherche;
     }
 
     public List<String> getRepertoires() {

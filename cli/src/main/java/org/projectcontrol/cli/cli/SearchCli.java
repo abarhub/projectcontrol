@@ -2,8 +2,10 @@ package org.projectcontrol.cli.cli;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.apache.commons.collections4.CollectionUtils;
+import org.projectcontrol.cli.utils.CritereRechercheCli;
 import org.projectcontrol.cli.utils.PicocliListConverter;
 import org.projectcontrol.core.service.GrepService;
+import org.projectcontrol.core.utils.GrepCriteresRecherche;
 import org.projectcontrol.core.utils.GrepParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +22,8 @@ public class SearchCli implements Callable<Integer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchCli.class);
     private static final Logger LOGGER_SANS_FORMAT = LoggerFactory.getLogger("ConsoleSansFormat");
 
-    @CommandLine.Option(names = "--texte", description = "Le texte recherché", required = true)
-    private String texte;
+    @CommandLine.ArgGroup(multiplicity = "1", exclusive = false)
+    private CritereRechercheCli critereRechercheCli;
 
     @CommandLine.Option(names = "--repertoires", description = "Les répertoires. Par défaut : ${DEFAULT-VALUE}",
             defaultValue = ".", converter = PicocliListConverter.class)
@@ -57,10 +59,15 @@ public class SearchCli implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         int resultat = 0;
-        LOGGER.info("recherche texte:{} repertoires:{}", texte, repertoires);
+        LOGGER.info("recherche critere:{} repertoires:{}", critereRechercheCli, repertoires);
         try {
             GrepParam grepParam = new GrepParam();
-            grepParam.setTexte(texte);
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setTexte(critereRechercheCli.getTexte());
+            criteresRecherche.setRegex(critereRechercheCli.getRegex());
+            criteresRecherche.setChamps(critereRechercheCli.getCheminRecherche());
+            criteresRecherche.setXpath(critereRechercheCli.getCheminXPath());
+            grepParam.setCriteresRecherche(criteresRecherche);
             grepParam.setRepertoires(repertoires);
             if (CollectionUtils.isNotEmpty(exclusions)) {
                 grepParam.setExclusions(exclusions);
@@ -68,7 +75,7 @@ public class SearchCli implements Callable<Integer> {
             if (CollectionUtils.isNotEmpty(extensionsFichiers)) {
                 grepParam.setExtensionsFichiers(extensionsFichiers);
             }
-            if( nbLignesAutour > 0 ){
+            if (nbLignesAutour > 0) {
                 grepParam.setNbLignesAutour(nbLignesAutour);
             }
             var reponse = grepService.search(grepParam);

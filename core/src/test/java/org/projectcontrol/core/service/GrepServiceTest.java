@@ -3,6 +3,7 @@ package org.projectcontrol.core.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.projectcontrol.core.utils.GrepCriteresRecherche;
 import org.projectcontrol.core.utils.GrepParam;
 import org.projectcontrol.core.utils.LignesRecherche;
 
@@ -41,7 +42,9 @@ class GrepServiceTest {
     @Test
     void search() throws Exception {
         // ARRANGE
-        grepParam.setTexte("simple");
+        GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+        criteresRecherche.setTexte(List.of("simple"));
+        grepParam.setCriteresRecherche(criteresRecherche);
 
         // ACT
         var res = grepService.search(grepParam);
@@ -61,7 +64,9 @@ class GrepServiceTest {
     @Test
     void search2() throws Exception {
         // ARRANGE
-        grepParam.setTexte("exemple");
+        GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+        criteresRecherche.setTexte(List.of("exemple"));
+        grepParam.setCriteresRecherche(criteresRecherche);
 
         // ACT
         var res = grepService.search(grepParam);
@@ -82,7 +87,9 @@ class GrepServiceTest {
     @Test
     void search3() throws Exception {
         // ARRANGE
-        grepParam.setTexte("instant2");
+        GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+        criteresRecherche.setTexte(List.of("instant2"));
+        grepParam.setCriteresRecherche(criteresRecherche);
         grepParam.setExtensionsFichiers(List.of("tmp"));
 
         // ACT
