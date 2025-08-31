@@ -1,0 +1,9 @@
+{
+  "champ1": 1,
+  "champs2": "xxx",
+  "champ3": {
+    "champs4": "ZZZZZZZZZZ",
+    "champs5": "ZZZZZZZZZZ",
+    "champs6": "ZZZZZZZZZZ"
+  }
+}
