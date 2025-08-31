@@ -266,17 +266,19 @@ public class GrepService {
                     for (var chemin : cacheCriteresRecherche.getCheminXPath()) {
 
                         NodeList nodeList = (NodeList) xpath.evaluate(chemin, xml, XPathConstants.NODESET);
-                        if (nodeList!=null && nodeList.getLength()>0) {
-                            String texte="";
-                            if(nodeList.getLength()==1){
-                                texte=nodeList.item(0).getTextContent();
+                        if (nodeList != null && nodeList.getLength() > 0) {
+                            String texte = "";
+                            if (nodeList.getLength() == 1) {
+                                texte = nodeList.item(0).getTextContent();
                             } else {
+                                StringBuilder texte2 = new StringBuilder();
                                 for (int i = 0; i < nodeList.getLength(); i++) {
-                                    if(i>0){
-                                        texte+=";";
+                                    if (i > 0) {
+                                        texte2.append(";");
                                     }
-                                    texte+=nodeList.item(i).getTextContent();
+                                    texte2.append(nodeList.item(i).getTextContent());
                                 }
+                                texte = texte2.toString();
                             }
                             String name = chemin + ": " + texte;
                             LignesRecherche l = new LignesRecherche(0, List.of(name), file, List.of(0));
