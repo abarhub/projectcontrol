@@ -45,9 +45,9 @@ public class GrepService {
             "go,rs,txt,yml,yaml";
     public static final List<String> EXTENSIONS_FICHIERS_DEFAULT;
 
-    private static List<String> EXTENSION_JSON = List.of("json");
-    private static List<String> EXTENSION_YAML = List.of("yml", "yaml");
-    private static List<String> EXTENSION_XML = List.of("xml");
+    private static final List<String> EXTENSION_JSON = List.of("json");
+    private static final List<String> EXTENSION_YAML = List.of("yml", "yaml");
+    private static final List<String> EXTENSION_XML = List.of("xml");
 
     private static final Splitter SPLITTER = Splitter.on(',')
             .omitEmptyStrings()
@@ -88,16 +88,12 @@ public class GrepService {
         if (criteresRecherche == null) {
             return false;
         } else {
-
-            if (ListUtils.isEmpty(criteresRecherche.getTexte()) &&
-                    ListUtils.isEmpty(criteresRecherche.getRegex()) &&
-                    ListUtils.isEmpty(criteresRecherche.getChamps()) &&
-                    ListUtils.isEmpty(criteresRecherche.getXpath())) {
-                // toutes les listes sont vides
-                return false;
-            }
+            // toutes les listes sont vides
+            return !ListUtils.isEmpty(criteresRecherche.getTexte()) ||
+                    !ListUtils.isEmpty(criteresRecherche.getRegex()) ||
+                    !ListUtils.isEmpty(criteresRecherche.getChamps()) ||
+                    !ListUtils.isEmpty(criteresRecherche.getXpath());
         }
-        return true;
     }
 
 
@@ -150,9 +146,7 @@ public class GrepService {
         if (CollectionUtils.isNotEmpty(grepParam.getExtensionsFichiers())) {
 
             if (StringUtils.isNotBlank(extension)) {
-                if (grepParam.getExtensionsFichiers().contains(extension)) {
-                    return true;
-                }
+                return grepParam.getExtensionsFichiers().contains(extension);
             }
             return false;
         } else {
@@ -160,9 +154,8 @@ public class GrepService {
         }
     }
 
-    private List<LignesRecherche> searchInFile(Path file, ObservableEmitter<LignesRecherche> processor,
+    private void searchInFile(Path file, ObservableEmitter<LignesRecherche> processor,
                                                CacheCriteresRecherche cacheCriteresRecherche, String extension) throws IOException {
-        List<LignesRecherche> liste = new ArrayList<>();
         if (cacheCriteresRecherche.isRechercheTextuel()) {
             CircularFifoQueue<LigneRecherche> queue = new CircularFifoQueue<>(6);
             try (Stream<String> stream = Files.lines(file)) {
@@ -230,9 +223,8 @@ public class GrepService {
                     Map<Object, Object> documentInitial = yaml.load(inputStream);
                     if (documentInitial != null) {
                         for (var chemin : cacheCriteresRecherche.getListeChemins()) {
-                            Map<Object, Object> document = documentInitial;
-                            if (document.containsKey(chemin.getFirst())) {
-                                var documentStr = parcourtYml(document, chemin);
+                            if (documentInitial.containsKey(chemin.getFirst())) {
+                                var documentStr = parcourtYml(documentInitial, chemin);
                                 if (documentStr != null) {
                                     String texte = Joiner.on('.').join(chemin) + ": " + documentStr;
                                     LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
@@ -295,8 +287,6 @@ public class GrepService {
                 }
             }
         }
-
-        return liste;
     }
 
     private String parcourtYml(Map<Object, Object> document, List<String> chemin) {
@@ -319,7 +309,6 @@ public class GrepService {
                         return null;
                     }
                 }
-//                document = (Map<Object, Object>) document.get(chemin.get(i));
             } else {
                 return null;
             }
