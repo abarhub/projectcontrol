@@ -9,8 +9,8 @@ import {GroupeProjet} from '../entity/groupe-projet';
 })
 export class ProjetService {
   private http = inject(HttpClient);
-  //private baseUrl = 'http://localhost:8080/api/projet';
-  private baseUrl = 'api/projet';
+  private baseUrl = 'http://localhost:8080/api/projet';
+  // private baseUrl = 'api/projet';
 
   getProjets(groupeId: string): Observable<Projet[]> {
     return this.http.get<Projet[]>(this.baseUrl + '/from-groupId/' + groupeId);

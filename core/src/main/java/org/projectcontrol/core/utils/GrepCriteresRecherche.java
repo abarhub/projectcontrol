@@ -40,4 +40,14 @@ public class GrepCriteresRecherche {
     public void setXpath(List<String> xpath) {
         this.xpath = xpath;
     }
+
+    @Override
+    public String toString() {
+        return "GrepCriteresRecherche{" +
+                "texte=" + texte +
+                ", regex=" + regex +
+                ", champs=" + champs +
+                ", xpath=" + xpath +
+                '}';
+    }
 }

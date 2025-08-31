@@ -10,7 +10,9 @@ import type {ColDef} from 'ag-grid-community';
 import {LinkCellAgGrid} from './cell/link-cell-aggrid';
 import {GitCellAgGrid} from './cell/git-cell-aggrid';
 import {ModuleCellAgGrid} from './cell/module-cell-aggrid';
-import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid'; // Column Definition Type Interface
+import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid';
+import {RechercheService} from '../../service/recherche.service';
+import {LigneResultat} from '../../entity/LigneResultat'; // Column Definition Type Interface
 
 
 @Component({
@@ -25,6 +27,9 @@ import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid'; // Co
 })
 export class TableauPrincipal {
 
+  AFFICHAGE_TABLEAU = 'tableau';
+  AFFICHAGE_RECHERCHE = 'recherche';
+
   listeProjet: Projet[] = [];
   tableau: LigneTableauPrincipal[] = [];
   chargement = false;
@@ -32,10 +37,19 @@ export class TableauPrincipal {
   formGrouId = new FormGroup({
     groupeId: new FormControl("")
   });
+  formGrouId2 = new FormGroup({
+    affichage: new FormControl(this.AFFICHAGE_TABLEAU)
+  });
+  formGrouId3 = new FormGroup({
+    recherche: new FormControl('')
+  });
   groupeIdSelected = signal('');
   pagination = true;
   paginationPageSize = 15;
   paginationPageSizeSelector = [15, 50, 100, 300];
+  critereRecherche: string = '';
+  resultatRecherche: Map<number, LigneResultat> = new Map<number, LigneResultat>();
+  chargementRecherche: boolean = false;
 
   // Column Definitions: Defines the columns to be displayed.
   colDefs: ColDef[] = [
@@ -80,22 +94,7 @@ export class TableauPrincipal {
     // rowHeight: 150
   };
 
-  // // Row Data: The data to be displayed.
-  // rowData = [
-  //   {make: "Tesla", model: "Model Y", price: 64950, electric: true},
-  //   {make: "Ford", model: "F-Series", price: 33850, electric: false},
-  //   {make: "Toyota", model: "Corolla", price: 29600, electric: false},
-  // ];
-  //
-  // // Column Definitions: Defines the columns to be displayed.
-  // colDefs2: ColDef[] = [
-  //   {field: "make"},
-  //   {field: "model"},
-  //   {field: "price"},
-  //   {field: "electric"}
-  // ];
-
-  constructor(private projetService: ProjetService) {
+  constructor(private projetService: ProjetService, private rechercheService: RechercheService) {
 
     projetService.getGroupeProjet().subscribe({
       next: (data) => {
@@ -142,7 +141,7 @@ export class TableauPrincipal {
       for (let i = 0; i < data.length; i++) {
         let projet = data[i];
         let ligne: LigneTableauPrincipal = new LigneTableauPrincipal();
-        ligne.id=projet.id;
+        ligne.id = projet.id;
         ligne.nom = projet.nom;
         ligne.groupeId = groupeId;
         ligne.repertoire = projet.repertoire;
@@ -173,5 +172,32 @@ export class TableauPrincipal {
       this.tableau = listeLignes;
       console.log('tableau 2 :', this.tableau);
     }
+  }
+
+  rechercher($event: MouseEvent) {
+    $event.preventDefault();
+    const {groupeId} = this.formGrouId.value;
+    let texte = this.formGrouId3.value.recherche;
+
+    if (groupeId && texte) {
+      this.chargementRecherche = true;
+      this.rechercheService.getRecherche(groupeId, texte).subscribe({
+        next: (data) => {
+          console.log('resultat', data);
+          let tableau: Map<number, LigneResultat> = new Map<number, LigneResultat>();
+          for (let i = 0; i < data.length; i++) {
+            let resultat = data[i];
+            tableau.set(resultat.noLigne, resultat);
+          }
+          this.resultatRecherche = tableau;
+          this.chargementRecherche = false;
+        },
+        error: (error) => {
+          console.error(error);
+          this.chargementRecherche = false;
+        }
+      })
+    }
+
   }
 }

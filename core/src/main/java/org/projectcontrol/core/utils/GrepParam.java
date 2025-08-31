@@ -49,4 +49,15 @@ public class GrepParam {
     public void setNbLignesAutour(int nbLignesAutour) {
         this.nbLignesAutour = nbLignesAutour;
     }
+
+    @Override
+    public String toString() {
+        return "GrepParam{" +
+                "criteresRecherche=" + criteresRecherche +
+                ", repertoires=" + repertoires +
+                ", exclusions=" + exclusions +
+                ", extensionsFichiers=" + extensionsFichiers +
+                ", nbLignesAutour=" + nbLignesAutour +
+                '}';
+    }
 }
