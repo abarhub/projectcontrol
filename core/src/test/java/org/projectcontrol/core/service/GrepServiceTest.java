@@ -1,6 +1,7 @@
 package org.projectcontrol.core.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.projectcontrol.core.utils.GrepCriteresRecherche;
@@ -39,74 +40,387 @@ class GrepServiceTest {
         grepParam.setExtensionsFichiers(GrepService.EXTENSIONS_FICHIERS_DEFAULT);
     }
 
-    @Test
-    void search() throws Exception {
-        // ARRANGE
-        GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
-        criteresRecherche.setTexte(List.of("simple"));
-        grepParam.setCriteresRecherche(criteresRecherche);
+    @Nested
+    class SearchTextuel {
 
-        // ACT
-        var res = grepService.search(grepParam);
+        @Test
+        void search() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setTexte(List.of("simple"));
+            grepParam.setCriteresRecherche(criteresRecherche);
 
-        // ASSERT
-        assertNotNull(res);
-        var liste = res.blockingIterable();
-        assertNotNull(liste);
-        assertThat(liste)
-                .hasSize(2)
-                .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
-                        LignesRecherche::lignes, (x) -> getChemin(rep1, x))
-                .contains(tuple(2, List.of(2), List.of("très simple a rechercher"), "file1.txt"),
-                        tuple(2, List.of(2), List.of("très simple a rechercher ici2"), "dir1/file3.java"));
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(2)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(2, List.of(2), List.of("très simple a rechercher"), "file1.txt"),
+                            tuple(2, List.of(2), List.of("très simple a rechercher ici2"), "dir1/file3.java"));
+        }
+
+        @Test
+        void search2() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setTexte(List.of("exemple"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(3)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(1, List.of(1), List.of("un exemple de fichier"), "file1.txt"),
+                            tuple(1, List.of(1), List.of("un autre exemple de fichier à chercher2"), "dir1/file3.java"),
+                            tuple(4, List.of(4), List.of("exemple2"), "dir1/file3.java"));
+        }
+
+        @Test
+        void search3() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setTexte(List.of("instant2"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+            grepParam.setExtensionsFichiers(List.of("tmp"));
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(3, List.of(3), List.of("fin du texte pour l'instant2"), "dir1/file4.tmp"));
+        }
+
     }
 
-    @Test
-    void search2() throws Exception {
-        // ARRANGE
-        GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
-        criteresRecherche.setTexte(List.of("exemple"));
-        grepParam.setCriteresRecherche(criteresRecherche);
+    @Nested
+    class SearchJson {
 
-        // ACT
-        var res = grepService.search(grepParam);
+        @Test
+        void search() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champs2"));
+            grepParam.setCriteresRecherche(criteresRecherche);
 
-        // ASSERT
-        assertNotNull(res);
-        var liste = res.blockingIterable();
-        assertNotNull(liste);
-        assertThat(liste)
-                .hasSize(3)
-                .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
-                        LignesRecherche::lignes, (x) -> getChemin(rep1, x))
-                .contains(tuple(1, List.of(1), List.of("un exemple de fichier"), "file1.txt"),
-                        tuple(1, List.of(1), List.of("un autre exemple de fichier à chercher2"), "dir1/file3.java"),
-                        tuple(4, List.of(4), List.of("exemple2"), "dir1/file3.java"));
+            String s1 = """
+                    {
+                      "champ1": 1,
+                      "champs2": "xxx",
+                      "champ3": {
+                        "champs4": "ZZZZZZZZZZ",
+                        "champs5": "ZZZZZZZZZZ",
+                        "champs6": "ZZZZZZZZZZ"
+                      },
+                      "champs7": [
+                        "aaa","bbb", "ccc"
+                      ]
+                    }""";
+
+            Files.writeString(rep1.resolve("file5.json"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champs2=\"xxx\""), "file5.json"));
+        }
+
+        @Test
+        void search2() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champ3.champs6"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                    {
+                      "champ1": 1,
+                      "champs2": "xxx",
+                      "champ3": {
+                        "champs4": "AAAA",
+                        "champs5": "BBBB",
+                        "champs6": "CCCC"
+                      },
+                      "champs7": [
+                        "aaa","bbb", "ccc"
+                      ]
+                    }""";
+
+            Files.writeString(rep1.resolve("file5.json"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champ3.champs6=\"CCCC\""), "file5.json"));
+        }
+
+        @Test
+        void search3() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champs7"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                    {
+                      "champ1": 1,
+                      "champs2": "xxx",
+                      "champ3": {
+                        "champs4": "AAAA",
+                        "champs5": "BBBB",
+                        "champs6": "CCCC"
+                      },
+                      "champs7": [
+                        "aaa","bbb", "ccc"
+                      ]
+                    }""";
+
+            Files.writeString(rep1.resolve("file5.json"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champs7=[\"aaa\",\"bbb\",\"ccc\"]"), "file5.json"));
+        }
+
+
+        @Test
+        void search4() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champ3"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                    {
+                      "champ1": 1,
+                      "champs2": "xxx",
+                      "champ3": {
+                        "champs4": "AAAA",
+                        "champs5": "BBBB",
+                        "champs6": "CCCC"
+                      },
+                      "champs7": [
+                        "aaa","bbb", "ccc"
+                      ]
+                    }""";
+
+            Files.writeString(rep1.resolve("file5.json"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champ3={\"champs4\":\"AAAA\",\"champs5\":\"BBBB\",\"champs6\":\"CCCC\"}"), "file5.json"));
+        }
+
     }
 
-    @Test
-    void search3() throws Exception {
-        // ARRANGE
-        GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
-        criteresRecherche.setTexte(List.of("instant2"));
-        grepParam.setCriteresRecherche(criteresRecherche);
-        grepParam.setExtensionsFichiers(List.of("tmp"));
 
-        // ACT
-        var res = grepService.search(grepParam);
+    @Nested
+    class SearchYml {
 
-        // ASSERT
-        assertNotNull(res);
-        var liste = res.blockingIterable();
-        assertNotNull(liste);
-        assertThat(liste)
-                .hasSize(1)
-                .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
-                        LignesRecherche::lignes, (x) -> getChemin(rep1, x))
-                .contains(tuple(3, List.of(3), List.of("fin du texte pour l'instant2"), "dir1/file4.tmp"));
+        @Test
+        void search() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champ1"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                     champ1: value1
+                     champ2: value2
+                     champ3:
+                       champ31: value31
+                       champ32: value32
+                       champ33: value33
+                     champ4: value4
+                     champ5: value5
+                     champ6:
+                       champ61: value61
+                       champ62: value62
+                       champ63: [ value631, value632]""";
+
+            Files.writeString(rep1.resolve("file6.yml"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champ1: value1"), "file6.yml"));
+        }
+
+        @Test
+        void search2() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champs3.champ31"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                     champ1: value1
+                     champ2: value2
+                     champs3:
+                       champ31: value31
+                       champ32: value32
+                       champ33: value33
+                     champ4: value4
+                     champ5: value5
+                     champ6:
+                       champ61: value61
+                       champ62: value62
+                       champ63: [ value631, value632]""";
+
+            Files.writeString(rep1.resolve("file6.yml"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champs3.champ31: value31"), "file6.yml"));
+        }
+
+        @Test
+        void search3() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champ6.champ63"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                     champ1: value1
+                     champ2: value2
+                     champs3:
+                       champ31: value31
+                       champ32: value32
+                       champ33: value33
+                     champ4: value4
+                     champ5: value5
+                     champ6:
+                       champ61: value61
+                       champ62: value62
+                       champ63: [ value631, value632]""";
+
+            Files.writeString(rep1.resolve("file6.yml"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champ6.champ63: [value631, value632]"), "file6.yml"));
+        }
+
+        @Test
+        void search4() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setChamps(List.of("champ6"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            String s1 = """
+                     champ1: value1
+                     champ2: value2
+                     champs3:
+                       champ31: value31
+                       champ32: value32
+                       champ33: value33
+                     champ4: value4
+                     champ5: value5
+                     champ6:
+                       champ61: value61
+                       champ62: value62
+                       champ63: [ value631, value632]""";
+
+            Files.writeString(rep1.resolve("file6.yml"), s1);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+            var liste = res.blockingIterable();
+            assertNotNull(liste);
+            assertThat(liste)
+                    .hasSize(1)
+                    .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
+                    .contains(tuple(0, List.of(0), List.of("champ6: {champ61=value61, champ62=value62, champ63=[value631, value632]}"), "file6.yml"));
+        }
+
     }
 
-    // méthodes utilitaires
+        // méthodes utilitaires
 
     private String getChemin(Path rep, LignesRecherche lignesRecherche) {
         if (lignesRecherche == null || lignesRecherche.ficher() == null) {
