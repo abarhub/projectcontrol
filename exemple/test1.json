@@ -5,5 +5,8 @@
     "champs4": "ZZZZZZZZZZ",
     "champs5": "ZZZZZZZZZZ",
     "champs6": "ZZZZZZZZZZ"
-  }
+  },
+  "champs7": [
+    "aaa","bbb", "ccc"
+  ]
 }

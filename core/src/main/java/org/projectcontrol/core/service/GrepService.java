@@ -1,6 +1,5 @@
 package org.projectcontrol.core.service;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
@@ -15,15 +14,13 @@ import org.projectcontrol.core.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_COMMENTS;
@@ -37,7 +34,8 @@ public class GrepService {
 
     public static final List<String> REPERTOIRES_EXCLUSION;
 
-    public static final String EXTENSIONS_FICHIERS_DEFAULT_STR = "java,ts,xml,html,css,scss,js,json,md,htm,py,go,rs,txt";
+    public static final String EXTENSIONS_FICHIERS_DEFAULT_STR = "java,ts,xml,html,css,scss,js,json,md,htm,py," +
+            "go,rs,txt,yml,yaml";
     public static final List<String> EXTENSIONS_FICHIERS_DEFAULT;
 
     private static List<String> EXTENSION_JSON = List.of("json");
@@ -214,13 +212,75 @@ public class GrepService {
                             }
                         }
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);
                 }
+            }
+            if (CollectionUtils.containsAny(EXTENSION_YAML, extension)) {
+                Yaml yaml = new Yaml();
+                try (InputStream inputStream = Files.newInputStream(file)) {
+                    Map<Object, Object> documentInitial = yaml.load(inputStream);
+                    if (documentInitial != null) {
+                        for (var chemin : cacheCriteresRecherche.getListeChemins()) {
+                            Map<Object, Object> document = documentInitial;
+                            if (document.containsKey(chemin.getFirst())) {
+//                            for (int i = 0; i < chemin.size(); i++) {
+//                                if (document.containsKey(chemin.get(i))) {
+//                                    document = (Map<Object, Object>) document.get(chemin.get(i));
+//                                } else {
+//                                    document = null;
+//                                    break;
+//                                }
+//                            }
+                                var documentStr = parcourtYml(document, chemin);
+                                if (documentStr != null) {
+                                    String texte = Joiner.on('.').join(chemin) + ": " + documentStr;
+                                    LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
+                                    LOGGER.debug("ajout de {}", l);
+                                    if (!processor.isDisposed()) {
+                                        processor.onNext(l);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
         }
 
         return liste;
+    }
+
+    private String parcourtYml(Map<Object, Object> document, List<String> chemin) {
+        String texte = null;
+        for (int i = 0; i < chemin.size(); i++) {
+            if (document != null && document.containsKey(chemin.get(i))) {
+                Object o = document.get(chemin.get(i));
+                if (o == null) {
+                    if(i == chemin.size() - 1) {
+                        return "";
+                    } else {
+                        return null;
+                    }
+                } else if (o instanceof Map m) {
+                    document = m;
+                } else {
+                    if (i == chemin.size() - 1) {
+                        return "" + o;
+                    } else {
+                        return null;
+                    }
+                }
+//                document = (Map<Object, Object>) document.get(chemin.get(i));
+            } else {
+                return null;
+            }
+        }
+        if (document != null) {
+            return document.toString();
+        }
+        return texte;
     }
 
 }

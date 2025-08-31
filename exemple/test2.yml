@@ -1,0 +1,12 @@
+champ1: value1
+champ2: value2
+champ3:
+  champ31: value31
+  champ32: value32
+  champ33: value33
+champ4: value4
+champ5: value5
+champ6:
+  champ61: value61
+  champ62: value62
+  champ63: [ value631, value632]
