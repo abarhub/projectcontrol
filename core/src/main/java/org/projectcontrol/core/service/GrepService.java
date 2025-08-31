@@ -7,7 +7,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 import org.projectcontrol.core.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Service
@@ -96,6 +94,8 @@ public class GrepService {
             repertoireExclu.addAll(grepParam.getExclusions());
         }
 
+        CacheCriteresRecherche cacheCriteresRecherche = new CacheCriteresRecherche(grepParam);
+
         Files.walkFileTree(startDir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
@@ -116,7 +116,7 @@ public class GrepService {
                     return FileVisitResult.CONTINUE;
                 }
                 try {
-                    searchInFile(grepParam, file, processor);
+                    searchInFile(file, processor, cacheCriteresRecherche);
 
                 } catch (Exception e) {
                     LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);
@@ -143,28 +143,19 @@ public class GrepService {
         }
     }
 
-    private List<LignesRecherche> searchInFile(GrepParam grepParam, Path file, ObservableEmitter<LignesRecherche> processor) throws IOException {
+    private List<LignesRecherche> searchInFile(Path file, ObservableEmitter<LignesRecherche> processor,
+                                               CacheCriteresRecherche cacheCriteresRecherche) throws IOException {
         List<LignesRecherche> liste = new ArrayList<>();
-        List<String> textes = null;
-        List<String> regexes = null;
-        if (CollectionUtils.isNotEmpty(grepParam.getCriteresRecherche().getTexte())) {
-            textes = grepParam.getCriteresRecherche().getTexte();
-        }
-        if (CollectionUtils.isNotEmpty(grepParam.getCriteresRecherche().getRegex())) {
-            regexes = grepParam.getCriteresRecherche().getRegex();
-        }
-        if (textes != null || regexes != null) {
+        if (cacheCriteresRecherche.rechercheTextuel()) {
             CircularFifoQueue<LigneRecherche> queue = new CircularFifoQueue<>(6);
             try (Stream<String> stream = Files.lines(file)) {
                 int[] tab = new int[1];
-                String[] texte2 = textes == null ? null : textes.toArray(new String[0]);
-                List<Pattern> regexes2 = regexes == null ? null : regexes.stream().map(Pattern::compile).toList();
                 stream
                         .peek(line -> {
                             tab[0]++;
                             queue.add(new LigneRecherche(tab[0], line));
                         })
-                        .filter(line -> contient(line, texte2, regexes2))
+                        .filter(cacheCriteresRecherche::contientTexte)
                         .forEach(x -> {
                             int noLigne = tab[0];
                             List<String> listeLigne = new ArrayList<>();
@@ -185,17 +176,4 @@ public class GrepService {
         return liste;
     }
 
-    private boolean contient(String ligne, String[] texte, List<Pattern> regexes) {
-        if (StringUtils.containsAny(ligne, texte)) {
-            return true;
-        }
-        if (CollectionUtils.isNotEmpty(regexes)) {
-            for (Pattern regex : regexes) {
-                if (Pattern.matches(regex.pattern(), ligne)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }
