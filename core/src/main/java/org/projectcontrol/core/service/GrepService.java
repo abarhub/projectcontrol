@@ -224,14 +224,6 @@ public class GrepService {
                         for (var chemin : cacheCriteresRecherche.getListeChemins()) {
                             Map<Object, Object> document = documentInitial;
                             if (document.containsKey(chemin.getFirst())) {
-//                            for (int i = 0; i < chemin.size(); i++) {
-//                                if (document.containsKey(chemin.get(i))) {
-//                                    document = (Map<Object, Object>) document.get(chemin.get(i));
-//                                } else {
-//                                    document = null;
-//                                    break;
-//                                }
-//                            }
                                 var documentStr = parcourtYml(document, chemin);
                                 if (documentStr != null) {
                                     String texte = Joiner.on('.').join(chemin) + ": " + documentStr;
@@ -244,6 +236,8 @@ public class GrepService {
                             }
                         }
                     }
+                } catch (Exception e) {
+                    LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);
                 }
 
             }
@@ -258,7 +252,7 @@ public class GrepService {
             if (document != null && document.containsKey(chemin.get(i))) {
                 Object o = document.get(chemin.get(i));
                 if (o == null) {
-                    if(i == chemin.size() - 1) {
+                    if (i == chemin.size() - 1) {
                         return "";
                     } else {
                         return null;
