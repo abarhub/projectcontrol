@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.ObservableEmitter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.io.FilenameUtils;
@@ -17,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.yaml.snakeyaml.Yaml;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -58,30 +58,56 @@ public class GrepService {
         EXTENSIONS_FICHIERS_DEFAULT = SPLITTER.splitToList(EXTENSIONS_FICHIERS_DEFAULT_STR);
     }
 
-    public Observable<LignesRecherche> search(GrepParam grepParam) throws IOException {
+    public Flux<LignesRecherche> search(GrepParam grepParam) throws IOException {
         if (!verifieCritereRecherche(grepParam.getCriteresRecherche())) {
             LOGGER.debug("pas de texte à chercher");
-            return Observable.empty();
+            //return Observable.empty();
+            return Flux.empty();
         }
 
-        return Observable.create(emitter -> {
+//        return Observable.create(emitter -> {
+//
+//            try {
+//                List<String> repertoires = grepParam.getRepertoires();
+//                for (String repertoire : repertoires) {
+//                    if (StringUtils.isNotBlank(repertoire)) {
+//                        search(repertoire, emitter, grepParam);
+//                    }
+//                }
+//            } catch (Exception e) {
+//                emitter.onError(e);
+//            } finally {
+//                if (!emitter.isDisposed()) {
+//                    emitter.onComplete();
+//                }
+//            }
+//
+//        });
 
-            try {
-                List<String> repertoires = grepParam.getRepertoires();
-                for (String repertoire : repertoires) {
-                    if (StringUtils.isNotBlank(repertoire)) {
-                        search(repertoire, emitter, grepParam);
-                    }
-                }
-            } catch (Exception e) {
-                emitter.onError(e);
-            } finally {
-                if (!emitter.isDisposed()) {
-                    emitter.onComplete();
+        Sinks.Many<LignesRecherche> sink = Sinks.many().multicast().onBackpressureBuffer();
+
+        Flux<LignesRecherche> hotFlux = sink.asFlux();
+
+//        return Observable.create(emitter -> {
+
+        try {
+            List<String> repertoires = grepParam.getRepertoires();
+            for (String repertoire : repertoires) {
+                if (StringUtils.isNotBlank(repertoire)) {
+                    search(repertoire, sink, grepParam);
                 }
             }
+        } catch (Exception e) {
+            sink.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
+        } finally {
+//                if (!emitter.isDisposed()) {
+//                    emitter.onComplete();
+//                }
+            sink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
+        }
 
-        });
+        //});
+        return hotFlux;
     }
 
     private boolean verifieCritereRecherche(GrepCriteresRecherche criteresRecherche) {
@@ -97,7 +123,7 @@ public class GrepService {
     }
 
 
-    private void search(String repertoire, ObservableEmitter<LignesRecherche> processor,
+    private void search(String repertoire, Sinks.Many<LignesRecherche> processor,
                         GrepParam grepParam) throws IOException {
         Path startDir = Paths.get(repertoire);
 
@@ -154,8 +180,8 @@ public class GrepService {
         }
     }
 
-    private void searchInFile(Path file, ObservableEmitter<LignesRecherche> processor,
-                                               CacheCriteresRecherche cacheCriteresRecherche, String extension) throws IOException {
+    private void searchInFile(Path file, Sinks.Many<LignesRecherche> processor,
+                              CacheCriteresRecherche cacheCriteresRecherche, String extension) throws IOException {
         if (cacheCriteresRecherche.isRechercheTextuel()) {
             CircularFifoQueue<LigneRecherche> queue = new CircularFifoQueue<>(6);
             try (Stream<String> stream = Files.lines(file)) {
@@ -174,9 +200,10 @@ public class GrepService {
                             listeNoLigne.add(noLigne);
                             LignesRecherche l = new LignesRecherche(noLigne, listeLigne, file, listeNoLigne);
                             LOGGER.debug("ajout de {}", l);
-                            if (!processor.isDisposed()) {
-                                processor.onNext(l);
-                            }
+                            //if (!processor.isDisposed()) {
+                            //    processor.onNext(l);
+                            //}
+                            processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                         });
             } catch (Exception e) {
                 LOGGER.error("Erreur lors de la recherche dans le fichier {}", file, e);
@@ -205,9 +232,10 @@ public class GrepService {
                                         String texte = Joiner.on('.').join(chemin) + "=" + jsonNode;
                                         LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
                                         LOGGER.debug("ajout de {}", l);
-                                        if (!processor.isDisposed()) {
-                                            processor.onNext(l);
-                                        }
+//                                        if (!processor.isDisposed()) {
+//                                            processor.onNext(l);
+//                                        }
+                                        processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                                     }
                                 }
                             }
@@ -229,9 +257,10 @@ public class GrepService {
                                     String texte = Joiner.on('.').join(chemin) + ": " + documentStr;
                                     LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
                                     LOGGER.debug("ajout de {}", l);
-                                    if (!processor.isDisposed()) {
-                                        processor.onNext(l);
-                                    }
+//                                    if (!processor.isDisposed()) {
+//                                        processor.onNext(l);
+//                                    }
+                                    processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                                 }
                             }
                         }
@@ -275,9 +304,10 @@ public class GrepService {
                             String name = chemin + ": " + texte;
                             LignesRecherche l = new LignesRecherche(0, List.of(name), file, List.of(0));
                             LOGGER.debug("ajout de {}", l);
-                            if (!processor.isDisposed()) {
-                                processor.onNext(l);
-                            }
+//                            if (!processor.isDisposed()) {
+//                                processor.onNext(l);
+//                            }
+                            processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                         }
                     }
 

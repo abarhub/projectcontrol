@@ -1,6 +1,6 @@
 package org.projectcontrol.cli.cli;
 
-import io.reactivex.rxjava3.disposables.Disposable;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.projectcontrol.cli.utils.CritereRechercheCli;
 import org.projectcontrol.cli.utils.PicocliListConverter;
@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import picocli.CommandLine;
+import reactor.core.Disposable;
 
 import java.util.List;
 import java.util.concurrent.Callable;

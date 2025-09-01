@@ -55,7 +55,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(2)
@@ -77,7 +77,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(3)
@@ -101,7 +101,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -143,7 +143,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -180,7 +180,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -217,7 +217,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -255,7 +255,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -297,7 +297,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -334,7 +334,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -371,7 +371,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -408,7 +408,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)
@@ -436,18 +436,18 @@ class GrepServiceTest {
                              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                              xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
                         <modelVersion>4.0.0</modelVersion>
-
+                    
                         <parent>
                             <groupId>org.projectcontrol</groupId>
                             <artifactId>projectcontrol-parent</artifactId>
                             <version>0.0.1-SNAPSHOT</version>
                         </parent>
-
+                    
                         <artifactId>core</artifactId>
                         <version>0.0.2-SNAPSHOT</version>
-
+                    
                         <dependencies>
-
+                    
                             <dependency>
                                 <groupId>org.springframework.boot</groupId>
                                 <artifactId>spring-boot-starter</artifactId>
@@ -462,7 +462,7 @@ class GrepServiceTest {
 
             // ASSERT
             assertNotNull(res);
-            var liste = res.blockingIterable();
+            var liste = res.collectList().block();
             assertNotNull(liste);
             assertThat(liste)
                     .hasSize(1)

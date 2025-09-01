@@ -64,8 +64,9 @@ public class RechercheService {
         grepParam.setCriteresRecherche(criteresRecherche);
 
         LOGGER.info("search : {} - {} ...", groupId, texte);
-        var res = grepService.search(grepParam)
-                .blockingIterable();
+        var res0 = grepService.search(grepParam)
+                .collectList();
+        var res= res0.block();
         LOGGER.info("search : {} - {} OK", groupId, texte);
 
         Path repertoireProjet = Path.of(repertoire);
