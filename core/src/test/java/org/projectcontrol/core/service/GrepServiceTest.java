@@ -7,17 +7,24 @@ import org.junit.jupiter.api.io.TempDir;
 import org.projectcontrol.core.utils.GrepCriteresRecherche;
 import org.projectcontrol.core.utils.GrepParam;
 import org.projectcontrol.core.utils.LignesRecherche;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class GrepServiceTest {
+
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GrepServiceTest.class);
 
     private GrepService grepService = new GrepService();
 
@@ -63,6 +70,28 @@ class GrepServiceTest {
                             LignesRecherche::lignes, (x) -> getChemin(rep1, x))
                     .contains(tuple(2, List.of(2), List.of("très simple a rechercher"), "file1.txt"),
                             tuple(2, List.of(2), List.of("très simple a rechercher ici2"), "dir1/file3.java"));
+        }
+
+        @Test
+        void searchBis() throws Exception {
+            // ARRANGE
+            GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+            criteresRecherche.setTexte(List.of("simple"));
+            grepParam.setCriteresRecherche(criteresRecherche);
+
+            // ACT
+            var res = grepService.search(grepParam);
+
+            // ASSERT
+            assertNotNull(res);
+
+            StepVerifier.create(res)
+                    .expectNextMatches(x -> similaire(x, 2, List.of(2),
+                            "très simple a rechercher ici2", "dir1/file3.java"))
+                    .expectNextMatches(x -> similaire(x, 2, List.of(2),
+                            "très simple a rechercher", "file1.txt"))
+                    .expectComplete()
+                    .verify();
         }
 
         @Test
@@ -501,5 +530,14 @@ class GrepServiceTest {
         Files.createDirectory(dir1);
         Files.writeString(dir1.resolve("file3.java"), s2);
         Files.writeString(dir1.resolve("file4.tmp"), s2);
+    }
+
+    private boolean similaire(LignesRecherche ligne, int noLigne, List<Integer> lignesTrouves,
+                              String ligneStr, String nomFichier) {
+        LOGGER.info("comparaison ligne {} : {}, {}, {}, {}", noLigne, ligne, lignesTrouves, ligneStr, nomFichier);
+        return ligne.noLigneDebut() == noLigne &&
+                Objects.equals(ligne.lignesTrouvees(), lignesTrouves) &&
+                Objects.equals(ligne.lignes(), List.of(ligneStr)) &&
+                Objects.equals(getChemin(rep1, ligne), nomFichier);
     }
 }
