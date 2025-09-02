@@ -5,6 +5,9 @@ import org.projectcontrol.core.utils.GrepCriteresRecherche;
 import org.projectcontrol.core.utils.GrepParam;
 import org.projectcontrol.server.dto.LigneResultatDto;
 import org.projectcontrol.server.dto.ProjetDto;
+import org.projectcontrol.server.dto.ReponseRechercheInitialDto;
+import org.projectcontrol.server.dto.ReponseRechercheSuivanteDto;
+import org.projectcontrol.server.recherche.ExecuteRecherche;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class RechercheService {
@@ -22,12 +30,17 @@ public class RechercheService {
     private final GrepService grepService;
     private final ProjetService projetService;
 
+    private final Map<String, ExecuteRecherche> map = new ConcurrentHashMap<>();
+    private final AtomicLong count = new AtomicLong(1);
+    private final ExecutorService executorService;
+
     public RechercheService(GrepService grepService, ProjetService projetService) {
         this.grepService = grepService;
         this.projetService = projetService;
+        executorService = Executors.newCachedThreadPool();
     }
 
-    public List<LigneResultatDto> recherche(String groupId, String texte, String typeRecherche) throws IOException {
+    public ReponseRechercheInitialDto recherche(String groupId, String texte, String typeRecherche) throws IOException {
         List<LigneResultatDto> resultat = new ArrayList<>();
 
         LOGGER.info("recherche groupe : {} - {} ...", groupId, texte);
@@ -35,7 +48,8 @@ public class RechercheService {
         LOGGER.info("recherche groupe : {} - {} OK", groupId, texte);
 
         if (listeGroupe == null || listeGroupe.size() != 1) {
-            return resultat;
+            ReponseRechercheInitialDto resultatDto = new ReponseRechercheInitialDto();
+            return resultatDto;
         }
         ProjetDto projet = listeGroupe.getFirst();
 
@@ -55,7 +69,7 @@ public class RechercheService {
             case "texte":
                 criteresRecherche.setTexte(List.of(texte));
                 break;
-            case "regex":
+            case "regexp":
                 criteresRecherche.setRegex(List.of(texte));
             default:
                 throw new IllegalArgumentException("typeRecherche inconnu : " + typeRecherche);
@@ -63,24 +77,55 @@ public class RechercheService {
 
         grepParam.setCriteresRecherche(criteresRecherche);
 
+        var idStr = getId();
+        ExecuteRecherche executeRecherche = new ExecuteRecherche(idStr, grepService);
+
         LOGGER.info("search : {} - {} ...", groupId, texte);
-        var res0 = grepService.search(grepParam)
-                .collectList();
-        var res= res0.block();
+        executorService.submit(() -> {
+            executeRecherche.run(grepParam, repertoire);
+            return 0;
+        });
+        map.put(idStr, executeRecherche);
+//        var res0 = grepService.search(grepParam)
+//                .collectList();
+//        var res = res0.block();
         LOGGER.info("search : {} - {} OK", groupId, texte);
 
-        Path repertoireProjet = Path.of(repertoire);
-        for (org.projectcontrol.core.utils.LignesRecherche ligne : res) {
-            var ligneResultatDto = new LigneResultatDto();
-            ligneResultatDto.setNoLigne(ligne.noLigneDebut());
-            ligneResultatDto.setLigne(ligne.lignes().getFirst());
-            Path path = ligne.ficher();
-            ligneResultatDto.setFichier(repertoireProjet.relativize(path).toString());
-            ligneResultatDto.setRepertoireParent(repertoire);
-            resultat.add(ligneResultatDto);
-        }
-        LOGGER.info("nb resultat : {}", resultat.size());
+//        Path repertoireProjet = Path.of(repertoire);
+//        for (org.projectcontrol.core.utils.LignesRecherche ligne : res) {
+//            var ligneResultatDto = new LigneResultatDto();
+//            ligneResultatDto.setNoLigne(ligne.noLigneDebut());
+//            ligneResultatDto.setLigne(ligne.lignes().getFirst());
+//            Path path = ligne.ficher();
+//            ligneResultatDto.setFichier(repertoireProjet.relativize(path).toString());
+//            ligneResultatDto.setRepertoireParent(repertoire);
+//            resultat.add(ligneResultatDto);
+//        }
+//        LOGGER.info("nb resultat : {}", resultat.size());
 
-        return resultat;
+        ReponseRechercheInitialDto resultatDto = new ReponseRechercheInitialDto();
+        resultatDto.setId(idStr);
+
+        return resultatDto;
+    }
+
+    public ReponseRechercheSuivanteDto rechercheSuite(String id) {
+        if(map.containsKey(id)) {
+            var recherche=map.get(id);
+            ReponseRechercheSuivanteDto resultatDto = new ReponseRechercheSuivanteDto();
+            resultatDto.setListeLignes(recherche.getResultatDtoList());
+            resultatDto.setTerminer(recherche.isFini());
+            return resultatDto;
+        } else {
+            ReponseRechercheSuivanteDto resultatDto = new ReponseRechercheSuivanteDto();
+            resultatDto.setTerminer(true);
+            return resultatDto;
+        }
+    }
+
+    private String getId(){
+        long id = count.getAndIncrement();
+        var idStr = "" + id;
+        return idStr;
     }
 }

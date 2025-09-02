@@ -2,6 +2,8 @@ package org.projectcontrol.server.controler;
 
 import org.projectcontrol.server.dto.LigneResultatDto;
 import org.projectcontrol.server.dto.ProjetDto;
+import org.projectcontrol.server.dto.ReponseRechercheInitialDto;
+import org.projectcontrol.server.dto.ReponseRechercheSuivanteDto;
 import org.projectcontrol.server.service.RechercheService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +26,16 @@ public class RechercheControler {
     }
 
     @GetMapping(path = "/{groupId}", produces = "application/json")
-    public List<LigneResultatDto> getListProjet(@PathVariable String groupId,
-                                                @RequestParam String texte,
-                                                @RequestParam String typeRecherche) throws IOException {
+    public ReponseRechercheInitialDto getListProjet(@PathVariable String groupId,
+                                                    @RequestParam String texte,
+                                                    @RequestParam String typeRecherche) throws IOException {
         LOGGER.info("recherche : {} - {}", groupId, texte);
         return rechercheService.recherche(groupId, texte, typeRecherche);
+    }
+
+    @GetMapping(path = "/suite/{id}", produces = "application/json")
+    public ReponseRechercheSuivanteDto rechercheSuite(@PathVariable String id) throws IOException {
+        LOGGER.info("rechercheSuite : {}", id);
+        return rechercheService.rechercheSuite(id);
     }
 }

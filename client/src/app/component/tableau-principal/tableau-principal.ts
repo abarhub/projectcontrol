@@ -12,7 +12,10 @@ import {GitCellAgGrid} from './cell/git-cell-aggrid';
 import {ModuleCellAgGrid} from './cell/module-cell-aggrid';
 import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid';
 import {RechercheService} from '../../service/recherche.service';
-import {LigneResultat} from '../../entity/LigneResultat'; // Column Definition Type Interface
+import {LigneResultat} from '../../entity/LigneResultat';
+import {catchError, concatMap, expand, map, Observable, of} from 'rxjs';
+import {ReponseRechercheInitial} from '../../entity/reponse-recherche-initial';
+import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante'; // Column Definition Type Interface
 
 
 @Component({
@@ -185,26 +188,112 @@ export class TableauPrincipal {
     const {groupeId} = this.formGrouId.value;
     let texte = this.formGrouId3.value.recherche;
     let typeRecherche = this.formGrouId3.value.typeRecherche;
-
     if (groupeId && texte && typeRecherche) {
       this.chargementRecherche = true;
-      this.rechercheService.getRecherche(groupeId, texte, typeRecherche).subscribe({
+
+      this.pollApiDataWithId(groupeId, texte, typeRecherche).subscribe({
         next: (data) => {
           console.log('resultat', data);
-          let tableau: Map<number, LigneResultat> = new Map<number, LigneResultat>();
-          for (let i = 0; i < data.length; i++) {
-            let resultat = data[i];
-            tableau.set(resultat.noLigne, resultat);
-          }
-          this.resultatRecherche = tableau;
-          this.chargementRecherche = false;
+          this.ajouteTableau(data);
         },
         error: (error) => {
           console.error(error);
+        },
+        complete: () => {
           this.chargementRecherche = false;
         }
       })
     }
-
   }
+
+  private ajouteTableau(data: LigneResultat[]) {
+    let tableau: Map<number, LigneResultat> = new Map<number, LigneResultat>();
+    let i0 = 0;
+    for (let [key, value] of this.resultatRecherche) {
+      // console.log(key, value);
+      tableau.set(key, value);
+      if (key > i0) {
+        i0 = key;
+      }
+    }
+    for (let i = 0; i < data.length; i++) {
+      let resultat = data[i];
+      tableau.set(i0 + i + 1, resultat);
+    }
+    this.resultatRecherche = tableau;
+  }
+
+  /**
+   * Appelle une première API, puis fait des appels en boucle à une seconde API
+   * en utilisant un ID retourné par le premier appel.
+   * @param firstUrl L'URL du premier appel API.
+   * @param pollUrlTemplate L'URL pour le polling, avec un placeholder pour l'ID.
+   * @returns Un Observable qui émet les données de l'API de polling.
+   */
+  private pollApiDataWithId(
+    //firstUrl: string,
+    //pollUrlTemplate: string,
+    groupeId: string,
+    texte: string,
+    typeRecherche: string
+  ): Observable<LigneResultat[]> {
+    // 1. Premier appel API
+    return this.rechercheService.getRecherche(groupeId, texte, typeRecherche).pipe(
+      // 2. Traitement de la réponse pour extraire l'ID.
+      // L'opérateur map est utilisé pour transformer le JSON de la réponse.
+      // map((response) => response.json()),
+      concatMap((firstResponse: ReponseRechercheInitial) => {
+        // 3. Extrait l'ID de la réponse pour construire la nouvelle URL.
+        const jobId = firstResponse.id;
+        // const pollUrl = pollUrlTemplate.replace('{id}', jobId);
+
+        // 4. Démarre le processus de polling avec l'URL mise à jour.
+        return this.rechercheService.getRechercheSuivant(jobId).pipe(
+          expand((response: ReponseRechercheSuivante) => {
+            // L'observable continue tant que `isDone` n'est pas vrai.
+            if (response.terminer) {
+              return of();
+            }
+            // On continue le polling.
+            return this.rechercheService.getRechercheSuivant(jobId);
+          }),
+          // On s'assure de bien extraire le JSON à chaque tour de boucle.
+          map((response) => response.listeLignes),
+          // Pour gérer les erreurs à n'importe quelle étape.
+          catchError((error) => {
+            console.error('API call failed:', error);
+            throw error;
+          })
+        );
+      })
+    );
+  }
+
+  // rechercher0($event: MouseEvent) {
+  //   $event.preventDefault();
+  //   const {groupeId} = this.formGrouId.value;
+  //   let texte = this.formGrouId3.value.recherche;
+  //   let typeRecherche = this.formGrouId3.value.typeRecherche;
+  //
+  //   if (groupeId && texte && typeRecherche) {
+  //     this.chargementRecherche = true;
+  //     this.rechercheService.getRecherche(groupeId, texte, typeRecherche).subscribe({
+  //       next: (data) => {
+  //         console.log('resultat', data);
+  //         let tableau: Map<number, LigneResultat> = new Map<number, LigneResultat>();
+  //         for (let i = 0; i < data.length; i++) {
+  //           let resultat = data[i];
+  //           tableau.set(resultat.noLigne, resultat);
+  //         }
+  //         this.resultatRecherche = tableau;
+  //         this.chargementRecherche = false;
+  //       },
+  //       error: (error) => {
+  //         console.error(error);
+  //         this.chargementRecherche = false;
+  //       }
+  //     })
+  //   }
+  //
+  // }
 }
