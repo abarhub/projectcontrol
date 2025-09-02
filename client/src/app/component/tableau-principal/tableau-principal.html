@@ -55,19 +55,19 @@
         <div>
           <div>Recherche</div>
 
+          <form [formGroup]="formGrouId3">
           <div class="input-group">
-            <form [formGroup]="formGrouId3">
-              <input type="text" [value]="critereRecherche" formControlName="recherche">
-              <select class="form-select" aria-label="Default select example" formControlName="typeRecherche">
-                <option selected>Open this select menu</option>
+              <input type="text" [value]="critereRecherche" formControlName="recherche"
+                     class="form-control" placeholder="Critere de recherche">
+              <select class="form-select max-width100" aria-label="Default select example" formControlName="typeRecherche">
                 <option [value]="TYPE_RECHERCHE_TEXTE">Texte</option>
                 <option [value]="TYPE_RECHERCHE_REGEXP">Regex</option>
                 <option [value]="TYPE_RECHERCHE_CHEMIN">Chemin</option>
                 <option [value]="TYPE_RECHERCHE_XPATH">XPath</option>
               </select>
-              <button (click)="rechercher($event)">Rechercher</button>
-            </form>
+              <button (click)="rechercher($event)" class="btn btn-outline-secondary" type="button">Rechercher</button>
           </div>
+          </form>
 
           @if (chargementRecherche) {
             <div class="spinner-border" role="status">
