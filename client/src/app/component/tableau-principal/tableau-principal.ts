@@ -13,7 +13,7 @@ import {ModuleCellAgGrid} from './cell/module-cell-aggrid';
 import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid';
 import {RechercheService} from '../../service/recherche.service';
 import {LigneResultat} from '../../entity/LigneResultat';
-import {catchError, concatMap, expand, map, Observable, of} from 'rxjs';
+import {catchError, concatMap, delayWhen, expand, map, Observable, of, timer} from 'rxjs';
 import {ReponseRechercheInitial} from '../../entity/reponse-recherche-initial';
 import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante'; // Column Definition Type Interface
 
@@ -192,7 +192,7 @@ export class TableauPrincipal {
       this.chargementRecherche = true;
       this.resultatRecherche=new Map<number, LigneResultat>();
 
-      this.pollApiDataWithId(groupeId, texte, typeRecherche).subscribe({
+      this.pollApiDataWithId(groupeId, texte, typeRecherche, 1000).subscribe({
         next: (data) => {
           console.log('resultat', data);
           this.ajouteTableau(data);
@@ -236,7 +236,8 @@ export class TableauPrincipal {
     //pollUrlTemplate: string,
     groupeId: string,
     texte: string,
-    typeRecherche: string
+    typeRecherche: string,
+    temporisation: number
   ): Observable<LigneResultat[]> {
     // 1. Premier appel API
     return this.rechercheService.getRecherche(groupeId, texte, typeRecherche).pipe(
@@ -250,6 +251,8 @@ export class TableauPrincipal {
 
         // 4. Démarre le processus de polling avec l'URL mise à jour.
         return this.rechercheService.getRechercheSuivant(jobId).pipe(
+          // temporisation de 2 secondes avant d'émettre le résultat suivant
+          delayWhen(() => timer(temporisation)),
           expand((response: ReponseRechercheSuivante) => {
             // L'observable continue tant que `isDone` n'est pas vrai.
             if (response.terminer) {
