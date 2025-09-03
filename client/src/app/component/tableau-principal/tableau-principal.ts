@@ -190,6 +190,7 @@ export class TableauPrincipal {
     let typeRecherche = this.formGrouId3.value.typeRecherche;
     if (groupeId && texte && typeRecherche) {
       this.chargementRecherche = true;
+      this.resultatRecherche=new Map<number, LigneResultat>();
 
       this.pollApiDataWithId(groupeId, texte, typeRecherche).subscribe({
         next: (data) => {
