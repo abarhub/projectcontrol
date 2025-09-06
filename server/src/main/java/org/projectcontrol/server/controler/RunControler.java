@@ -25,16 +25,16 @@ public class RunControler {
     }
 
     @GetMapping(path = "/{groupId}/{nomProjet}", produces = "application/json")
-    public ReponseRunInitialDto getListProjet(@PathVariable String groupId,
+    public ReponseRunInitialDto runInitialise(@PathVariable String groupId,
                                               @PathVariable String nomProjet,
                                               @RequestParam String action) throws IOException {
-        LOGGER.info("recherche : {} - {} - {}", groupId, nomProjet, action);
+        LOGGER.info("runInitialise : {} - {} - {}", groupId, nomProjet, action);
         return runService.run(groupId, nomProjet, action);
     }
 
     @GetMapping(path = "/suite/{id}", produces = "application/json")
-    public ReponseRunSuivanteDto rechercheSuite(@PathVariable String id) throws IOException {
-        LOGGER.info("rechercheSuite : {}", id);
+    public ReponseRunSuivanteDto runSuite(@PathVariable String id) throws IOException {
+        LOGGER.info("runSuite : {}", id);
         return runService.runSuite(id);
     }
 }

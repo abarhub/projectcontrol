@@ -1,8 +1,9 @@
 package org.projectcontrol.server.service;
 
 import org.projectcontrol.core.service.RunService;
-import org.projectcontrol.server.dto.*;
-import org.projectcontrol.server.recherche.ExecuteRecherche;
+import org.projectcontrol.server.dto.ProjetDto;
+import org.projectcontrol.server.dto.ReponseRunInitialDto;
+import org.projectcontrol.server.dto.ReponseRunSuivanteDto;
 import org.projectcontrol.server.recherche.ExecuteRun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -45,10 +45,10 @@ public class Run2Service {
         ProjetDto projet = listeGroupe.getFirst();
 
         var idStr = getId();
-        String repertoire = projet.getRepertoire();
+//        String repertoire = projet.getRepertoire();
 
-        ExecuteRun executeRun=new ExecuteRun(idStr,runService, projet);
-        map.put(idStr,executeRun);
+        ExecuteRun executeRun = new ExecuteRun(idStr, runService, projet, action);
+        map.put(idStr, executeRun);
 
         LOGGER.info("run : {} - {} ...", groupId, nomProjet);
         executorService.submit(() -> {
@@ -63,8 +63,8 @@ public class Run2Service {
     }
 
     public ReponseRunSuivanteDto runSuite(String id) {
-        if(map.containsKey(id)) {
-            var recherche=map.get(id);
+        if (map.containsKey(id)) {
+            var recherche = map.get(id);
             ReponseRunSuivanteDto resultatDto = new ReponseRunSuivanteDto();
             resultatDto.setListeLignes(recherche.getResultatDtoList());
             resultatDto.setTerminer(recherche.isFini());
@@ -77,7 +77,7 @@ public class Run2Service {
     }
 
 
-    private String getId(){
+    private String getId() {
         long id = count.getAndIncrement();
         var idStr = "" + id;
         return idStr;

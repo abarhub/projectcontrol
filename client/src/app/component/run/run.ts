@@ -27,11 +27,13 @@ export class Run {
   private toasterService = inject(ToasterService);
   messages: string [] = [];
   private runService = inject(RunService);
+  private action:string='';
 
 
-  public show(groupeId: string, nomProjet: string) {
+  public show(groupeId: string, nomProjet: string, action:string) {
     this.groupeId = groupeId;
     this.nomProjet = nomProjet;
+    this.action = action;
     this.majVersionModal = new Modal(this.majVersionEl.nativeElement);
     this.majVersionModal.show();
     this.run();
@@ -42,9 +44,9 @@ export class Run {
   }
 
   private run() {
-    if (this.groupeId && this.nomProjet) {
+    if (this.groupeId && this.nomProjet&&this.action) {
       this.messages = [];
-      this.pollApiDataWithId(this.groupeId, this.nomProjet, 'dependance', 1000).subscribe({
+      this.pollApiDataWithId(this.groupeId, this.nomProjet, this.action, 1000).subscribe({
         next: (data) => {
           console.log('resultat', data);
           this.toasterService.show("run OK");

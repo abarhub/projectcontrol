@@ -1,5 +1,7 @@
 package org.projectcontrol.server.recherche;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.projectcontrol.core.service.RunService;
 import org.projectcontrol.server.dto.ProjetDto;
 import org.slf4j.Logger;
@@ -20,19 +22,28 @@ public class ExecuteRun {
     private final RunService runService;
     private boolean fini = false;
     private final String repertoire;
+    private final String action;
 
-    public ExecuteRun(String id, RunService runService, ProjetDto projet) {
+    public ExecuteRun(String id, RunService runService, ProjetDto projet, String action) {
         this.id = id;
         this.runService = runService;
-        repertoire=projet.getRepertoire();
+        repertoire = projet.getRepertoire();
+        this.action = action;
     }
 
     public void run() throws IOException, InterruptedException {
 
         LOGGER.info("debut run ...");
         fini = false;
-        var fichier=repertoire+"/pom.xml";
-        if(false) {
+        var fichier = repertoire + "/pom.xml";
+        if(StringUtils.isEmpty(action)){
+            throw new RuntimeException("Action invalide: " + action);
+        }
+        List<String> listeCommande = getListeCommande(action, fichier);
+        if (CollectionUtils.isEmpty(listeCommande)) {
+            throw new RuntimeException("Commande invalide: " + listeCommande);
+        }
+        if (false) {
             runService.runCommand(x -> {
                 try {
                     LOGGER.info("ligne: {}", x);
@@ -41,9 +52,9 @@ public class ExecuteRun {
                     LOGGER.error("error", e);
                     throw new RuntimeException(e);
                 }
-            }, "cmd", "/C", "mvn", "dependency:tree", "-f", fichier);
+            }, listeCommande.toArray(new String[0]));
         } else {
-            var res = runService.runCommand("cmd", "/C", "mvn", "dependency:tree", "-f", fichier);
+            var res = runService.runCommand(listeCommande.toArray(new String[0]));
             LOGGER.info("fin run ...");
             LOGGER.info("subscribe ...");
             var disposable = res.subscribe(x -> {
@@ -65,6 +76,16 @@ public class ExecuteRun {
             LOGGER.info("dispose ...");
             disposable.dispose();
             LOGGER.info("dispose ok");
+        }
+    }
+
+    private List<String> getListeCommande(String action, String fichier) {
+        if (action.equals("dependencyTree")) {
+            return List.of("cmd", "/C", "mvn", "dependency:tree", "-f", fichier);
+        } else if (action.equals("dependencyAnalyse")) {
+            return List.of("cmd", "/C", "mvn", "dependency:analyze", "-f", fichier);
+        } else {
+            throw new RuntimeException("Action invalide: " + action);
         }
     }
 

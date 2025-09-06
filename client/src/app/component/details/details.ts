@@ -141,7 +141,16 @@ export class Details implements AfterViewInit {
     let nomProjet = this.nomProjet();
     let groupeProjet = this.groupeProjet();
     if (groupeProjet && nomProjet) {
-      this.run.show(groupeProjet, nomProjet);
+      this.run.show(groupeProjet, nomProjet, 'dependencyTree');
+    }
+  }
+
+  analyseDependances($event: MouseEvent) {
+    $event?.preventDefault();
+    let nomProjet = this.nomProjet();
+    let groupeProjet = this.groupeProjet();
+    if (groupeProjet && nomProjet) {
+      this.run.show(groupeProjet, nomProjet, 'dependencyAnalyse');
     }
   }
 }
