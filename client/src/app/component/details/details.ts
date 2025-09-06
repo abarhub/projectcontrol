@@ -64,9 +64,6 @@ export class Details implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // if(this.majVersionEl) {
-    //   this.majVersionModal = new Modal(this.majVersionEl.nativeElement);
-    // }
   }
 
   private complete(data: Projet) {
@@ -88,17 +85,6 @@ export class Details implements AfterViewInit {
 
   majVersion2($event: MouseEvent) {
     $event.preventDefault();
-    // if (this.majVersionEl) {
-    //   this.majVersionModal = new Modal(this.majVersionEl.nativeElement);
-    //   if (this.majVersionModal) {
-    //     this.majVersionModal.show();
-    //   }
-    // }
-    // const modalElement = document.getElementById('majVersionId');
-    // if (modalElement) {
-    //   this.majVersionModal = new Modal(modalElement);
-    //   this.majVersionModal.show();
-    // }
     let nomProjet = this.nomProjet();
     let groupeProjet = this.groupeProjet();
     if (groupeProjet && nomProjet) {
