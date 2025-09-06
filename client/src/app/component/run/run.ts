@@ -57,6 +57,7 @@ export class Run {
         },
         error: (error) => {
           console.error(error);
+          this.toasterService.show("Erreur pour run");
         }
       })
     }

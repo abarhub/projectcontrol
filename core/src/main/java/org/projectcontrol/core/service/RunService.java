@@ -62,7 +62,7 @@ public class RunService {
                 liste.add(s);
             }
         }
-        Sinks.Many<Line> sink = Sinks.many().multicast().onBackpressureBuffer();
+        Sinks.Many<Line> sink = Sinks.many().multicast().onBackpressureBuffer(Integer.MAX_VALUE, false);
 
         Flux<Line> hotFlux = sink.asFlux();
         LOGGER.info("run {}", liste);
@@ -79,11 +79,14 @@ public class RunService {
                         sink.emitNext(new Line(true, x), Sinks.EmitFailureHandler.FAIL_FAST);
                     });
             executorService.submit(streamGobblerErrur);
+            LOGGER.info("attente exit code ...");
             int exitCode = process.waitFor();
+            LOGGER.info("exit code : {}", exitCode);
             if (exitCode != 0) {
                 sink.emitError(new RuntimeException("exit code : " + exitCode), Sinks.EmitFailureHandler.FAIL_FAST);
             }
         } finally {
+            LOGGER.info("fin consummer");
             sink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
         }
         return hotFlux;

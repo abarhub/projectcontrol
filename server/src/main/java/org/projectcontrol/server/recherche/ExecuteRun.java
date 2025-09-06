@@ -32,32 +32,40 @@ public class ExecuteRun {
         LOGGER.info("debut run ...");
         fini = false;
         var fichier=repertoire+"/pom.xml";
-//        runService.runCommand(x-> {
-//            try {
-//                LOGGER.info("ligne: {}",x);
-//                resultat.put(x.line());
-//            } catch (InterruptedException e) {
-//                LOGGER.error("error",e);
-//                throw new RuntimeException(e);
-//            }
-//        },"cmd","/C","mvn","--help");
-        var res = runService.runCommand("cmd", "/C", "mvn", "dependency:tree", "-f", fichier);
-        LOGGER.info("fin run ...");
-        var disposable=res.subscribe(x -> {
-                    try {
-                        LOGGER.info("ligne: {}", x);
-                        resultat.put(x.line());
-                    } catch (InterruptedException e) {
-                        LOGGER.error("error", e);
-                        throw new RuntimeException(e);
-                    }
-                }, error -> {
-                    LOGGER.error("error", error);
-                },
-                () -> {
-                    fini = true;
-                });
-        disposable.dispose();
+        if(false) {
+            runService.runCommand(x -> {
+                try {
+                    LOGGER.info("ligne: {}", x);
+                    resultat.put(x.line());
+                } catch (InterruptedException e) {
+                    LOGGER.error("error", e);
+                    throw new RuntimeException(e);
+                }
+            }, "cmd", "/C", "mvn", "dependency:tree", "-f", fichier);
+        } else {
+            var res = runService.runCommand("cmd", "/C", "mvn", "dependency:tree", "-f", fichier);
+            LOGGER.info("fin run ...");
+            LOGGER.info("subscribe ...");
+            var disposable = res.subscribe(x -> {
+                        try {
+                            LOGGER.info("ligne: {}", x);
+                            resultat.put(x.line());
+                        } catch (InterruptedException e) {
+                            LOGGER.error("error", e);
+                            throw new RuntimeException(e);
+                        }
+                    }, error -> {
+                        LOGGER.error("error", error);
+                    },
+                    () -> {
+                        fini = true;
+                        LOGGER.info("fin run ...");
+                    });
+            LOGGER.info("subscribe ok");
+            LOGGER.info("dispose ...");
+            disposable.dispose();
+            LOGGER.info("dispose ok");
+        }
     }
 
     public List<String> getResultatDtoList() {
