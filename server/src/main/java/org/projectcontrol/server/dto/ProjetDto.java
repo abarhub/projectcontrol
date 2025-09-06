@@ -14,10 +14,6 @@ public class ProjetDto {
     private String nom;
     private String description;
     private String repertoire;
-//    private String fichierPom;
-//    private String packageJson;
-//    private String goMod;
-//    private String cargoToml;
     private ArtifactDto parent;
     private ArtifactDto artifact;
     private Map<String,String> properties;

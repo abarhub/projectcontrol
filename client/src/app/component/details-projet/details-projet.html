@@ -201,6 +201,24 @@
                     <th>Message</th>
                     <td>{{ projet()?.infoGit?.message }}</td>
                   </tr>
+                  <tr>
+                    <th>Messages non commités</th>
+                    <td>
+                      @let nbFichiersNonCommite = projet()?.infoGit?.fichiersNonCommite?.length || 0;
+                      @let nbFichiersNonTracke = projet()?.infoGit?.fichiersNonTracke?.length || 0;
+                      @if (nbFichiersNonCommite + nbFichiersNonTracke > 0) {
+                        <span>{{ nbFichiersNonCommite + nbFichiersNonTracke }}</span>
+                        (non commité : {{ nbFichiersNonCommite }},
+                        non tracké : {{ nbFichiersNonTracke }})
+                      } @else {
+                        0
+                      }
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Branches</th>
+                    <td>{{ projet()?.infoGit?.listeBranchesCommit }}</td>
+                  </tr>
                   </tbody>
                 </table>
 

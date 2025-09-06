@@ -1,6 +1,7 @@
 package org.projectcontrol.server.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class InfoGitDto {
 
@@ -9,6 +10,9 @@ public class InfoGitDto {
     private String idCommitComplet;
     private String branche;
     private String message;
+    private List<String> fichiersNonCommite;
+    private List<String> fichiersNonTracke;
+    private List<String> listeBranchesCommit;
 
     public LocalDateTime getDate() {
         return date;
@@ -48,5 +52,29 @@ public class InfoGitDto {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public List<String> getFichiersNonCommite() {
+        return fichiersNonCommite;
+    }
+
+    public void setFichiersNonCommite(List<String> fichiersNonCommite) {
+        this.fichiersNonCommite = fichiersNonCommite;
+    }
+
+    public List<String> getFichiersNonTracke() {
+        return fichiersNonTracke;
+    }
+
+    public void setFichiersNonTracke(List<String> fichiersNonTracke) {
+        this.fichiersNonTracke = fichiersNonTracke;
+    }
+
+    public List<String> getListeBranchesCommit() {
+        return listeBranchesCommit;
+    }
+
+    public void setListeBranchesCommit(List<String> listeBranchesCommit) {
+        this.listeBranchesCommit = listeBranchesCommit;
     }
 }

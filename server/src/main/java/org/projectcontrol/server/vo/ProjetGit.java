@@ -9,8 +9,9 @@ public class ProjetGit {
     private String idCommitComplet;
     private String branche;
     private String message;
-    private boolean fichiersNonCommite;
     private List<String> listeBranchesCommit;
+    private List<String> fichiersNonCommite;
+    private List<String> fichiersNonTracke;
 
     public LocalDateTime getDate() {
         return date;
@@ -52,19 +53,27 @@ public class ProjetGit {
         this.message = message;
     }
 
-    public boolean isFichiersNonCommite() {
-        return fichiersNonCommite;
-    }
-
-    public void setFichiersNonCommite(boolean fichiersNonCommite) {
-        this.fichiersNonCommite = fichiersNonCommite;
-    }
-
     public List<String> getListeBranchesCommit() {
         return listeBranchesCommit;
     }
 
     public void setListeBranchesCommit(List<String> listeBranchesCommit) {
         this.listeBranchesCommit = listeBranchesCommit;
+    }
+
+    public List<String> getFichiersNonCommite() {
+        return fichiersNonCommite;
+    }
+
+    public void setFichiersNonCommite(List<String> fichiersNonCommite) {
+        this.fichiersNonCommite = fichiersNonCommite;
+    }
+
+    public List<String> getFichiersNonTracke() {
+        return fichiersNonTracke;
+    }
+
+    public void setFichiersNonTracke(List<String> fichiersNonTracke) {
+        this.fichiersNonTracke = fichiersNonTracke;
     }
 }

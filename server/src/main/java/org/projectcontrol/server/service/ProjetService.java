@@ -9,9 +9,14 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.projectcontrol.core.service.PomParserService;
 import org.projectcontrol.server.dto.*;
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
@@ -381,13 +386,6 @@ public class ProjetService {
                 var projetDto = new ProjetDto();
                 analyseProjet(projet);
                 projetDto.setNom(projet.getNom());
-//                projetDto.setDescription(projet.getDescription());
-//                projetDto.setFichierPom(projet.getFichierPom());
-//                projetDto.setPackageJson(projet.getPackageJson());
-//                projetDto.setGoMod(projet.getGoMod());
-//                projetDto.setCargoToml(projet.getCargoToml());
-//                projetDto.setRepertoire(projet.getRepertoire());
-//                projetDto.setDateModification(projet.getDateModification());
                 if (projet.getProjetPom() != null) {
                     var pom = projet.getProjetPom();
                     copiePom(pom, projetDto);
@@ -569,7 +567,8 @@ public class ProjetService {
     private void analyseGit(Path pathGit, ProjetGit resultat) {
         try (Repository repository = new RepositoryBuilder().setGitDir(pathGit.toFile()).readEnvironment().findGitDir().build()) {
 
-            RevCommit latestCommit = new Git(repository).
+            Git git = new Git(repository);
+            RevCommit latestCommit = git.
                     log().
                     setMaxCount(1).
                     call().
@@ -583,6 +582,38 @@ public class ProjetService {
             resultat.setBranche(repository.getFullBranch());
             var date = Instant.ofEpochSecond(latestCommit.getCommitTime());
             resultat.setDate(LocalDateTime.ofInstant(date, ZoneOffset.systemDefault()));
+
+            Status status = git.status().call();
+            if (!status.isClean()) {
+                resultat.setFichiersNonTracke(List.of(status.getUntracked().toArray(new String[0])));
+                resultat.setFichiersNonCommite(List.of(status.getModified().toArray(new String[0])));
+            } else {
+                resultat.setFichiersNonCommite(List.of());
+                resultat.setFichiersNonTracke(List.of());
+            }
+
+            ObjectId head = repository.resolve("HEAD");
+            try (RevWalk walk = new RevWalk(repository)) {
+                RevCommit commit = walk.parseCommit(head);
+
+                List<Ref> branches = git.branchList()
+                        .setListMode(ListBranchCommand.ListMode.ALL)
+                        .call();
+
+                LOGGER.info("Branches contenant le commit courant :");
+                for (Ref ref : branches) {
+                    boolean contains = git.branchList()
+                            .setContains(commit.getName())
+                            .call()
+                            .stream()
+                            .anyMatch(r -> r.getName().equals(ref.getName()));
+
+                    if (contains) {
+                        LOGGER.info("  {}", ref.getName());
+                    }
+                }
+            }
+
         } catch (Exception e) {
             LOGGER.error("Erreur lors de l'analyse du projet {}", pathGit, e);
         }
