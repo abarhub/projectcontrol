@@ -592,6 +592,7 @@ public class ProjetService {
                 resultat.setFichiersNonTracke(List.of());
             }
 
+            resultat.setListeBranchesCommit(new ArrayList<>());
             ObjectId head = repository.resolve("HEAD");
             try (RevWalk walk = new RevWalk(repository)) {
                 RevCommit commit = walk.parseCommit(head);
@@ -610,6 +611,7 @@ public class ProjetService {
 
                     if (contains) {
                         LOGGER.info("  {}", ref.getName());
+                        resultat.getListeBranchesCommit().add(ref.getName());
                     }
                 }
             }
