@@ -10,6 +10,7 @@ import {MajVersion} from '../maj-version/maj-version';
 import {MajVersionService} from '../../service/maj-version.service';
 import {ChangementConfigService} from '../../service/changement-config.service';
 import {ChangementConfig} from '../changement-config/changement-config';
+import {Run} from '../run/run';
 
 @Component({
   selector: 'app-details',
@@ -18,7 +19,8 @@ import {ChangementConfig} from '../changement-config/changement-config';
     DetailsProjet,
     RouterLink,
     MajVersion,
-    ChangementConfig
+    ChangementConfig,
+    Run
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
@@ -38,6 +40,8 @@ export class Details implements AfterViewInit {
 
   @ViewChild(ChangementConfig) changementConfig!: ChangementConfig;
 
+
+  @ViewChild(Run) run!: Run;
 
   private majVersionModal?: Modal;
 
@@ -130,5 +134,14 @@ export class Details implements AfterViewInit {
 
   private alerte(message: string) {
     this.toasterService.show("message : " + message);
+  }
+
+  listDependances($event: MouseEvent) {
+    $event?.preventDefault();
+    let nomProjet = this.nomProjet();
+    let groupeProjet = this.groupeProjet();
+    if (groupeProjet && nomProjet) {
+      this.run.show(groupeProjet, nomProjet);
+    }
   }
 }

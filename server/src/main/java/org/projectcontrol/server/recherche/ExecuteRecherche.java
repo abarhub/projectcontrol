@@ -20,7 +20,6 @@ public class ExecuteRecherche {
 
     private final String id;
     private final GrepService grepService;
-    //    private final List<LigneResultatDto> resultatDtoList=new CopyOnWriteArrayList<>();
     private final BlockingQueue<LigneResultatDto> resultatDtoList = new LinkedBlockingQueue<>();
     private boolean fini = false;
 

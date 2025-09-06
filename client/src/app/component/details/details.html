@@ -21,6 +21,7 @@
     <div class="btn-group" role="group" aria-label="Basic example">
       <button type="button" class="btn btn-primary" (click)="majVersion2($event)">Mise à jour version</button>
       <button type="button" class="btn btn-primary" (click)="listConfig($event)">Liste configuration</button>
+      <button type="button" class="btn btn-primary" (click)="listDependances($event)">Liste des dépendances</button>
       <button type="button" class="btn btn-primary" (click)="recharger($event)">Recharger</button>
     </div>
 
@@ -46,5 +47,7 @@
   <app-maj-version #majVersion id="majVersionId"></app-maj-version>
 
   <app-changement-config #changementConfig id="changementConfigId"></app-changement-config>
+
+  <app-run #run id="runId"  ></app-run>
 
 </div>

@@ -1,0 +1,42 @@
+<!-- Modal -->
+<div class="modal fade modal-xl" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" #toastEl>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Liste des dépendances</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+<!--        <form [formGroup]="myForm">-->
+
+<!--          <div>-->
+<!--            <label for="commit-initial">Commit inital : </label>-->
+<!--            <input id="commit-initial" type="text" />-->
+<!--          </div>-->
+
+<!--          <div>-->
+<!--            <label for="commit-final">Commit final : </label>-->
+<!--            <input id="commit-final" type="text" formControlName="commitFinal"/>-->
+<!--          </div>-->
+
+<!--        </form>-->
+
+        <div>
+
+          @for (message of messages; track $index) {
+            <pre>{{message}}</pre>
+          }
+
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" (click)="enregistrer($event)">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
