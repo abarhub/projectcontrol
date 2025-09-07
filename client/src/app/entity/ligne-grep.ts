@@ -6,5 +6,6 @@ export class LigneGrep {
   ligne: string = '';
   trouve: boolean = false;
   range: Interval[] = [];
-
+  lignesDecoupees: string[] = [];
+  debutTrouve: boolean = false;
 }

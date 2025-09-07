@@ -8,4 +8,5 @@ export class LigneResultat {
   fichier: string = '';
   repertoireParent: string = '';
   trouve: boolean = false;
+  listeLigneGrep: LigneGrep[]|null = null;
 }

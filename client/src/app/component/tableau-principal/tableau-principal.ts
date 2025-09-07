@@ -15,7 +15,8 @@ import {RechercheService} from '../../service/recherche.service';
 import {LigneResultat} from '../../entity/LigneResultat';
 import {catchError, concatMap, delayWhen, expand, map, Observable, of, timer} from 'rxjs';
 import {ReponseRechercheInitial} from '../../entity/reponse-recherche-initial';
-import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante'; // Column Definition Type Interface
+import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante';
+import {LigneGrep} from '../../entity/ligne-grep'; // Column Definition Type Interface
 
 
 @Component({
@@ -235,20 +236,28 @@ export class TableauPrincipal {
       } else if (resultat.ligne) {
         no++;
         tableau.set(no, resultat);
-      } else if(resultat.lignes2){
-        for (let j = 0; j < resultat.lignes2.length; j++) {
-          no++;
-          let item = resultat.lignes2[j];
-          let ligne: LigneResultat = new LigneResultat();
-          ligne.ligne = item.ligne;
-          ligne.noLigne = item.noLigne;
-          ligne.fichier = resultat.fichier;
-          ligne.trouve=item.trouve;
-          tableau.set(no, ligne);
-        }
+      } else if (resultat.lignes2) {
+        let ligne: LigneResultat = new LigneResultat();
+        ligne.listeLigneGrep = resultat.lignes2;
+        ligne.fichier = resultat.fichier;
+        this.analyse(ligne.listeLigneGrep);
+        tableau.set(no, ligne);
+        no++;
+        // for (let j = 0; j < resultat.lignes2.length; j++) {
+        //   no++;
+        //   let item = resultat.lignes2[j];
+        //   let ligne: LigneResultat = new LigneResultat();
+        //   ligne.ligne = item.ligne;
+        //   ligne.noLigne = item.noLigne;
+        //   ligne.fichier = resultat.fichier;
+        //   ligne.trouve = item.trouve;
+        //   ligne.ligneGrep = item;
+        //   tableau.set(no, ligne);
+        // }
       }
       //tableau.set(i0 + i + 1, resultat);
     }
+    console.log('tableau :', tableau);
     this.resultatRecherche = tableau;
   }
 
@@ -328,4 +337,45 @@ export class TableauPrincipal {
   //   }
   //
   // }
+  private analyse(listeLigneGrep: LigneGrep[]) {
+    for (let i = 0; i < listeLigneGrep.length; i++) {
+      let ligneGrep = listeLigneGrep[i];
+      if (ligneGrep.trouve) {
+        if (ligneGrep.range) {
+          let liste: string[] = [];
+          let debutRouge = false;
+          let pos = 0;
+          for (let i = 0; i < ligneGrep.range.length; i++) {
+            let range = ligneGrep.range[i];
+            if (range.debut == pos) {
+              let s = ligneGrep.ligne.substring(pos, range.fin+1);
+              liste.push(s);
+              pos = range.fin + 1;
+              if (i == 0) {
+                debutRouge = true;
+              }
+            } else {
+              let s = ligneGrep.ligne.substring(pos, range.debut - 1+1);
+              liste.push(s);
+              s = ligneGrep.ligne.substring(range.debut, range.fin+1);
+              liste.push(s);
+              pos = range.fin + 1;
+              if (i == 0) {
+                debutRouge = false;
+              }
+            }
+          }
+          if(pos < ligneGrep.ligne.length) {
+            let s = ligneGrep.ligne.substring(pos, ligneGrep.ligne.length);
+            liste.push(s);
+          }
+          if (liste) {
+            ligneGrep.lignesDecoupees = liste;
+            ligneGrep.debutTrouve = debutRouge;
+          }
+        }
+      }
+    }
+
+  }
 }

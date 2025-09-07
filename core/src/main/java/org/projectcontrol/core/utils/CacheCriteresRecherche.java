@@ -4,8 +4,11 @@ import com.google.common.base.Splitter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class CacheCriteresRecherche {
 
@@ -63,5 +66,54 @@ public class CacheCriteresRecherche {
 
     public List<String> getCheminXPath() {
         return cheminXPath;
+    }
+
+    public List<Interval> getPositionsTexte(String contenu) {
+        List<Interval> liste = new ArrayList<>();
+        if (StringUtils.containsAny(contenu, texte2)) {
+            for (var s : texte2) {
+                var index = contenu.indexOf(s);
+                if (index != -1) {
+                    liste.add(new Interval(index, index + s.length() - 1));
+                    index += s.length();
+                    while (index < contenu.length()) {
+                        index = contenu.indexOf(s, index);
+                        if (index != -1) {
+                            liste.add(new Interval(index, index + s.length() - 1));
+                        } else {
+                            break;
+                        }
+                        index += s.length();
+                    }
+                }
+            }
+        }
+        if (CollectionUtils.isNotEmpty(regexes2)) {
+            for (Pattern regex : regexes2) {
+                var matcher = Pattern.compile(regex.pattern()).matcher(contenu);
+                while (matcher.find()) {
+                    liste.add(new Interval(matcher.start(), matcher.end()));
+                }
+            }
+        }
+        if (!liste.isEmpty()) {
+            liste = liste.stream().sorted(Comparator.comparing(Interval::debut))
+                    .collect(Collectors.toList());
+            for (int i = 0; i < liste.size() - 1; i++) {
+                if (i > 0) {
+                    var precedent = liste.get(i - 1);
+                    var actuel = liste.get(i);
+                    if (precedent.fin() >= actuel.debut() || precedent.fin() + 1 == actuel.debut()) {
+                        Interval interval = new Interval(precedent.debut(), Math.max(actuel.fin(), precedent.fin()));
+                        liste.set(i - 1, interval);
+                        liste.remove(i);
+                        i--;
+                    }
+                }
+            }
+            return liste;
+        } else {
+            return null;
+        }
     }
 }

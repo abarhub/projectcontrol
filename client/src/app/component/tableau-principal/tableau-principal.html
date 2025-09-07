@@ -56,17 +56,18 @@
           <div>Recherche</div>
 
           <form [formGroup]="formGrouId3">
-          <div class="input-group">
+            <div class="input-group">
               <input type="text" [value]="critereRecherche" formControlName="recherche"
                      class="form-control" placeholder="Critere de recherche">
-              <select class="form-select max-width100" aria-label="Default select example" formControlName="typeRecherche">
+              <select class="form-select max-width100" aria-label="Default select example"
+                      formControlName="typeRecherche">
                 <option [value]="TYPE_RECHERCHE_TEXTE">Texte</option>
                 <option [value]="TYPE_RECHERCHE_REGEXP">Regex</option>
                 <option [value]="TYPE_RECHERCHE_CHEMIN">Chemin</option>
                 <option [value]="TYPE_RECHERCHE_XPATH">XPath</option>
               </select>
               <button (click)="rechercher($event)" class="btn btn-outline-secondary" type="button">Rechercher</button>
-          </div>
+            </div>
           </form>
 
           @if (chargementRecherche) {
@@ -83,10 +84,34 @@
                 </tr>
                 </thead>
                 @for (ligne of resultatRecherche | keyvalue; track ligne.key) {
-                  <tr>
-                    <td>{{ ligne.value.fichier }} : {{ ligne.value.noLigne }}</td>
-                    <td [ngClass]="ligne.value.trouve ? 'trouve' : ''">{{ ligne.value.ligne }}</td>
-                  </tr>
+                  @if (ligne.value.listeLigneGrep) {
+                    @for (ligneGrep of ligne.value.listeLigneGrep; track ligneGrep.noLigne) {
+                      <tr>
+                        <td>{{ ligne.value.fichier }} : {{ ligneGrep.noLigne }}</td>
+                        <td>
+                          @if (ligneGrep.trouve) {
+                            @for (ligne2 of ligneGrep.lignesDecoupees; track $index) {
+                              @if ((ligneGrep.debutTrouve && $index % 2 == 0) || (!ligneGrep.debutTrouve && $index % 2 == 1)) {
+                                <span class="trouve formatted">{{ ligne2 }}</span>
+                              } @else {
+                                <span class="formatted">{{ ligne2 }}</span>
+                              }
+                            }
+                            <br/>
+                          } @else {
+                            <span class="formatted">{{ ligneGrep.ligne }}</span><br/>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  } @else {
+                    <tr>
+                      <td>{{ ligne.value.fichier }} : {{ ligne.value.noLigne }}</td>
+
+                      <td [ngClass]="ligne.value.trouve ? 'trouve' : ''">{{ ligne.value.ligne }}</td>
+
+                    </tr>
+                  }
                 }
               </table>
             } @else {

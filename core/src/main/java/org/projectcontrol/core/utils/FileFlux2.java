@@ -32,7 +32,7 @@ public class FileFlux2 {
                     int n = 0;
                     for (FileFlux.Ligne l : window) {
                         boolean trouve2 = n == avant;
-                        LigneGrep ligneGrep = convertie(l, trouve2);
+                        LigneGrep ligneGrep = convertie(l, trouve2, cacheCriteresRecherche);
                         bloc.add(ligneGrep);
                         n++;
                     }
@@ -47,11 +47,14 @@ public class FileFlux2 {
                 .flatMapMany(FileFlux2::fusionnerBlocs);
     }
 
-    private static LigneGrep convertie(FileFlux.Ligne l, boolean trouve2) {
+    private static LigneGrep convertie(FileFlux.Ligne l, boolean trouve2, CacheCriteresRecherche cacheCriteresRecherche) {
         LigneGrep ligneGrep = new LigneGrep();
         ligneGrep.setNoLigne(l.numero());
         ligneGrep.setLigne(l.contenu());
         ligneGrep.setTrouve(trouve2);
+        if(trouve2) {
+            ligneGrep.setRange(cacheCriteresRecherche.getPositionsTexte(l.contenu()));
+        }
         return ligneGrep;
     }
 
