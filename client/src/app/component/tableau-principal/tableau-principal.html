@@ -85,7 +85,7 @@
                 @for (ligne of resultatRecherche | keyvalue; track ligne.key) {
                   <tr>
                     <td>{{ ligne.value.fichier }} : {{ ligne.value.noLigne }}</td>
-                    <td>{{ ligne.value.ligne }}</td>
+                    <td [ngClass]="ligne.value.trouve ? 'trouve' : ''">{{ ligne.value.ligne }}</td>
                   </tr>
                 }
               </table>

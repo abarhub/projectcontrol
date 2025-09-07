@@ -2,7 +2,7 @@ import {Component, signal} from '@angular/core';
 import {ProjetService} from '../../service/projet.service';
 import {Projet} from '../../entity/projet';
 import {GroupeProjet} from '../../entity/groupe-projet';
-import {KeyValuePipe} from '@angular/common';
+import {KeyValuePipe, NgClass} from '@angular/common';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {LigneTableauPrincipal} from './ligne-tableau-principal';
 import {AgGridAngular} from 'ag-grid-angular'; // Angular Data Grid Component
@@ -23,7 +23,8 @@ import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante'
   imports: [
     KeyValuePipe,
     ReactiveFormsModule,
-    AgGridAngular
+    AgGridAngular,
+    NgClass
   ],
   templateUrl: './tableau-principal.html',
   styleUrl: './tableau-principal.scss'
@@ -230,9 +231,21 @@ export class TableauPrincipal {
           ligne.fichier = resultat.fichier;
           tableau.set(no, ligne);
         }
+
       } else if (resultat.ligne) {
         no++;
         tableau.set(no, resultat);
+      } else if(resultat.lignes2){
+        for (let j = 0; j < resultat.lignes2.length; j++) {
+          no++;
+          let item = resultat.lignes2[j];
+          let ligne: LigneResultat = new LigneResultat();
+          ligne.ligne = item.ligne;
+          ligne.noLigne = item.noLigne;
+          ligne.fichier = resultat.fichier;
+          ligne.trouve=item.trouve;
+          tableau.set(no, ligne);
+        }
       }
       //tableau.set(i0 + i + 1, resultat);
     }

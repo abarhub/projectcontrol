@@ -50,6 +50,7 @@ public class ExecuteRecherche {
         var ligneResultatDto = new LigneResultatDto();
         ligneResultatDto.setNoLigne(ligne.noLigneDebut());
         ligneResultatDto.setLignes(ligne.lignes());
+        ligneResultatDto.setLignes2(ligne.lignes2());
         Path path = ligne.ficher();
         ligneResultatDto.setFichier(repertoireProjet.relativize(path).toString());
         ligneResultatDto.setRepertoireParent(repertoireProjet.toString());

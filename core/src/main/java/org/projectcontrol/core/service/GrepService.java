@@ -186,7 +186,7 @@ public class GrepService {
                                     }
                                     if (jsonNode != null) {
                                         String texte = Joiner.on('.').join(chemin) + "=" + jsonNode;
-                                        LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
+                                        LignesRecherche l = new LignesRecherche(0, List.of(texte), null, file, List.of(0));
                                         LOGGER.debug("ajout de {}", l);
                                         processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                                     }
@@ -208,7 +208,7 @@ public class GrepService {
                                 var documentStr = parcourtYml(documentInitial, chemin);
                                 if (documentStr != null) {
                                     String texte = Joiner.on('.').join(chemin) + ": " + documentStr;
-                                    LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
+                                    LignesRecherche l = new LignesRecherche(0, List.of(texte), null, file, List.of(0));
                                     LOGGER.debug("ajout de {}", l);
                                     processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                                 }
@@ -252,7 +252,7 @@ public class GrepService {
                                 texte = texte2.toString();
                             }
                             String name = chemin + ": " + texte;
-                            LignesRecherche l = new LignesRecherche(0, List.of(name), file, List.of(0));
+                            LignesRecherche l = new LignesRecherche(0, List.of(name), null, file, List.of(0));
                             LOGGER.debug("ajout de {}", l);
                             processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                         }
@@ -300,7 +300,7 @@ public class GrepService {
                         listeLigne.add(x);
                         List<Integer> listeNoLigne = new ArrayList<>();
                         listeNoLigne.add(noLigne);
-                        LignesRecherche l = new LignesRecherche(noLigne, listeLigne, file, listeNoLigne);
+                        LignesRecherche l = new LignesRecherche(noLigne, listeLigne, null, file, listeNoLigne);
                         LOGGER.debug("ajout de {}", l);
                         processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                     });
@@ -343,7 +343,7 @@ public class GrepService {
                         listeLigne.add(x);
                         List<Integer> listeNoLigne = new ArrayList<>();
                         listeNoLigne.add(noLigne);
-                        LignesRecherche l = new LignesRecherche(noLigne, listeLigne, file, listeNoLigne);
+                        LignesRecherche l = new LignesRecherche(noLigne, listeLigne, null, file, listeNoLigne);
                         LOGGER.debug("ajout de {}", l);
                         processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                     });
@@ -631,15 +631,27 @@ public class GrepService {
 
         Flux<FileFlux.Ligne> flux = FileFlux.lire(cheminFichier);
 
-        FileFlux.rechercher(flux, motif, avant, avant, cacheCriteresRecherche)
-                .doOnNext(x -> {
-                    LOGGER.info("ligne: {}", x);
-                    LignesRecherche l = new LignesRecherche(0, x.getLignes(),
-                            Path.of(cheminFichier), List.of(0));
-                    LOGGER.debug("ajout de {}", l);
-                    processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
-                })
-                .blockLast();
+        if (false) {
+            FileFlux.rechercher(flux, motif, avant, avant, cacheCriteresRecherche)
+                    .doOnNext(x -> {
+                        LOGGER.info("ligne: {}", x);
+                        LignesRecherche l = new LignesRecherche(0, x.getLignes(), null,
+                                Path.of(cheminFichier), List.of(0));
+                        LOGGER.debug("ajout de {}", l);
+                        processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
+                    })
+                    .blockLast();
+        } else {
+            FileFlux2.rechercherEtFusionner(flux, List.of(), avant, avant, cacheCriteresRecherche)
+                    .doOnNext(x -> {
+                        LOGGER.info("ligne: {}", x);
+                        LignesRecherche l = new LignesRecherche(0, null, x.getLignes(),
+                                Path.of(cheminFichier), List.of(0));
+                        LOGGER.debug("ajout de {}", l);
+                        processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
+                    })
+                    .blockLast();
+        }
 
     }
 

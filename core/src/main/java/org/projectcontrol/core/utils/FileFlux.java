@@ -5,9 +5,9 @@ import reactor.core.publisher.Flux;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class FileFlux {
     public static Flux<Ligne> lire(String cheminFichier) {
