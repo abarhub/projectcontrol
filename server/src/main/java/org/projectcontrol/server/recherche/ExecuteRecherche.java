@@ -49,7 +49,7 @@ public class ExecuteRecherche {
     private LigneResultatDto convertie(LignesRecherche ligne, Path repertoireProjet) {
         var ligneResultatDto = new LigneResultatDto();
         ligneResultatDto.setNoLigne(ligne.noLigneDebut());
-        ligneResultatDto.setLigne(ligne.lignes().getFirst());
+        ligneResultatDto.setLignes(ligne.lignes());
         Path path = ligne.ficher();
         ligneResultatDto.setFichier(repertoireProjet.relativize(path).toString());
         ligneResultatDto.setRepertoireParent(repertoireProjet.toString());

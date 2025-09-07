@@ -190,7 +190,7 @@ export class TableauPrincipal {
     let typeRecherche = this.formGrouId3.value.typeRecherche;
     if (groupeId && texte && typeRecherche) {
       this.chargementRecherche = true;
-      this.resultatRecherche=new Map<number, LigneResultat>();
+      this.resultatRecherche = new Map<number, LigneResultat>();
 
       this.pollApiDataWithId(groupeId, texte, typeRecherche, 1000).subscribe({
         next: (data) => {
@@ -217,9 +217,24 @@ export class TableauPrincipal {
         i0 = key;
       }
     }
+    let no = 0;
     for (let i = 0; i < data.length; i++) {
       let resultat = data[i];
-      tableau.set(i0 + i + 1, resultat);
+      if (resultat.lignes) {
+        for (let j = 0; j < resultat.lignes.length; j++) {
+          no++;
+          let item = resultat.lignes[j];
+          let ligne: LigneResultat = new LigneResultat();
+          ligne.ligne = item;
+          ligne.noLigne = no;
+          ligne.fichier = resultat.fichier;
+          tableau.set(no, ligne);
+        }
+      } else if (resultat.ligne) {
+        no++;
+        tableau.set(no, resultat);
+      }
+      //tableau.set(i0 + i + 1, resultat);
     }
     this.resultatRecherche = tableau;
   }

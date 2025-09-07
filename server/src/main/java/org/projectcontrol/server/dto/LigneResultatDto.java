@@ -1,9 +1,12 @@
 package org.projectcontrol.server.dto;
 
+import java.util.List;
+
 public class LigneResultatDto {
 
     private int noLigne;
     private String ligne;
+    private List<String> lignes;
     private String fichier;
     private String repertoireParent;
 
@@ -37,5 +40,13 @@ public class LigneResultatDto {
 
     public void setRepertoireParent(String repertoireParent) {
         this.repertoireParent = repertoireParent;
+    }
+
+    public List<String> getLignes() {
+        return lignes;
+    }
+
+    public void setLignes(List<String> lignes) {
+        this.lignes = lignes;
     }
 }
