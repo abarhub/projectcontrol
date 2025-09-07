@@ -31,16 +31,6 @@ public class ExecuteRecherche {
     public void run(GrepParam grepParam, String repertoire) throws Exception {
         try {
             fini = false;
-//            var res0 = grepService.search(grepParam)
-//                    .collectList();
-//            var res = res0.block();
-//
-//            Path repertoireProjet = Path.of(repertoire);
-//            for (LignesRecherche ligne : res) {
-//                var ligneResultatDto = convertie(ligne, repertoireProjet);
-//                resultatDtoList.add(ligneResultatDto);
-//            }
-//            fini = true;
             grepService.search(grepParam)
                     .subscribe(ligne -> {
                         resultatDtoList.add(convertie(ligne, Path.of(repertoire)));

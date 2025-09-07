@@ -65,30 +65,10 @@ public class GrepService {
             return Flux.empty();
         }
 
-//        return Observable.create(emitter -> {
-//
-//            try {
-//                List<String> repertoires = grepParam.getRepertoires();
-//                for (String repertoire : repertoires) {
-//                    if (StringUtils.isNotBlank(repertoire)) {
-//                        search(repertoire, emitter, grepParam);
-//                    }
-//                }
-//            } catch (Exception e) {
-//                emitter.onError(e);
-//            } finally {
-//                if (!emitter.isDisposed()) {
-//                    emitter.onComplete();
-//                }
-//            }
-//
-//        });
-
         Sinks.Many<LignesRecherche> sink = Sinks.many().multicast().onBackpressureBuffer();
 
         Flux<LignesRecherche> hotFlux = sink.asFlux();
 
-//        return Observable.create(emitter -> {
 
         try {
             List<String> repertoires = grepParam.getRepertoires();
@@ -100,13 +80,9 @@ public class GrepService {
         } catch (Exception e) {
             sink.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
         } finally {
-//                if (!emitter.isDisposed()) {
-//                    emitter.onComplete();
-//                }
             sink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
         }
 
-        //});
         return hotFlux;
     }
 
@@ -200,9 +176,6 @@ public class GrepService {
                             listeNoLigne.add(noLigne);
                             LignesRecherche l = new LignesRecherche(noLigne, listeLigne, file, listeNoLigne);
                             LOGGER.debug("ajout de {}", l);
-                            //if (!processor.isDisposed()) {
-                            //    processor.onNext(l);
-                            //}
                             processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                         });
             } catch (Exception e) {
@@ -232,9 +205,6 @@ public class GrepService {
                                         String texte = Joiner.on('.').join(chemin) + "=" + jsonNode;
                                         LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
                                         LOGGER.debug("ajout de {}", l);
-//                                        if (!processor.isDisposed()) {
-//                                            processor.onNext(l);
-//                                        }
                                         processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                                     }
                                 }
@@ -257,9 +227,6 @@ public class GrepService {
                                     String texte = Joiner.on('.').join(chemin) + ": " + documentStr;
                                     LignesRecherche l = new LignesRecherche(0, List.of(texte), file, List.of(0));
                                     LOGGER.debug("ajout de {}", l);
-//                                    if (!processor.isDisposed()) {
-//                                        processor.onNext(l);
-//                                    }
                                     processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                                 }
                             }
@@ -304,9 +271,6 @@ public class GrepService {
                             String name = chemin + ": " + texte;
                             LignesRecherche l = new LignesRecherche(0, List.of(name), file, List.of(0));
                             LOGGER.debug("ajout de {}", l);
-//                            if (!processor.isDisposed()) {
-//                                processor.onNext(l);
-//                            }
                             processor.emitNext(l, Sinks.EmitFailureHandler.FAIL_FAST);
                         }
                     }

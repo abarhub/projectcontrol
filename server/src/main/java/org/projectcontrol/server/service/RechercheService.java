@@ -86,22 +86,7 @@ public class RechercheService {
             return 0;
         });
         map.put(idStr, executeRecherche);
-//        var res0 = grepService.search(grepParam)
-//                .collectList();
-//        var res = res0.block();
         LOGGER.info("search : {} - {} OK", groupId, texte);
-
-//        Path repertoireProjet = Path.of(repertoire);
-//        for (org.projectcontrol.core.utils.LignesRecherche ligne : res) {
-//            var ligneResultatDto = new LigneResultatDto();
-//            ligneResultatDto.setNoLigne(ligne.noLigneDebut());
-//            ligneResultatDto.setLigne(ligne.lignes().getFirst());
-//            Path path = ligne.ficher();
-//            ligneResultatDto.setFichier(repertoireProjet.relativize(path).toString());
-//            ligneResultatDto.setRepertoireParent(repertoire);
-//            resultat.add(ligneResultatDto);
-//        }
-//        LOGGER.info("nb resultat : {}", resultat.size());
 
         ReponseRechercheInitialDto resultatDto = new ReponseRechercheInitialDto();
         resultatDto.setId(idStr);
