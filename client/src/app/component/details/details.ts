@@ -11,6 +11,8 @@ import {MajVersionService} from '../../service/maj-version.service';
 import {ChangementConfigService} from '../../service/changement-config.service';
 import {ChangementConfig} from '../changement-config/changement-config';
 import {Run} from '../run/run';
+import {Button} from 'primeng/button';
+import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 
 @Component({
   selector: 'app-details',
@@ -20,7 +22,13 @@ import {Run} from '../run/run';
     RouterLink,
     MajVersion,
     ChangementConfig,
-    Run
+    Run,
+    Button,
+    Tabs,
+    TabList,
+    Tab,
+    TabPanels,
+    TabPanel
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
