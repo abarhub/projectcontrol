@@ -59,6 +59,13 @@
       </p-tabpanel>
 
       <p-tabpanel value="1">
+
+        @let groupeProjet1 = groupeProjet();
+        @let projetId1 = projet()?.id;
+        @if (groupeProjet1 && projetId1) {
+          <app-recherche [groupeId]="groupeProjet1 || null" [projetId]="projetId1 || null"></app-recherche>
+        }
+
       </p-tabpanel>
 
       <p-tabpanel value="2">

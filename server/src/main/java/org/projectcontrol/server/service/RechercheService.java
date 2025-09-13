@@ -1,5 +1,6 @@
 package org.projectcontrol.server.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.projectcontrol.core.service.GrepService;
 import org.projectcontrol.core.utils.GrepCriteresRecherche;
 import org.projectcontrol.core.utils.GrepParam;
@@ -13,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,11 +40,12 @@ public class RechercheService {
         executorService = Executors.newCachedThreadPool();
     }
 
-    public ReponseRechercheInitialDto recherche(String groupId, String texte, String typeRecherche) throws IOException {
+    public ReponseRechercheInitialDto recherche(String groupId, String texte, String typeRecherche,
+                                                String projetId) throws IOException {
         List<LigneResultatDto> resultat = new ArrayList<>();
 
         LOGGER.info("recherche groupe : {} - {} ...", groupId, texte);
-        List<ProjetDto> listeGroupe = projetService.getProjetDto(groupId, null);
+        List<ProjetDto> listeGroupe = projetService.getProjetDto(groupId, (StringUtils.isBlank(projetId) ? null : projetId));
         LOGGER.info("recherche groupe : {} - {} OK", groupId, texte);
 
         if (listeGroupe == null || listeGroupe.size() != 1) {
@@ -95,8 +96,8 @@ public class RechercheService {
     }
 
     public ReponseRechercheSuivanteDto rechercheSuite(String id) {
-        if(map.containsKey(id)) {
-            var recherche=map.get(id);
+        if (map.containsKey(id)) {
+            var recherche = map.get(id);
             ReponseRechercheSuivanteDto resultatDto = new ReponseRechercheSuivanteDto();
             resultatDto.setListeLignes(recherche.getResultatDtoList());
             resultatDto.setTerminer(recherche.isFini());
@@ -108,7 +109,7 @@ public class RechercheService {
         }
     }
 
-    private String getId(){
+    private String getId() {
         long id = count.getAndIncrement();
         var idStr = "" + id;
         return idStr;

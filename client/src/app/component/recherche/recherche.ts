@@ -37,6 +37,7 @@ export class Recherche {
   chargementRecherche: boolean = false;
 
   groupeId = input<string | null>(null);
+  projetId = input<string | null>(null);
 
   constructor(private rechercheService: RechercheService) {
 
@@ -45,13 +46,14 @@ export class Recherche {
   rechercher($event: MouseEvent) {
     $event.preventDefault();
     const groupeId = this.groupeId();
+    const projetId = this.projetId() || '';
     let texte = this.formGrouId3.value.recherche;
     let typeRecherche = this.formGrouId3.value.typeRecherche;
     if (groupeId && texte && typeRecherche) {
       this.chargementRecherche = true;
       this.resultatRecherche = new Map<number, LigneResultat>();
 
-      this.pollApiDataWithId(groupeId, texte, typeRecherche, 1000).subscribe({
+      this.pollApiDataWithId(groupeId, projetId, texte, typeRecherche, 1000).subscribe({
         next: (data) => {
           console.log('resultat', data);
           this.ajouteTableau(data);
@@ -126,15 +128,14 @@ export class Recherche {
    * @returns Un Observable qui émet les données de l'API de polling.
    */
   private pollApiDataWithId(
-    //firstUrl: string,
-    //pollUrlTemplate: string,
     groupeId: string,
+    projetId: string,
     texte: string,
     typeRecherche: string,
     temporisation: number
   ): Observable<LigneResultat[]> {
     // 1. Premier appel API
-    return this.rechercheService.getRecherche(groupeId, texte, typeRecherche).pipe(
+    return this.rechercheService.getRecherche(groupeId, texte, typeRecherche, projetId).pipe(
       // 2. Traitement de la réponse pour extraire l'ID.
       // L'opérateur map est utilisé pour transformer le JSON de la réponse.
       // map((response) => response.json()),

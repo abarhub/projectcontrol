@@ -13,6 +13,7 @@ import {ChangementConfig} from '../changement-config/changement-config';
 import {Run} from '../run/run';
 import {Button} from 'primeng/button';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
+import {Recherche} from '../recherche/recherche';
 
 @Component({
   selector: 'app-details',
@@ -28,7 +29,8 @@ import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
     TabList,
     Tab,
     TabPanels,
-    TabPanel
+    TabPanel,
+    Recherche
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
