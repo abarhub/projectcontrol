@@ -2,7 +2,7 @@ import {Component, signal} from '@angular/core';
 import {ProjetService} from '../../service/projet.service';
 import {Projet} from '../../entity/projet';
 import {GroupeProjet} from '../../entity/groupe-projet';
-import {KeyValuePipe, NgClass} from '@angular/common';
+import {KeyValuePipe} from '@angular/common';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {LigneTableauPrincipal} from './ligne-tableau-principal';
 import {AgGridAngular} from 'ag-grid-angular'; // Angular Data Grid Component
@@ -11,12 +11,6 @@ import {LinkCellAgGrid} from './cell/link-cell-aggrid';
 import {GitCellAgGrid} from './cell/git-cell-aggrid';
 import {ModuleCellAgGrid} from './cell/module-cell-aggrid';
 import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid';
-import {RechercheService} from '../../service/recherche.service';
-import {LigneResultat} from '../../entity/LigneResultat';
-import {catchError, concatMap, delayWhen, expand, map, Observable, of, timer} from 'rxjs';
-import {ReponseRechercheInitial} from '../../entity/reponse-recherche-initial';
-import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante';
-import {LigneGrep} from '../../entity/ligne-grep';
 import {Recherche} from '../recherche/recherche'; // Column Definition Type Interface
 
 
@@ -26,7 +20,6 @@ import {Recherche} from '../recherche/recherche'; // Column Definition Type Inte
     KeyValuePipe,
     ReactiveFormsModule,
     AgGridAngular,
-    NgClass,
     Recherche
   ],
   templateUrl: './tableau-principal.html',
