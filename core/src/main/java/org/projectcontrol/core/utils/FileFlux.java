@@ -1,15 +1,24 @@
 package org.projectcontrol.core.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class FileFlux {
+
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileFlux.class);
+
+    private FileFlux() {
+    }
+
     public static Flux<Ligne> lire(String cheminFichier) {
         return Flux.generate(
                 () -> {
@@ -37,7 +46,7 @@ public class FileFlux {
                     try {
                         state.reader.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOGGER.error("erreur pour fermer le flux (fichier:{})", cheminFichier, e);
                     }
                 }
         );

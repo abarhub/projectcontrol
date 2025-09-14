@@ -18,12 +18,10 @@ public class FileFlux2 {
                     String contenu = ligneCentrale.contenu();
 
                     List<String> motifsTrouves = motifs.stream()
-                            //.filter(contenu::contains)
                             .filter(cacheCriteresRecherche::contientTexte)
                             .collect(Collectors.toList());
                     boolean trouve = cacheCriteresRecherche.contientTexte(contenu);
 
-//                    if (motifsTrouves.isEmpty()) {
                     if (!trouve) {
                         return Flux.empty();
                     }

@@ -39,12 +39,14 @@ public class CacheCriteresRecherche {
     }
 
     private boolean contientTexte(String ligne, String[] texte, List<Pattern> regexes) {
-        if (StringUtils.containsAny(ligne, texte)) {
-            return true;
+        if (texte != null && texte.length > 0) {
+            if (StringUtils.containsAny(ligne, texte)) {
+                return true;
+            }
         }
         if (CollectionUtils.isNotEmpty(regexes)) {
             for (Pattern regex : regexes) {
-                if (Pattern.matches(regex.pattern(), ligne)) {
+                if (regex.matcher(ligne).find()) {
                     return true;
                 }
             }
