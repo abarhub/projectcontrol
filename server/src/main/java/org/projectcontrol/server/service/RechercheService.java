@@ -41,7 +41,7 @@ public class RechercheService {
     }
 
     public ReponseRechercheInitialDto recherche(String groupId, String texte, String typeRecherche,
-                                                String projetId) throws IOException {
+                                                String projetId, int nbLignesAutour) throws IOException {
         List<LigneResultatDto> resultat = new ArrayList<>();
 
         LOGGER.info("recherche groupe : {} - {} ...", groupId, texte);
@@ -59,6 +59,9 @@ public class RechercheService {
         grepParam.setExclusions(GrepService.REPERTOIRES_EXCLUSION);
         grepParam.setExtensionsFichiers(GrepService.EXTENSIONS_FICHIERS_DEFAULT);
         grepParam.setRepertoires(List.of(repertoire));
+        if (nbLignesAutour > 0) {
+            grepParam.setNbLignesAutour(nbLignesAutour);
+        }
         GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
         switch (typeRecherche) {
             case "xpath":
@@ -72,6 +75,7 @@ public class RechercheService {
                 break;
             case "regexp":
                 criteresRecherche.setRegex(List.of(texte));
+                break;
             default:
                 throw new IllegalArgumentException("typeRecherche inconnu : " + typeRecherche);
         }

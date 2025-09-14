@@ -25,9 +25,10 @@ public class RechercheControler {
     public ReponseRechercheInitialDto getListProjet(@PathVariable String groupId,
                                                     @RequestParam String texte,
                                                     @RequestParam String typeRecherche,
-                                                    @RequestParam(required = false) String projetId) throws IOException {
+                                                    @RequestParam(required = false) String projetId,
+                                                    @RequestParam(required = false,defaultValue = "0") int nbLignesAutour) throws IOException {
         LOGGER.info("recherche : {} - {}", groupId, texte);
-        return rechercheService.recherche(groupId, texte, typeRecherche, projetId);
+        return rechercheService.recherche(groupId, texte, typeRecherche, projetId, nbLignesAutour);
     }
 
     @GetMapping(path = "/suite/{id}", produces = "application/json")

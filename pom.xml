@@ -37,6 +37,7 @@
         <java.version>21</java.version>
         <picocli.version>4.7.7</picocli.version>
         <core.version>0.0.1-SNAPSHOT</core.version>
+        <client.version>0.0.1-SNAPSHOT</client.version>
     </properties>
 
     <dependencyManagement>
@@ -51,6 +52,12 @@
                 <groupId>org.projectcontrol</groupId>
                 <artifactId>core</artifactId>
                 <version>${core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.projectcontrol</groupId>
+                <artifactId>client</artifactId>
+                <version>${client.version}</version>
             </dependency>
 
         </dependencies>

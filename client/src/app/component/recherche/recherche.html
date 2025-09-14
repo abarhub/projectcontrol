@@ -2,12 +2,19 @@
   <div class="input-group">
     <input type="text" [value]="critereRecherche" formControlName="recherche"
            class="form-control" placeholder="Critere de recherche">
-    <select class="form-select max-width100" aria-label="Default select example"
+    <select class="form-select select-type-recherche" aria-label="Default select example"
             formControlName="typeRecherche">
       <option [value]="TYPE_RECHERCHE_TEXTE">Texte</option>
       <option [value]="TYPE_RECHERCHE_REGEXP">Regex</option>
       <option [value]="TYPE_RECHERCHE_CHEMIN">Chemin</option>
       <option [value]="TYPE_RECHERCHE_XPATH">XPath</option>
+    </select>
+    <select class="form-select select-type-recherche" aria-label="Default select example"
+            formControlName="nbLignesAutour">
+      <option [value]="0">0</option>
+      <option [value]="3">3</option>
+      <option [value]="5">5</option>
+      <option [value]="10">10</option>
     </select>
     <button (click)="rechercher($event)" class="btn btn-outline-secondary" type="button">Rechercher</button>
   </div>

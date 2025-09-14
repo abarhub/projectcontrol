@@ -1,4 +1,4 @@
-import {Component, signal} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {ProjetService} from '../../service/projet.service';
 import {Projet} from '../../entity/projet';
 import {GroupeProjet} from '../../entity/groupe-projet';
@@ -11,7 +11,8 @@ import {LinkCellAgGrid} from './cell/link-cell-aggrid';
 import {GitCellAgGrid} from './cell/git-cell-aggrid';
 import {ModuleCellAgGrid} from './cell/module-cell-aggrid';
 import {ModuleDetailsCellAgGrid} from './cell/module-details-cell-aggrid';
-import {Recherche} from '../recherche/recherche'; // Column Definition Type Interface
+import {Recherche} from '../recherche/recherche';
+import {ToasterService} from '../../service/toaster.service'; // Column Definition Type Interface
 
 
 @Component({
@@ -44,6 +45,8 @@ export class TableauPrincipal {
   pagination = true;
   paginationPageSize = 15;
   paginationPageSizeSelector = [15, 50, 100, 300];
+
+  private toasterService = inject(ToasterService);
 
   // Column Definitions: Defines the columns to be displayed.
   colDefs: ColDef[] = [
@@ -120,6 +123,8 @@ export class TableauPrincipal {
           },
           error: (error) => {
             console.error(error);
+            this.toasterService.show("Erreur pour lister les projets");
+            this.chargement = false;
           },
           complete: () => {
             this.chargement = false;

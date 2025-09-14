@@ -1,4 +1,4 @@
-import {Component, input} from '@angular/core';
+import {Component, inject, input} from '@angular/core';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {KeyValuePipe, NgClass} from '@angular/common';
 import {LigneResultat} from '../../entity/LigneResultat';
@@ -7,6 +7,7 @@ import {ReponseRechercheInitial} from '../../entity/reponse-recherche-initial';
 import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante';
 import {LigneGrep} from '../../entity/ligne-grep';
 import {RechercheService} from '../../service/recherche.service';
+import {ToasterService} from '../../service/toaster.service';
 
 @Component({
   selector: 'app-recherche',
@@ -28,7 +29,8 @@ export class Recherche {
 
   formGrouId3 = new FormGroup({
     recherche: new FormControl(''),
-    typeRecherche: new FormControl(this.TYPE_RECHERCHE_TEXTE)
+    typeRecherche: new FormControl(this.TYPE_RECHERCHE_TEXTE),
+    nbLignesAutour: new FormControl('0'),
   });
 
 
@@ -38,6 +40,8 @@ export class Recherche {
 
   groupeId = input<string | null>(null);
   projetId = input<string | null>(null);
+
+  private toasterService = inject(ToasterService);
 
   constructor(private rechercheService: RechercheService) {
 
@@ -49,17 +53,24 @@ export class Recherche {
     const projetId = this.projetId() || '';
     let texte = this.formGrouId3.value.recherche;
     let typeRecherche = this.formGrouId3.value.typeRecherche;
+    let nbLignesAutour = this.formGrouId3.value.nbLignesAutour;
     if (groupeId && texte && typeRecherche) {
       this.chargementRecherche = true;
       this.resultatRecherche = new Map<number, LigneResultat>();
+      let nbLignesAutourNumber=0;
+      if (nbLignesAutour) {
+        nbLignesAutourNumber = parseInt(nbLignesAutour);
+      }
 
-      this.pollApiDataWithId(groupeId, projetId, texte, typeRecherche, 1000).subscribe({
+      this.pollApiDataWithId(groupeId, projetId, texte, typeRecherche, 1000, nbLignesAutourNumber).subscribe({
         next: (data) => {
           console.log('resultat', data);
           this.ajouteTableau(data);
         },
         error: (error) => {
           console.error(error);
+          this.toasterService.show("Erreur pour la recherche");
+          this.chargementRecherche = false;
         },
         complete: () => {
           this.chargementRecherche = false;
@@ -102,19 +113,7 @@ export class Recherche {
         this.analyse(ligne.listeLigneGrep);
         tableau.set(no, ligne);
         no++;
-        // for (let j = 0; j < resultat.lignes2.length; j++) {
-        //   no++;
-        //   let item = resultat.lignes2[j];
-        //   let ligne: LigneResultat = new LigneResultat();
-        //   ligne.ligne = item.ligne;
-        //   ligne.noLigne = item.noLigne;
-        //   ligne.fichier = resultat.fichier;
-        //   ligne.trouve = item.trouve;
-        //   ligne.ligneGrep = item;
-        //   tableau.set(no, ligne);
-        // }
       }
-      //tableau.set(i0 + i + 1, resultat);
     }
     console.log('tableau :', tableau);
     this.resultatRecherche = tableau;
@@ -132,10 +131,11 @@ export class Recherche {
     projetId: string,
     texte: string,
     typeRecherche: string,
-    temporisation: number
+    temporisation: number,
+    nbLignesAutour: number
   ): Observable<LigneResultat[]> {
     // 1. Premier appel API
-    return this.rechercheService.getRecherche(groupeId, texte, typeRecherche, projetId).pipe(
+    return this.rechercheService.getRecherche(groupeId, texte, typeRecherche, projetId, nbLignesAutour).pipe(
       // 2. Traitement de la réponse pour extraire l'ID.
       // L'opérateur map est utilisé pour transformer le JSON de la réponse.
       // map((response) => response.json()),

@@ -13,10 +13,12 @@ export class RechercheService {
   private http = inject(HttpClient);
   private baseUrl = '/api/recherche';
 
-  getRecherche(groupeId: string, texte: string, typeRecherche: string, projetId: string): Observable<ReponseRechercheInitial> {
+  getRecherche(groupeId: string, texte: string, typeRecherche: string,
+               projetId: string,  nbLignesAutour:number): Observable<ReponseRechercheInitial> {
     return this.http.get<ReponseRechercheInitial>(this.baseUrl + '/' + groupeId + "?texte=" + encodeURIComponent(texte) +
         "&typeRecherche=" + encodeURIComponent(typeRecherche) +
-      ((projetId) ? "&projetId=" + encodeURIComponent(typeRecherche) : ""));
+      ((projetId) ? "&projetId=" + encodeURIComponent(typeRecherche) : "")+
+      ((nbLignesAutour>0) ? "&nbLignesAutour=" + nbLignesAutour : ""));
   }
 
   getRechercheSuivant(id: string): Observable<ReponseRechercheSuivante> {
