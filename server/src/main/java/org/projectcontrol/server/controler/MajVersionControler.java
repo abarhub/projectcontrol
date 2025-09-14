@@ -2,11 +2,9 @@ package org.projectcontrol.server.controler;
 
 import org.projectcontrol.server.dto.ListVersionDto;
 import org.projectcontrol.server.dto.MajVersionDto;
-import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.service.ProjetService;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("api/maj-version")
 public class MajVersionControler {
@@ -25,8 +23,8 @@ public class MajVersionControler {
 
     @PostMapping(path = "/{groupId}/{nomProjet}", produces = "application/json")
     public void updateVersions(@PathVariable String groupId,
-                                           @PathVariable String nomProjet,
-                                         @RequestBody MajVersionDto majVersion) throws Exception {
+                               @PathVariable String nomProjet,
+                               @RequestBody MajVersionDto majVersion) throws Exception {
         projetService.updateVersion(groupId, nomProjet, majVersion);
     }
 }

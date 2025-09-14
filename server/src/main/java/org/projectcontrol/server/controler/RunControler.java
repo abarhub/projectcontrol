@@ -1,7 +1,5 @@
 package org.projectcontrol.server.controler;
 
-import org.projectcontrol.server.dto.ReponseRechercheInitialDto;
-import org.projectcontrol.server.dto.ReponseRechercheSuivanteDto;
 import org.projectcontrol.server.dto.ReponseRunInitialDto;
 import org.projectcontrol.server.dto.ReponseRunSuivanteDto;
 import org.projectcontrol.server.service.Run2Service;
@@ -11,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("api/run")
 public class RunControler {

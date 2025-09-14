@@ -10,7 +10,7 @@ import {MajVersionApi} from '../entity/maj-version-api';
 export class MajVersionService {
 
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8080/api/maj-version';
+  private baseUrl = '/api/maj-version';
 
 
   getVersions(groupeId: string, nom: string): Observable<ListeVersions> {

@@ -11,7 +11,7 @@ export class RechercheService {
 
 
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8080/api/recherche';
+  private baseUrl = '/api/recherche';
 
   getRecherche(groupeId: string, texte: string, typeRecherche: string, projetId: string): Observable<ReponseRechercheInitial> {
     return this.http.get<ReponseRechercheInitial>(this.baseUrl + '/' + groupeId + "?texte=" + encodeURIComponent(texte) +

@@ -73,8 +73,7 @@
               "buildTarget": "projectcontrolclient:build:production"
             },
             "development": {
-              "buildTarget": "projectcontrolclient:build:development",
-              "proxyConfig": "src/proxy.conf.json"
+              "buildTarget": "projectcontrolclient:build:development"
             }
           },
           "defaultConfiguration": "development"

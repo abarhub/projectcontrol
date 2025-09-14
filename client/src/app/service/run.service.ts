@@ -10,7 +10,7 @@ import {ReponseRunSuivante} from '../entity/reponse-run-suivante';
 export class RunService {
 
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8080/api/run';
+  private baseUrl = '/api/run';
 
   getRun(groupeId: string, nom: string, action: string): Observable<ReponseRunInitial> {
     return this.http.get<ReponseRunInitial>(this.baseUrl + '/' + groupeId + '/' + nom + "?action=" + encodeURIComponent(action));

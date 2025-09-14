@@ -8,7 +8,7 @@ import {ChangementConfigApi} from '../entity/changement-config-api';
 })
 export class ChangementConfigService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8080/api/changement-config';
+  private baseUrl = '/api/changement-config';
 
 
   getChangementConfig(groupeId: string, nom: string, comminInitial: string, commitFinal: string): Observable<ChangementConfigApi> {
