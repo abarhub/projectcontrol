@@ -1,7 +1,5 @@
 package org.projectcontrol.server.controler;
 
-import org.projectcontrol.server.dto.LigneResultatDto;
-import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.dto.ReponseRechercheInitialDto;
 import org.projectcontrol.server.dto.ReponseRechercheSuivanteDto;
 import org.projectcontrol.server.service.RechercheService;
@@ -10,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
