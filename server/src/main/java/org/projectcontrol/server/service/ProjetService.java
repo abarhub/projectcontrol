@@ -11,12 +11,15 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryBuilder;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.projectcontrol.core.service.PomParserService;
 import org.projectcontrol.server.dto.*;
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
@@ -29,7 +32,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -891,6 +897,102 @@ public class ProjetService {
                         }
                     }
                 }
+            }
+        }
+        return resultat;
+    }
+
+    public List<LigneGitDto> getGitCommentaire(String groupId, String nomProjet, int nbCommit) {
+        List<LigneGitDto> resultat = new ArrayList<>();
+        List<Projet> liste = getProjets(groupId, nomProjet);
+        if (liste != null && liste.size() == 1) {
+
+            Projet projet = liste.getFirst();
+            try {
+                File repoDir = new File(projet.getRepertoire(), ".git");
+                Repository repo = new FileRepositoryBuilder()
+                        .setGitDir(repoDir)
+                        .readEnvironment()
+                        .findGitDir()
+                        .build();
+
+                try (Git git = new Git(repo)) {
+
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+// --- 1. Diff des modifications non commitées ---
+                    ByteArrayOutputStream workingDiffOut = new ByteArrayOutputStream();
+                    DiffFormatter diffFormatter = new DiffFormatter(workingDiffOut);
+                    diffFormatter.setRepository(repo);
+                    diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
+                    diffFormatter.setDetectRenames(true);
+
+                    ObjectReader reader = repo.newObjectReader();
+                    CanonicalTreeParser headTreeIter = new CanonicalTreeParser();
+                    ObjectId headTree = repo.resolve("HEAD^{tree}");
+                    headTreeIter.reset(reader, headTree);
+
+                    FileTreeIterator workingTreeIter = new FileTreeIterator(repo);
+
+                    List<DiffEntry> diffs = diffFormatter.scan(headTreeIter, workingTreeIter);
+                    for (DiffEntry entry : diffs) {
+                        diffFormatter.format(entry);
+                    }
+
+                    out.write("### Uncommitted changes ###\n".getBytes());
+                    out.write(workingDiffOut.toByteArray());
+
+                    if(nbCommit>0) {
+                        // --- 2. Patch des 3 derniers commits ---
+                        Iterable<RevCommit> commits = git.log()
+                                .setMaxCount(nbCommit)
+                                .call();
+
+                        for (RevCommit commit : commits) {
+                            if (commit.getParentCount() == 0) {
+                                continue; // pas de parent (ex: premier commit)
+                            }
+
+                            ByteArrayOutputStream commitPatchOut = new ByteArrayOutputStream();
+                            DiffFormatter commitFormatter = new DiffFormatter(commitPatchOut);
+                            commitFormatter.setRepository(repo);
+                            commitFormatter.setDiffComparator(RawTextComparator.DEFAULT);
+                            commitFormatter.setDetectRenames(true);
+
+                            RevCommit parent = commit.getParent(0);
+                            commitFormatter.format(parent, commit);
+
+                            out.write(("\n### Commit " + commit.getName() + " ###\n").getBytes());
+                            out.write(commitPatchOut.toByteArray());
+                        }
+                    }
+
+
+                    String text = out.toString(StandardCharsets.UTF_8);
+
+                    String[] lines = text.split("\\R");
+
+                    List<LigneGitDto> list = Arrays.stream(lines)
+                            .map(x -> {
+                                LigneGitDto ligne = new LigneGitDto();
+                                if (StringUtils.isNotBlank(x)) {
+                                    if (x.startsWith("+")) {
+                                        if (StringUtils.containsAny(x, "//", "/*","*/")) {
+                                            ligne.setCommentaire(true);
+                                        }
+                                    }
+                                }
+                                ligne.setLigne(x);
+                                return ligne;
+                            }).toList();
+
+                    resultat.addAll(list);
+                }
+
+                LOGGER.info("Patch généré");
+            } catch (Exception e) {
+                LOGGER.error("Erreur pour générer le patch", e);
+                throw new RuntimeException(e);
             }
         }
         return resultat;

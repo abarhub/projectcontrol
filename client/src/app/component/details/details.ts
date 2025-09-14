@@ -7,13 +7,13 @@ import {DetailsProjet} from '../details-projet/details-projet';
 import {Modal} from 'bootstrap';
 import {ToasterService} from '../../service/toaster.service';
 import {MajVersion} from '../maj-version/maj-version';
-import {MajVersionService} from '../../service/maj-version.service';
 import {ChangementConfigService} from '../../service/changement-config.service';
 import {ChangementConfig} from '../changement-config/changement-config';
 import {Run} from '../run/run';
 import {Button} from 'primeng/button';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 import {Recherche} from '../recherche/recherche';
+import {GitCommentaire} from '../git-commentaire/git-commentaire';
 
 @Component({
   selector: 'app-details',
@@ -30,7 +30,8 @@ import {Recherche} from '../recherche/recherche';
     Tab,
     TabPanels,
     TabPanel,
-    Recherche
+    Recherche,
+    GitCommentaire
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
@@ -52,6 +53,8 @@ export class Details implements AfterViewInit {
 
 
   @ViewChild(Run) run!: Run;
+
+  @ViewChild(GitCommentaire) gitCommentaire!: GitCommentaire;
 
   private majVersionModal?: Modal;
 
@@ -161,6 +164,15 @@ export class Details implements AfterViewInit {
     let groupeProjet = this.groupeProjet();
     if (groupeProjet && nomProjet) {
       this.run.show(groupeProjet, nomProjet, 'dependencyAnalyse');
+    }
+  }
+
+  analyseCommentaires($event: MouseEvent) {
+    $event?.preventDefault();
+    let nomProjet = this.nomProjet();
+    let groupeProjet = this.groupeProjet();
+    if (groupeProjet && nomProjet) {
+      this.gitCommentaire.show(groupeProjet, nomProjet);
     }
   }
 }

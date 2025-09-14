@@ -25,6 +25,8 @@
       <button type="button" class="btn btn-primary" (click)="listDependances($event)">Liste des dépendances</button>
       <button type="button" class="btn btn-primary" (click)="analyseDependances($event)">Analyse des dépendances
       </button>
+      <button type="button" class="btn btn-primary" (click)="analyseCommentaires($event)">Liste commentaire dans les commits
+      </button>
       <button type="button" class="btn btn-primary" (click)="recharger($event)">Recharger</button>
       <p-button label="Check"/>
     </div>
@@ -79,5 +81,7 @@
   <app-changement-config #changementConfig id="changementConfigId"></app-changement-config>
 
   <app-run #run id="runId"></app-run>
+
+  <app-git-commentaire #gitCommentaire id="gitCommentaireId"></app-git-commentaire>
 
 </div>

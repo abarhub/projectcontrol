@@ -1,0 +1,49 @@
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" #toastEl>
+  <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Mise à jour de la version</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <form [formGroup]="myForm">
+
+          <div>
+            <label for="commit-initial">Nombre de commit : </label>
+            <input id="commit-initial" type="text" formControlName="nbCommit"/>
+          </div>
+
+        </form>
+
+        <div class="overflow-x-auto">
+
+          @if (chargementMessages) {
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          } @else {
+
+            @if (messages) {
+              @for (message of messages; track $index) {
+                @if (message.commentaire) {
+                  <span class="formatted commentaire">{{message.ligne}}</span><br/>
+                } @else {
+                  <span class="formatted">{{message.ligne}}</span><br/>
+                }
+              }
+            }
+
+          }
+
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" (click)="enregistrer($event)">Charger</button>
+      </div>
+    </div>
+  </div>
+</div>
