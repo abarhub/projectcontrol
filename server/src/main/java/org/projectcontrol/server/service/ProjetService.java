@@ -20,7 +20,11 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.projectcontrol.core.service.GrepService;
 import org.projectcontrol.core.service.PomParserService;
+import org.projectcontrol.core.utils.GrepCriteresRecherche;
+import org.projectcontrol.core.utils.GrepParam;
+import org.projectcontrol.core.utils.LignesRecherche;
 import org.projectcontrol.server.dto.*;
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
 import org.projectcontrol.server.mapper.ProjetMapper;
@@ -83,15 +87,19 @@ public class ProjetService {
 
     private final ChangementConfigService changementConfigService;
 
+    private final GrepService grepService;
+
     public ProjetService(ApplicationProperties applicationProperties, ProjetMapper projetMapper,
                          RechercheRepertoireService rechercheRepertoireService,
-                         PomParserService pomParserService, ChangementConfigService changementConfigService) {
+                         PomParserService pomParserService, ChangementConfigService changementConfigService,
+                         GrepService grepService) {
         this.projetMapper = projetMapper;
         this.rechercheRepertoireService = rechercheRepertoireService;
         this.pomParserService = pomParserService;
         this.changementConfigService = changementConfigService;
         LOGGER.info("creation repertoireProjet: {}", repertoireProjet);
         this.applicationProperties = applicationProperties;
+        this.grepService = grepService;
     }
 
     @PostConstruct
@@ -341,6 +349,7 @@ public class ProjetService {
                 var version = projet.getProjetPom().getArtifact().version();
                 if (StringUtils.isNotBlank(version)) {
                     List<String> listeVersion = getListeVersion(version);
+                    rechercheVersion(projet, version);
                     ListVersionDto listVersionDto = new ListVersionDto();
                     listVersionDto.setVersionActuelle(version);
                     listVersionDto.setListeVersions(listeVersion);
@@ -350,6 +359,48 @@ public class ProjetService {
             }
         }
         return null;
+    }
+
+    private void rechercheVersion(Projet projet, String version) {
+        String repertoire = projet.getRepertoire();
+        GrepParam grepParam = new GrepParam();
+        grepParam.setRepertoires(List.of(repertoire));
+        grepParam.setExclusions(GrepService.REPERTOIRES_EXCLUSION);
+        grepParam.setExtensionsFichiers(List.of("xml"));
+        grepParam.setNbLignesAutour(3);
+        GrepCriteresRecherche criteresRecherche = new GrepCriteresRecherche();
+        criteresRecherche.setTexte(List.of(version));
+        grepParam.setCriteresRecherche(criteresRecherche);
+        try {
+            List<LigneResultatDto> resultatDtoList = new ArrayList<>();
+            grepService.search(grepParam)
+                    .subscribe(ligne -> {
+                        if(ligne != null) {
+                            if(Objects.equals(ligne.ficher().getFileName().toString(),"pom.xml")) {
+                                resultatDtoList.add(convertie(ligne, Path.of(repertoire)));
+                            }
+                        }
+                    }, (error) -> {
+                        LOGGER.error("Erreur lors de l'analyse du projet {}", repertoire, error);
+                    }, () -> {
+                        //fini = true;
+                    });
+            LOGGER.info("ResultatDtoList {}", resultatDtoList);
+        } catch (Exception e) {
+            LOGGER.error("Erreur", e);
+        }
+    }
+
+
+    private LigneResultatDto convertie(LignesRecherche ligne, Path repertoireProjet) {
+        var ligneResultatDto = new LigneResultatDto();
+        ligneResultatDto.setNoLigne(ligne.noLigneDebut());
+        ligneResultatDto.setLignes(ligne.lignes());
+        ligneResultatDto.setLignes2(ligne.lignes2());
+        Path path = ligne.ficher();
+        ligneResultatDto.setFichier(repertoireProjet.relativize(path).toString());
+        ligneResultatDto.setRepertoireParent(repertoireProjet.toString());
+        return ligneResultatDto;
     }
 
     private List<String> getListeVersion(String versionActuelle) {
@@ -942,7 +993,7 @@ public class ProjetService {
                     out.write("### Uncommitted changes ###\n".getBytes());
                     out.write(workingDiffOut.toByteArray());
 
-                    if(nbCommit>0) {
+                    if (nbCommit > 0) {
                         // --- 2. Patch des 3 derniers commits ---
                         Iterable<RevCommit> commits = git.log()
                                 .setMaxCount(nbCommit)
@@ -977,7 +1028,7 @@ public class ProjetService {
                                 LigneGitDto ligne = new LigneGitDto();
                                 if (StringUtils.isNotBlank(x)) {
                                     if (x.startsWith("+")) {
-                                        if (StringUtils.containsAny(x, "//", "/*","*/")) {
+                                        if (StringUtils.containsAny(x, "//", "/*", "*/")) {
                                             ligne.setCommentaire(true);
                                         }
                                     }
