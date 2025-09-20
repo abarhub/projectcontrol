@@ -271,9 +271,10 @@ public class ProjetService {
                     int noLigne2 = ligne2.getNoLigne();
                     String s = ligne2.getLigne();
                     if (ligne2.isTrouve()) {
-                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, true, ligne2.getRange()));
+                        String id = newIdLigne();
+                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, true, ligne2.getRange(), id));
                     } else {
-                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, false, null));
+                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, false, null, null));
                     }
                 }
             }
@@ -281,6 +282,10 @@ public class ProjetService {
         }
 
         return listeFichiersAModifie;
+    }
+
+    private String newIdLigne() {
+        return "ligne%05d".formatted(idHash.getAndIncrement());
     }
 
     private String hash() {

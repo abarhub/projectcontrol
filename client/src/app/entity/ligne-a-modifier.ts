@@ -5,4 +5,6 @@ export class LigneAModifier {
   contenu: string = '';
   trouve: boolean = false;
   positionModification: Interval[] = [];
+  nomForm: string = '';
+  id: string = '';
 }

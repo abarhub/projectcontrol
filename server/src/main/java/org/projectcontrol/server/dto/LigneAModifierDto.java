@@ -4,5 +4,5 @@ import org.projectcontrol.core.utils.Interval;
 
 import java.util.List;
 
-public record LigneAModifierDto(int ligne,String contenu,boolean trouve, List<Interval> positionModification) {
+public record LigneAModifierDto(int ligne,String contenu,boolean trouve, List<Interval> positionModification, String id) {
 }

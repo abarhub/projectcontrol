@@ -1,6 +1,6 @@
 import {Component, ElementRef, inject, OnDestroy, ViewChild} from '@angular/core';
 import {Modal} from 'bootstrap';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {KeyValuePipe} from '@angular/common';
 import {MajVersionService} from '../../service/maj-version.service';
 import {Subscription} from 'rxjs';
@@ -34,6 +34,7 @@ export class MajVersion implements OnDestroy {
   private nomProjet: string = "";
   private toasterService = inject(ToasterService);
   fichierAModifier: FichierAModifier[] = [];
+  listeNomFormCheckLigne: string[] = [];
 
   changes: Subscription | undefined;
   changes2: Subscription | undefined;
@@ -118,33 +119,36 @@ export class MajVersion implements OnDestroy {
                       this.versions.set("" + (i + 1), version);
                     }
                   }
-                  let tab = data.fichierAModifier;
-
-                  // for(let i=0;i<tab.length;i++) {
-                  //   let file=tab[i];
-                  //   let myMap=file.lignes;
-                  //   if(myMap) {
-                  //     let map2 = new Map<number, string>();
-                  //     for (const key of Array.from(myMap.keys()).sort((a, b) => a - b)) {
-                  //       const val = myMap.get(key);
-                  //       if (val) {
-                  //         map2.set(key, val);
-                  //       }
-                  //     }
-                  //     file.lignes = map2;
-                  //   }
-                  // }
-
-
-                  this.fichierAModifier=tab;
+                  this.fichierAModifier = data.fichierAModifier;
                   console.log("fichierAModifier", this.fichierAModifier);
 
+                  this.listeNomFormCheckLigne = [];
                   this.myForm.setValue({
                     choixVersion: '',
                     versionAutre: '',
                     commitActive: true,
                     commitMessage: ""
                   });
+
+                  if (this.fichierAModifier) {
+                    let no = 1;
+                    for (let i = 0; i < this.fichierAModifier.length; i++) {
+                      let file = this.fichierAModifier[i];
+
+                      if (file.lignes) {
+                        for (let [k, v] of Object.entries(file.lignes)) {
+                          let value = v
+                          if (value && value.trouve) {
+                            let nom = "ligne" + no;
+                            this.myForm.addControl(nom, new FormControl(true));
+                            value.nomForm = nom;
+                            this.listeNomFormCheckLigne.push(nom);
+                          }
+                        }
+                      }
+
+                    }
+                  }
 
                   this.majVersionModal.show();
                 }
@@ -161,10 +165,6 @@ export class MajVersion implements OnDestroy {
 
       }
     }
-  }
-
-  contientModification(ligneAModifier: LigneAModifier[], noLigne: number): boolean {
-    return ligneAModifier.findIndex((x) => x.ligne == noLigne) >= 0;
   }
 
   enregistrer($event: MouseEvent) {
