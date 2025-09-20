@@ -1,0 +1,8 @@
+import {Interval} from './interval';
+
+export class LigneAModifier {
+  ligne: number = 0;
+  contenu: string = '';
+  trouve: boolean = false;
+  positionModification: Interval[] = [];
+}

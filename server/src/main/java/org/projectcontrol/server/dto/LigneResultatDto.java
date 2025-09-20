@@ -60,4 +60,16 @@ public class LigneResultatDto {
     public void setLignes2(List<LigneGrep> lignes2) {
         this.lignes2 = lignes2;
     }
+
+    @Override
+    public String toString() {
+        return "LigneResultatDto{" +
+                "noLigne=" + noLigne +
+                ", ligne='" + ligne + '\'' +
+                ", lignes=" + lignes +
+                ", lignes2=" + lignes2 +
+                ", fichier='" + fichier + '\'' +
+                ", repertoireParent='" + repertoireParent + '\'' +
+                '}';
+    }
 }

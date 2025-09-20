@@ -1,5 +1,5 @@
 <!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" #toastEl>
+<div class="modal fade modal-xl" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" #toastEl>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -48,6 +48,42 @@
           </div>
 
         </form>
+
+        <div>
+
+          <table class="table">
+            <thead>
+            <tr>
+              <th scope="col">Nom fichier</th>
+              <th scope="col">Contenu</th>
+            </tr>
+            </thead>
+            <tbody>
+
+              @for (fichier of fichierAModifier; track $index) {
+
+                <tr>
+                <td>{{fichier.nomFichier}}</td>
+
+                  <td>
+                @for (ligne of fichier.lignes | keyvalue: null; track ligne.key) {
+                  @let ligne2=ligne.value;
+                  <span>{{ligne.key}}</span>
+                  @if (ligne2.trouve) {
+                    <span>X</span>
+                  }
+                  <span class="formatted">{{ligne2.contenu}}</span><br/>
+                }
+                  </td>
+
+                </tr>
+              }
+
+
+            </tbody>
+          </table>
+
+        </div>
 
       </div>
       <div class="modal-footer">

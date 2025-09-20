@@ -6,6 +6,8 @@ import {MajVersionService} from '../../service/maj-version.service';
 import {Subscription} from 'rxjs';
 import {MajVersionApi} from '../../entity/maj-version-api';
 import {ToasterService} from '../../service/toaster.service';
+import {FichierAModifier} from '../../entity/fichier-a-modifier';
+import {LigneAModifier} from '../../entity/ligne-a-modifier';
 
 @Component({
   selector: 'app-maj-version',
@@ -31,6 +33,7 @@ export class MajVersion implements OnDestroy {
   private groupeId: string = "";
   private nomProjet: string = "";
   private toasterService = inject(ToasterService);
+  fichierAModifier: FichierAModifier[] = [];
 
   changes: Subscription | undefined;
   changes2: Subscription | undefined;
@@ -115,6 +118,26 @@ export class MajVersion implements OnDestroy {
                       this.versions.set("" + (i + 1), version);
                     }
                   }
+                  let tab = data.fichierAModifier;
+
+                  // for(let i=0;i<tab.length;i++) {
+                  //   let file=tab[i];
+                  //   let myMap=file.lignes;
+                  //   if(myMap) {
+                  //     let map2 = new Map<number, string>();
+                  //     for (const key of Array.from(myMap.keys()).sort((a, b) => a - b)) {
+                  //       const val = myMap.get(key);
+                  //       if (val) {
+                  //         map2.set(key, val);
+                  //       }
+                  //     }
+                  //     file.lignes = map2;
+                  //   }
+                  // }
+
+
+                  this.fichierAModifier=tab;
+                  console.log("fichierAModifier", this.fichierAModifier);
 
                   this.myForm.setValue({
                     choixVersion: '',
@@ -138,6 +161,10 @@ export class MajVersion implements OnDestroy {
 
       }
     }
+  }
+
+  contientModification(ligneAModifier: LigneAModifier[], noLigne: number): boolean {
+    return ligneAModifier.findIndex((x) => x.ligne == noLigne) >= 0;
   }
 
   enregistrer($event: MouseEvent) {

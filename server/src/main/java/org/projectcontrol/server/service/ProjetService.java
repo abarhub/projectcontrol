@@ -2,6 +2,7 @@ package org.projectcontrol.server.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.hash.Hashing;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -67,6 +68,7 @@ public class ProjetService {
     private Map<String, Map<String, ProjetGroupe>> listeGroupes = new HashMap<>();
 
     private AtomicLong idProjet = new AtomicLong(1);
+    private AtomicLong idHash = new AtomicLong(1);
 
     @Value("${repertoireProjet:}")
     private String repertoireProjet;
@@ -106,29 +108,6 @@ public class ProjetService {
     public void init() {
         LOGGER.info("init repertoireProjet: {}", repertoireProjet);
     }
-
-//    public List<Projet> getProjets(String directoryPath) {
-//        LOGGER.info("répertoire: {}", directoryPath);
-//        if (directoryPath == null || directoryPath.isEmpty()) {
-//            throw new RuntimeException("Répertoire vide");
-//        }
-//        return listePom(directoryPath);
-//    }
-
-//    public List<Projet> getProjets() {
-//        String rep = this.applicationProperties.getListeProjets()
-//                .entrySet()
-//                .stream()
-//                .filter(x -> x.getValue().isDefaut())
-//                .map(x -> x.getValue().getRepertoires().getFirst())
-//                .findAny().orElse(null);
-//        LOGGER.info("répertoire: {}", rep);
-//        if (rep == null || rep.isEmpty()) {
-//            throw new RuntimeException("Répertoire vide");
-//        }
-//        return listePom(rep);
-//    }
-
 
     public List<Projet> getProjets2(String groupId) {
         var groupeOpt = this.applicationProperties.getListeProjets()
@@ -218,126 +197,6 @@ public class ProjetService {
         return null;
     }
 
-
-//    public static List<Path> findPomFiles(String directoryPath) throws IOException {
-//        Path startPath = Paths.get(directoryPath);
-//
-//        try (Stream<Path> walk = Files.walk(startPath)) {
-//            return walk
-//                    .filter(Files::isRegularFile) // Ne traiter que les fichiers réguliers
-//                    .filter(path -> path.getFileName().toString().equals("pom.xml")) // Chercher les fichiers nommés pom.xml
-//                    .filter(ProjetService::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
-//                    .collect(Collectors.toList());
-//        }
-//    }
-
-//    private static boolean isNotIgnoredDirectory(Path path) {
-//        // Vérifier si le chemin contient "target" ou "node_modules" comme nom de répertoire
-//        // Cela permet de s'assurer que même si un pom.xml se trouve dans un sous-sous-répertoire d'un répertoire ignoré, il est bien ignoré.
-//        for (Path segment : path) {
-//            String segmentName = segment.getFileName().toString();
-//            if (segmentName.equals("target") || segmentName.equals("node_modules")) {
-//                return false; // Le chemin contient un répertoire à ignorer
-//            }
-//        }
-//        return true; // Le chemin ne contient pas de répertoire à ignorer
-//    }
-
-//    public void updateProject(Projet selectedProduct) throws Exception {
-//        updateProject4(selectedProduct);
-//    }
-
-
-//    private void afficheVersion(Path inputFile, Position debut, Position fin, String versionActuelle) {
-//        List<String> listeVersions = getListeVersion(versionActuelle);
-//        List<String> liste2 = new ArrayList<>();
-//        Map<String, String> map = new HashMap<>();
-//        for (String version : listeVersions) {
-//            var libelle = "Version " + version;
-//            map.put(libelle, version);
-//            liste2.add(libelle);
-//        }
-//        final String autre = "Autre (saisir)";
-//        liste2.add(autre);
-//        Stage primaryStage = new Stage();
-//        primaryStage.setTitle("Sélectionnez la nouvelle version (version actuelle : " + versionActuelle + ")");
-//        // 1. Création de la ComboBox
-//        var comboBox = new ComboBox<String>();
-//        comboBox.setItems(FXCollections.observableArrayList(liste2));
-//        comboBox.setPromptText("Sélectionnez une option"); // Texte par défaut
-//
-//        // 2. Création du TextField (initialement masqué)
-//        var textField = new TextField();
-//        textField.setPromptText("Saisissez votre valeur");
-//        textField.setVisible(false); // Masqué par défaut
-//        textField.setManaged(false); // N'affecte pas l'agencement quand il est masqué
-//
-//        // 3. Gestion de l'affichage/masquage du TextField en fonction de la sélection de la ComboBox
-//        comboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-//            if (autre.equals(newValue)) {
-//                textField.setVisible(true);
-//                textField.setManaged(true);
-//            } else {
-//                textField.setVisible(false);
-//                textField.setManaged(false);
-//                textField.clear(); // Efface le contenu si l'option "Autre" n'est plus sélectionnée
-//            }
-//        });
-//
-//        // 4. Création du bouton de validation
-//        var validateButton = new Button("Valider");
-//        var messageLabel = new Label(); // Initialisation du label pour les messages
-//
-//        // 5. Action du bouton de validation
-//        validateButton.setOnAction(event -> {
-//            String selectedOption = comboBox.getSelectionModel().getSelectedItem();
-//            String message = "";
-//
-//            if (selectedOption == null) {
-//                message = "Veuillez sélectionner une option.";
-//            } else if (autre.equals(selectedOption)) {
-//                if (textField.getText().isEmpty()) {
-//                    message = "Veuillez saisir une valeur pour 'Autre'.";
-//                } else {
-//                    message = "Option sélectionnée : Autre, Valeur saisie : " + textField.getText();
-//                    var version = textField.getText();
-//                    if (StringUtils.isNotBlank(version)) {
-//                        try {
-//                            pomParserService.updateVersion(inputFile, version);
-
-    /// /                            this.XmlParserService.modifierFichier(inputFile.toString(), debut, fin, version);
-//                        } catch (Exception e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                    }
-//                }
-//            } else {
-//                var version = map.get(selectedOption);
-//                message = "Option sélectionnée : " + selectedOption + " (" + version + ")";
-//                if (StringUtils.isNotBlank(version)) {
-//                    try {
-//                        //this.XmlParserService.modifierFichier(inputFile.toString(), debut, fin, version);
-//                        pomParserService.updateVersion(inputFile, version);
-//                    } catch (Exception e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                }
-//            }
-//            messageLabel.setText(message);
-//        });
-//
-//        // 6. Agencement des éléments dans un VBox
-//        VBox root = new VBox(10); // Espacement de 10 pixels entre les enfants
-//        root.setPadding(new Insets(20)); // Marge intérieure de 20 pixels
-//        root.setAlignment(Pos.TOP_CENTER); // Alignement des éléments au centre en haut
-//
-//        root.getChildren().addAll(comboBox, textField, validateButton, messageLabel);
-//
-//        // 7. Création de la scène et affichage de la fenêtre
-//        Scene scene = new Scene(root, 600, 300); // Largeur, Hauteur
-//        primaryStage.setScene(scene);
-//        primaryStage.show();
-//    }
     public ListVersionDto getListeVersion(String groupId, String nomProjet) {
         LOGGER.info("LisiteVersion");
         List<Projet> liste = getProjets(groupId, nomProjet);
@@ -349,11 +208,12 @@ public class ProjetService {
                 var version = projet.getProjetPom().getArtifact().version();
                 if (StringUtils.isNotBlank(version)) {
                     List<String> listeVersion = getListeVersion(version);
-                    rechercheVersion(projet, version);
+                    List<FichierAModifieDto> listeFichierAModifie = rechercheVersion(projet, version);
                     ListVersionDto listVersionDto = new ListVersionDto();
                     listVersionDto.setVersionActuelle(version);
                     listVersionDto.setListeVersions(listeVersion);
                     listVersionDto.setMessageCommit("commit version VERSION");
+                    listVersionDto.setFichierAModifier(listeFichierAModifie);
                     return listVersionDto;
                 }
             }
@@ -361,7 +221,8 @@ public class ProjetService {
         return null;
     }
 
-    private void rechercheVersion(Projet projet, String version) {
+    private List<FichierAModifieDto> rechercheVersion(Projet projet, String version) {
+        List<FichierAModifieDto> listeFichiersAModifie = new ArrayList<>();
         String repertoire = projet.getRepertoire();
         GrepParam grepParam = new GrepParam();
         grepParam.setRepertoires(List.of(repertoire));
@@ -373,24 +234,62 @@ public class ProjetService {
         grepParam.setCriteresRecherche(criteresRecherche);
         try {
             List<LigneResultatDto> resultatDtoList = new ArrayList<>();
+            boolean erreur[] = new boolean[]{false};
             grepService.search(grepParam)
                     .subscribe(ligne -> {
-                        if(ligne != null) {
-                            if(Objects.equals(ligne.ficher().getFileName().toString(),"pom.xml")) {
+                        if (ligne != null) {
+                            if (Objects.equals(ligne.ficher().getFileName().toString(), "pom.xml")) {
                                 resultatDtoList.add(convertie(ligne, Path.of(repertoire)));
                             }
                         }
                     }, (error) -> {
                         LOGGER.error("Erreur lors de l'analyse du projet {}", repertoire, error);
+                        erreur[0] = true;
                     }, () -> {
                         //fini = true;
                     });
             LOGGER.info("ResultatDtoList {}", resultatDtoList);
+            if (!erreur[0]) {
+                listeFichiersAModifie = convertieResultatRecherche(resultatDtoList);
+            }
         } catch (Exception e) {
             LOGGER.error("Erreur", e);
         }
+        LOGGER.info("listeFichiersAModifie {}", listeFichiersAModifie);
+        return listeFichiersAModifie;
     }
 
+    private List<FichierAModifieDto> convertieResultatRecherche(List<LigneResultatDto> resultatDtoList) {
+        List<FichierAModifieDto> listeFichiersAModifie = new ArrayList<>();
+
+        for (LigneResultatDto ligne : resultatDtoList) {
+            FichierAModifieDto fichierAModifie = new FichierAModifieDto();
+            fichierAModifie.setNomFichier(ligne.getFichier());
+            fichierAModifie.setHash(hash());
+            if (!CollectionUtils.isEmpty(ligne.getLignes2())) {
+                for (var ligne2 : ligne.getLignes2()) {
+                    int noLigne2 = ligne2.getNoLigne();
+                    String s = ligne2.getLigne();
+                    if (ligne2.isTrouve()) {
+                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, true, ligne2.getRange()));
+                    } else {
+                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, false, null));
+                    }
+                }
+            }
+            listeFichiersAModifie.add(fichierAModifie);
+        }
+
+        return listeFichiersAModifie;
+    }
+
+    private String hash() {
+        var s = "%05d".formatted(idHash.getAndIncrement());
+        String sha256hex = Hashing.sha256()
+                .hashString(s, StandardCharsets.UTF_8)
+                .toString();
+        return sha256hex;
+    }
 
     private LigneResultatDto convertie(LignesRecherche ligne, Path repertoireProjet) {
         var ligneResultatDto = new LigneResultatDto();

@@ -41,4 +41,14 @@ public class LigneGrep {
     public void setRange(List<Interval> range) {
         this.range = range;
     }
+
+    @Override
+    public String toString() {
+        return "LigneGrep{" +
+                "noLigne=" + noLigne +
+                ", ligne='" + ligne + '\'' +
+                ", trouve=" + trouve +
+                ", range=" + range +
+                '}';
+    }
 }
