@@ -2,9 +2,9 @@ package org.projectcontrol.server.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.hash.Hashing;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
@@ -25,6 +25,7 @@ import org.projectcontrol.core.service.GrepService;
 import org.projectcontrol.core.service.PomParserService;
 import org.projectcontrol.core.utils.GrepCriteresRecherche;
 import org.projectcontrol.core.utils.GrepParam;
+import org.projectcontrol.core.utils.LigneAModifier;
 import org.projectcontrol.core.utils.LignesRecherche;
 import org.projectcontrol.server.dto.*;
 import org.projectcontrol.server.enumeration.ModuleProjetEnum;
@@ -65,19 +66,17 @@ public class ProjetService {
     public static final String CARGO_TOML = "Cargo.toml";
     private static final Set<String> FICHIER_PROJET = Set.of(POM_XML, PACKAGE_JSON, GO_MOD, CARGO_TOML);
 
+    private static final boolean MAJ_VERSION_METHODE2 = true;
+
     private Map<String, Map<String, ProjetGroupe>> listeGroupes = new HashMap<>();
+    private Map<String, ListVersionDto> mapListVersionDto = new HashMap<>();
 
     private AtomicLong idProjet = new AtomicLong(1);
     private AtomicLong idHash = new AtomicLong(1);
+    private Set<String> setHash = new HashSet<>();
 
     @Value("${repertoireProjet:}")
     private String repertoireProjet;
-
-//    @Autowired
-//    private XmlParserService XmlParserService;
-//
-//    @Autowired
-//    private PomParserService pomParserService;
 
     private final ApplicationProperties applicationProperties;
 
@@ -208,12 +207,15 @@ public class ProjetService {
                 var version = projet.getProjetPom().getArtifact().version();
                 if (StringUtils.isNotBlank(version)) {
                     List<String> listeVersion = getListeVersion(version);
-                    List<FichierAModifieDto> listeFichierAModifie = rechercheVersion(projet, version);
+                    String hash = hash();
+                    List<FichierAModifieDto> listeFichierAModifie = rechercheVersion(projet, version, hash);
                     ListVersionDto listVersionDto = new ListVersionDto();
                     listVersionDto.setVersionActuelle(version);
                     listVersionDto.setListeVersions(listeVersion);
                     listVersionDto.setMessageCommit("commit version VERSION");
                     listVersionDto.setFichierAModifier(listeFichierAModifie);
+                    listVersionDto.setId(hash + "_id");
+                    mapListVersionDto.put(listVersionDto.getId(), listVersionDto);
                     return listVersionDto;
                 }
             }
@@ -221,7 +223,7 @@ public class ProjetService {
         return null;
     }
 
-    private List<FichierAModifieDto> rechercheVersion(Projet projet, String version) {
+    private List<FichierAModifieDto> rechercheVersion(Projet projet, String version, String hash) {
         List<FichierAModifieDto> listeFichiersAModifie = new ArrayList<>();
         String repertoire = projet.getRepertoire();
         GrepParam grepParam = new GrepParam();
@@ -250,7 +252,7 @@ public class ProjetService {
                     });
             LOGGER.info("ResultatDtoList {}", resultatDtoList);
             if (!erreur[0]) {
-                listeFichiersAModifie = convertieResultatRecherche(resultatDtoList);
+                listeFichiersAModifie = convertieResultatRecherche(resultatDtoList, hash);
             }
         } catch (Exception e) {
             LOGGER.error("Erreur", e);
@@ -259,7 +261,7 @@ public class ProjetService {
         return listeFichiersAModifie;
     }
 
-    private List<FichierAModifieDto> convertieResultatRecherche(List<LigneResultatDto> resultatDtoList) {
+    private List<FichierAModifieDto> convertieResultatRecherche(List<LigneResultatDto> resultatDtoList, String hash) {
         List<FichierAModifieDto> listeFichiersAModifie = new ArrayList<>();
 
         for (LigneResultatDto ligne : resultatDtoList) {
@@ -271,10 +273,10 @@ public class ProjetService {
                     int noLigne2 = ligne2.getNoLigne();
                     String s = ligne2.getLigne();
                     if (ligne2.isTrouve()) {
-                        String id = newIdLigne();
-                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, true, ligne2.getRange(), id));
+                        String id = hash + "_" + newIdLigne();
+                        fichierAModifie.getLignes().add(new LigneAModifierDto(noLigne2, s, true, ligne2.getRange(), id));
                     } else {
-                        fichierAModifie.getLignes().put(noLigne2, new LigneAModifierDto(noLigne2, s, false, null, null));
+                        fichierAModifie.getLignes().add(new LigneAModifierDto(noLigne2, s, false, null, null));
                     }
                 }
             }
@@ -289,11 +291,25 @@ public class ProjetService {
     }
 
     private String hash() {
+//        var s = "%05d".formatted(idHash.getAndIncrement());
+//        String sha256hex = Hashing.sha256()
+//                .hashString(s, StandardCharsets.UTF_8)
+//                .toString();
+        return getNextHash();
+    }
+
+    private String getNextHash() {
         var s = "%05d".formatted(idHash.getAndIncrement());
-        String sha256hex = Hashing.sha256()
-                .hashString(s, StandardCharsets.UTF_8)
-                .toString();
-        return sha256hex;
+        for (int i = 0; i < 50; i++) {
+            var hash = RandomStringUtils.secure().nextAlphanumeric(5) + "_" + s;
+            if (setHash.contains(hash)) {
+                LOGGER.warn("hash deja existant : {}", hash);
+            } else {
+                setHash.add(hash);
+                return hash;
+            }
+        }
+        throw new RuntimeException("Impossible de trouver un hash disponible");
     }
 
     private LigneResultatDto convertie(LignesRecherche ligne, Path repertoireProjet) {
@@ -617,49 +633,31 @@ public class ProjetService {
             try (var reader = Files.newBufferedReader(jsonFile)) {
                 JsonNode node = mapper.reader().readTree(reader);
 
-//                resultat.append("fichier ").append(jsonFile).append("\n");
                 if (node.has("name")) {
-//                    resultat.append("nom:").append(node.get("name")).append("\n");
                     resultat.setNom(node.get("name").asText());
                 }
                 if (node.has("version")) {
-//                    resultat.append("version:").append(node.get("version")).append("\n");
                     resultat.setVersion(node.get("version").asText());
                 }
                 if (node.has("scripts")) {
-//                    resultat.append("script:").append("\n");
-//                    List<String> liste = new ArrayList<>();
                     Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("scripts").properties()) {
-//                        liste.add(script.getKey() + ":" + script.getValue().toString());
                         map.put(script.getKey(), script.getValue().asText());
                     }
-//                    Collections.sort(liste);
-//                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
                     resultat.setScript(map);
                 }
                 if (node.has("dependencies")) {
-//                    resultat.append("dependencies:").append("\n");
-//                    List<String> liste = new ArrayList<>();
                     Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("dependencies").properties()) {
-//                        liste.add(script.getKey() + ":" + script.getValue().toString());
                         map.put(script.getKey(), script.getValue().asText());
                     }
-//                    Collections.sort(liste);
-//                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
                     resultat.setDependencies(map);
                 }
                 if (node.has("devDependencies")) {
-//                    resultat.append("devDependencies:").append("\n");
-//                    List<String> liste = new ArrayList<>();
                     Map<String, String> map = new TreeMap<>();
                     for (var script : node.get("devDependencies").properties()) {
-//                        liste.add(script.getKey() + ":" + script.getValue().toString());
                         map.put(script.getKey(), script.getValue().asText());
                     }
-//                    Collections.sort(liste);
-//                    liste.forEach(x -> resultat.append("\t").append(x).append("\n"));
                     resultat.setDevDependencies(map);
                 }
             }
@@ -674,7 +672,7 @@ public class ProjetService {
             if (Files.exists(pomFile)) {
 
                 MavenXpp3Reader reader = new MavenXpp3Reader();
-                Model model = null;
+                Model model;
                 try (var fileReader = Files.newBufferedReader(pomFile)) {
                     model = reader.read(fileReader);
                 } catch (Exception e) {
@@ -690,25 +688,18 @@ public class ProjetService {
                     }
                     Parent parent = model.getParent();
                     if (parent != null) {
-//                        String s = parent.getGroupId() + ":" + parent.getArtifactId() + ":" + parent.getVersion();
-//                        resultat.append("parent:").append(s).append("\n");
                         ArtefactMaven parentArtefact = new ArtefactMaven(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
                         projetPom.setParent(parentArtefact);
 
                     } else {
-                        //resultat.append("parent:").append("\n");
+
                     }
-//                    String s = model.getGroupId() + ":" + model.getArtifactId() + ":" + model.getVersion();
-                    //resultat.append("version:").append(s).append("\n");
                     ArtefactMaven artefactMaven = new ArtefactMaven(model.getGroupId(), model.getArtifactId(), model.getVersion());
                     projetPom.setArtifact(artefactMaven);
 
                     if (!CollectionUtils.isEmpty(model.getProperties())) {
-//                        resultat.append("properties:\n");
-//                        List<String> liste = new ArrayList<>();
                         Map<String, String> map = new TreeMap<>();
                         model.getProperties().forEach((nom, valeur) -> {
-                            //liste.add(nom + ":" + valeur);
                             if (valeur != null) {
                                 map.put((String) nom, valeur.toString());
                             } else {
@@ -716,23 +707,13 @@ public class ProjetService {
                             }
                         });
                         projetPom.setProperties(map);
-//                        Collections.sort(liste);
-//                        liste.forEach(x -> {
-//                            resultat.append("\t").append(x).append("\n");
-//                        });
                     }
                     if (!CollectionUtils.isEmpty(model.getDependencies())) {
-//                        resultat.append("dependencies:\n");
                         List<ArtefactMaven> liste = new ArrayList<>();
                         model.getDependencies().forEach((dep) -> {
-//                            String s2 = dep.getGroupId() + ":" + dep.getArtifactId() + ":" + dep.getVersion();
                             liste.add(new ArtefactMaven(dep.getGroupId(), dep.getArtifactId(), dep.getVersion()));
                         });
                         projetPom.setDependencies(liste);
-//                        Collections.sort(liste);
-//                        liste.forEach(x -> {
-//                            resultat.append("\t").append(x).append("\n");
-//                        });
 
                     }
                 }
@@ -746,7 +727,6 @@ public class ProjetService {
                 for (var f : liste) {
                     var f2 = f.resolve("pom.xml");
                     if (Files.exists(f2)) {
-//                        resultat.append("* enfant ").append(f.getFileName()).append(" :").append("\n");
                         Projet projetEnfant = new Projet();
                         projetEnfant.setNom(f.getFileName().toString());
                         rechercheRepertoireService.completeProjet(f, projetEnfant);
@@ -763,7 +743,6 @@ public class ProjetService {
                             projetPom.getProjetPomEnfants().add(projetPom2);
                         }
 
-//
                         var f3 = f.resolve("package.json");
                         if (Files.exists(f3)) {
                             ProjetNode resultat2 = new ProjetNode();
@@ -827,10 +806,44 @@ public class ProjetService {
                 var versionPom = projet.getProjetPom().getArtifact().version();
                 var pomFile = projet.getFichierPom();
                 LOGGER.info("mise à jour de {} pour la version {} -> {}", pomFile, versionPom, version);
-                pomParserService.updateVersion(Path.of(pomFile), version,
-                        majVersion.isCommit(), majVersion.getMessageCommit());
+                if (!MAJ_VERSION_METHODE2) {
+                    pomParserService.updateVersion(Path.of(pomFile), version,
+                            majVersion.isCommit(), majVersion.getMessageCommit());
+                } else {
+                    majVersion(majVersion, projet);
+                }
             }
         }
+    }
+
+    private void majVersion(MajVersionDto majVersion, Projet projet) {
+        String idMaj = majVersion.getId();
+        if (mapListVersionDto.containsKey(idMaj)) {
+            var listeMaj = mapListVersionDto.get(idMaj);
+            var listLignes = getListeLigneModifier(listeMaj, majVersion);
+            pomParserService.updateVersion2(Path.of(projet.getFichierPom()), projet.getProjetPom().getArtifact().version(),
+                    majVersion.isCommit(), majVersion.getMessageCommit(), listLignes, majVersion.getListeIdLignes(), majVersion.getVersion());
+        } else {
+            LOGGER.error("impossible de trouver les infos pour la maj version {}", majVersion);
+            throw new IllegalArgumentException("Impossible de trouver les infos pour la maj version " + majVersion.getVersion());
+        }
+    }
+
+    private Map<String, List<LigneAModifier>> getListeLigneModifier(ListVersionDto listeMaj, MajVersionDto majVersion) {
+        Map<String, List<LigneAModifier>> mapLigneAModifier = new HashMap<>();
+        majVersion.getListeIdLignes().forEach(idLigneAModifier -> listeMaj.getFichierAModifier()
+                .forEach(x ->
+                        x.getLignes().stream()
+                                .filter(y -> y.trouve() && Objects.equals(y.id(), idLigneAModifier))
+                                .forEach(z -> {
+                                    LigneAModifier ligne = new LigneAModifier(x.getNomFichier(), z.ligne(), z.positionModification());
+                                    if (!mapLigneAModifier.containsKey(x.getNomFichier())) {
+                                        mapLigneAModifier.put(x.getNomFichier(), new ArrayList<>());
+                                    }
+                                    mapLigneAModifier.get(x.getNomFichier()).add(ligne);
+                                })));
+
+        return mapLigneAModifier;
     }
 
     public ChangementConfigDto getChangementConfig(String groupId, String nomProjet, String commitInitial, String commitFinal) throws Exception {

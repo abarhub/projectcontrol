@@ -5,7 +5,7 @@ import java.util.*;
 public class FichierAModifieDto {
     private String nomFichier;
     private String hash;
-    private Map<Integer, LigneAModifierDto> lignes = new TreeMap<>();
+    private List<LigneAModifierDto> lignes = new ArrayList<>();
 
     public String getNomFichier() {
         return nomFichier;
@@ -15,11 +15,11 @@ public class FichierAModifieDto {
         this.nomFichier = nomFichier;
     }
 
-    public Map<Integer, LigneAModifierDto> getLignes() {
+    public List<LigneAModifierDto> getLignes() {
         return lignes;
     }
 
-    public void setLignes(Map<Integer, LigneAModifierDto> lignes) {
+    public void setLignes(List<LigneAModifierDto> lignes) {
         this.lignes = lignes;
     }
 

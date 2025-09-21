@@ -1,18 +1,23 @@
 package org.projectcontrol.core.service;
 
+import com.google.common.base.Verify;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.projectcontrol.core.utils.LigneAModifier;
 import org.projectcontrol.core.vo.ResultatBalise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -47,7 +52,7 @@ public class PomParserService {
                 LOGGER.info("version: {} <> {} (fichier: {})", versionOld.valeur(), version, file);
                 xmlParserService.modifierFichier2(file.toString(), versionOld.positionDebut(), versionOld.positionFin(), version);
                 var repoDir = file.getParent().resolve(".git");
-                if (commit&&Files.exists(repoDir)) {
+                if (commit && Files.exists(repoDir)) {
                     FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
                     Repository repository = repositoryBuilder.setGitDir(repoDir.toFile())
                             .readEnvironment() // Lire GIT_DIR et d'autres variables d'environnement
@@ -60,9 +65,9 @@ public class PomParserService {
 
                         updateEnfantPom(resultat, file, version, git);
 
-                        String message="chore(version): préparation de la version " + version;
-                        if(messageCommit!=null){
-                            message=messageCommit;
+                        String message = "chore(version): préparation de la version " + version;
+                        if (messageCommit != null) {
+                            message = messageCommit;
                         }
                         git.commit().setMessage(message).call();
                     }
@@ -119,6 +124,34 @@ public class PomParserService {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    public void updateVersion2(Path file, String versionInitiale, boolean commit, String messageCommit,
+                               Map<String, List<LigneAModifier>> listLignes, List<String> listeIdLignes, String versionModifiee) throws IOException {
+        LOGGER.info("version: {} <> {} (fichier: {})", versionInitiale, versionModifiee, file);
+        LOGGER.info("liste: {}", listLignes);
+        Path repRacine = file.getParent();
+        for (var entry : listLignes.entrySet()) {
+            Path file2 = repRacine.resolve(entry.getKey());
+            LOGGER.info("fichier: {}", file2);
+            var contenu = Files.readAllLines(file2);
+            var modification = false;
+            for (var ligne : entry.getValue()) {
+                LOGGER.info("ligne: {}", ligne);
+                var pos = ligne.noLigne();
+                var s = contenu.get(pos);
+                Verify.verify(CollectionUtils.size(ligne.positionModification()) == 1, "il y a plusieurs modifications dans la ligne");
+                var inter = ligne.positionModification().getFirst();
+                var debut = s.substring(0, inter.debut());
+                var fin = s.substring(inter.fin() + 1);
+                var s2 = debut + versionModifiee + fin;
+                contenu.set(pos, s2);
+                modification = true;
+            }
+            if (modification) {
+                Files.write(file2, contenu);
             }
         }
     }

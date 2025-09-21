@@ -6,5 +6,6 @@ export class ListeVersions {
   listeVersions: string[] = [];
   messageCommit: string = '';
   fichierAModifier: FichierAModifier[] = [];
+  id: string = '';
 
 }

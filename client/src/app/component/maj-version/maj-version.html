@@ -1,5 +1,6 @@
 <!-- Modal -->
-<div class="modal fade modal-xl" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" #toastEl>
+<div class="modal fade modal-xl" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true"
+     #toastEl>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -62,21 +63,21 @@
                 @for (fichier of fichierAModifier; track $index) {
 
                   <tr>
-                  <td>{{fichier.nomFichier}}</td>
+                    <td>{{ fichier.nomFichier }}</td>
 
                     <td>
-                  @for (ligne of fichier.lignes | keyvalue: null; track ligne.key) {
-                    @let ligne2=ligne.value;
-                    <span>{{ligne.key}}</span>
-                    @if (ligne2.trouve) {
-<!--                      <span>X</span>-->
-                      @if(ligne2.nomForm){
-                        <input class="form-check-input" type="checkbox" value="1" [id]="'cbl'+ligne2.nomForm"
-                             [name]="ligne2.nomForm" [formControlName]="ligne2.nomForm">
+                      @for (ligne of fichier.lignes; track $index) {
+                        @let ligne2 = ligne;
+                        <span>{{ ligne2.ligne }}</span>
+                        @if (ligne2.trouve) {
+                          <!--                      <span>X</span>-->
+                          @if (ligne2.nomForm) {
+                            <input class="form-check-input" type="checkbox" value="1" [id]="'cbl'+ligne2.nomForm"
+                                   [name]="ligne2.nomForm" [formControlName]="ligne2.nomForm">
+                          }
+                        }
+                        <span class="formatted">{{ ligne2.contenu }}</span><br/>
                       }
-                    }
-                    <span class="formatted">{{ligne2.contenu}}</span><br/>
-                  }
                     </td>
 
                   </tr>

@@ -8,6 +8,7 @@ public class ListVersionDto {
     private List<String> listeVersions;
     private String messageCommit;
     private List<FichierAModifieDto> fichierAModifier;
+    private String id;
 
     public String getVersionActuelle() {
         return versionActuelle;
@@ -41,6 +42,14 @@ public class ListVersionDto {
         this.fichierAModifier = fichierAModifier;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return "ListVersionDto{" +
@@ -48,6 +57,7 @@ public class ListVersionDto {
                 ", listeVersions=" + listeVersions +
                 ", messageCommit='" + messageCommit + '\'' +
                 ", fichierAModifier=" + fichierAModifier +
+                ", id='" + id + '\'' +
                 '}';
     }
 }

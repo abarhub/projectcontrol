@@ -7,7 +7,7 @@ import {Subscription} from 'rxjs';
 import {MajVersionApi} from '../../entity/maj-version-api';
 import {ToasterService} from '../../service/toaster.service';
 import {FichierAModifier} from '../../entity/fichier-a-modifier';
-import {LigneAModifier} from '../../entity/ligne-a-modifier';
+import {ListeVersions} from '../../entity/liste-versions';
 
 @Component({
   selector: 'app-maj-version',
@@ -35,6 +35,7 @@ export class MajVersion implements OnDestroy {
   private toasterService = inject(ToasterService);
   fichierAModifier: FichierAModifier[] = [];
   listeNomFormCheckLigne: string[] = [];
+  id: string = '';
 
   changes: Subscription | undefined;
   changes2: Subscription | undefined;
@@ -104,12 +105,13 @@ export class MajVersion implements OnDestroy {
       if (this.majVersionModal) {
 
         this.majVersionService.getVersions(groupeId, nomProjet).subscribe({
-            next: (data) => {
+            next: (data: ListeVersions) => {
 
               console.info("affichage", data);
               if (data) {
                 if (data.versionActuelle) {
                   this.messageCommitTemplate = data.messageCommit;
+                  this.id = data.id;
                   // this.myForm.controls['commitMessage'].setValue(data.messageCommit);
                   //this.versions.set(data.versionActuelle, data.versionActuelle);
                   this.versionActuelle = data.versionActuelle;
@@ -177,6 +179,9 @@ export class MajVersion implements OnDestroy {
       if (majVersion.commit) {
         majVersion.messageCommit = this.myForm.controls['commitMessage'].value;
       }
+      majVersion.id = this.id;
+      this.ajouteLignesSelectionnees(majVersion);
+
       this.majVersionService.majVersions(this.groupeId, this.nomProjet, majVersion)
         .subscribe({
           next: (data) => {
@@ -208,5 +213,27 @@ export class MajVersion implements OnDestroy {
       return versionSelectionne;
     }
     return "";
+  }
+
+  private ajouteLignesSelectionnees(majVersion: MajVersionApi) {
+
+    majVersion.listeIdLignes = [];
+    Object.keys(this.myForm.controls).forEach(key => {
+      let control = this.myForm.get(key);
+      if (control) {
+        let value = control.value;
+        if (value) {
+          this.fichierAModifier.forEach(file => {
+            if (file.lignes) {
+              file.lignes.forEach(ligne => {
+                if (ligne.nomForm == key && ligne.id) {
+                  majVersion.listeIdLignes.push(ligne.id);
+                }
+              })
+            }
+          });
+        }
+      }
+    });
   }
 }
