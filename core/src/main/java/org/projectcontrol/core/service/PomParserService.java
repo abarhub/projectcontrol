@@ -13,9 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -129,10 +129,12 @@ public class PomParserService {
     }
 
     public void updateVersion2(Path file, String versionInitiale, boolean commit, String messageCommit,
-                               Map<String, List<LigneAModifier>> listLignes, List<String> listeIdLignes, String versionModifiee) throws IOException {
+                               Map<String, List<LigneAModifier>> listLignes, List<String> listeIdLignes, String versionModifiee) throws Exception {
         LOGGER.info("version: {} <> {} (fichier: {})", versionInitiale, versionModifiee, file);
         LOGGER.info("liste: {}", listLignes);
         Path repRacine = file.getParent();
+        List<String> listeFichiers = new ArrayList<>();
+
         for (var entry : listLignes.entrySet()) {
             Path file2 = repRacine.resolve(entry.getKey());
             LOGGER.info("fichier: {}", file2);
@@ -140,18 +142,53 @@ public class PomParserService {
             var modification = false;
             for (var ligne : entry.getValue()) {
                 LOGGER.info("ligne: {}", ligne);
-                var pos = ligne.noLigne();
+                var pos = ligne.noLigne() - 1;
+                Verify.verify(pos >= 0 && pos < contenu.size(), "la ligne n'existe pas dans le fichier");
                 var s = contenu.get(pos);
                 Verify.verify(CollectionUtils.size(ligne.positionModification()) == 1, "il y a plusieurs modifications dans la ligne");
                 var inter = ligne.positionModification().getFirst();
                 var debut = s.substring(0, inter.debut());
+                var millieux = s.substring(inter.debut(), inter.fin() + 1);
                 var fin = s.substring(inter.fin() + 1);
                 var s2 = debut + versionModifiee + fin;
+                LOGGER.info("modification (ligne:{}, debut={}, fin={})...", pos, inter.debut(), inter.fin());
+                LOGGER.info("ligne initiale : {}", s);
+                LOGGER.info("ligne modifiee : {}", s2);
+                Verify.verify(Objects.equals(millieux, versionInitiale));
                 contenu.set(pos, s2);
                 modification = true;
             }
             if (modification) {
                 Files.write(file2, contenu);
+                if (!listeFichiers.contains(entry.getKey())) {
+                    listeFichiers.add(entry.getKey());
+                }
+            }
+        }
+
+        if (commit&&CollectionUtils.isNotEmpty(listeFichiers)) {
+            var repoDir = repRacine.resolve(".git");
+            if (Files.exists(repoDir)) {
+
+                FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
+                Repository repository = repositoryBuilder.setGitDir(repoDir.toFile())
+                        .readEnvironment() // Lire GIT_DIR et d'autres variables d'environnement
+                        .findGitDir() // Chercher le répertoire .git
+                        .build();
+                try (Git git = new Git(repository)) {
+
+                    AddCommand add = git.add();
+
+                    for (var fichier : listeFichiers) {
+                        add.addFilepattern(fichier).call();
+                    }
+
+                    String message = "chore(version): préparation de la version " + versionModifiee;
+                    if (messageCommit != null) {
+                        message = messageCommit;
+                    }
+                    git.commit().setMessage(message).call();
+                }
             }
         }
     }

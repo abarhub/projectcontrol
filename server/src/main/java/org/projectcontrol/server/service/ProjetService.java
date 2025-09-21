@@ -816,7 +816,7 @@ public class ProjetService {
         }
     }
 
-    private void majVersion(MajVersionDto majVersion, Projet projet) {
+    private void majVersion(MajVersionDto majVersion, Projet projet) throws Exception {
         String idMaj = majVersion.getId();
         if (mapListVersionDto.containsKey(idMaj)) {
             var listeMaj = mapListVersionDto.get(idMaj);
