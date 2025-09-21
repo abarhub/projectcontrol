@@ -29,7 +29,7 @@ public class FileFlux2 {
                     List<LigneGrep> bloc = new ArrayList<>();
                     int n = 0;
                     for (FileFlux.Ligne l : window) {
-                        boolean trouve2 = n == avant;
+                        boolean trouve2 = cacheCriteresRecherche.contientTexte(l.contenu());
                         LigneGrep ligneGrep = convertie(l, trouve2, cacheCriteresRecherche);
                         bloc.add(ligneGrep);
                         n++;

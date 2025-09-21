@@ -239,7 +239,7 @@ public class ProjetService {
         grepParam.setCriteresRecherche(criteresRecherche);
         try {
             List<LigneResultatDto> resultatDtoList = new ArrayList<>();
-            boolean erreur[] = new boolean[]{false};
+            boolean[] erreur = new boolean[]{false};
             grepService.search(grepParam)
                     .subscribe(ligne -> {
                         if (ligne != null) {
