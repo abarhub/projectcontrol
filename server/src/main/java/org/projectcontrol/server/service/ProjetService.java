@@ -2,6 +2,7 @@ package org.projectcontrol.server.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Verify;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -208,11 +209,13 @@ public class ProjetService {
                 if (StringUtils.isNotBlank(version)) {
                     List<String> listeVersion = getListeVersion(version);
                     String hash = hash();
+                    var messageCommit = applicationProperties.getMaj().getMessageCommit();
+                    Verify.verify(StringUtils.isNotBlank(messageCommit), "Le message de commit est vide");
                     List<FichierAModifieDto> listeFichierAModifie = rechercheVersion(projet, version, hash);
                     ListVersionDto listVersionDto = new ListVersionDto();
                     listVersionDto.setVersionActuelle(version);
                     listVersionDto.setListeVersions(listeVersion);
-                    listVersionDto.setMessageCommit("commit version VERSION");
+                    listVersionDto.setMessageCommit(messageCommit);
                     listVersionDto.setFichierAModifier(listeFichierAModifie);
                     listVersionDto.setId(hash + "_id");
                     mapListVersionDto.put(listVersionDto.getId(), listVersionDto);
@@ -806,6 +809,7 @@ public class ProjetService {
                 var versionPom = projet.getProjetPom().getArtifact().version();
                 var pomFile = projet.getFichierPom();
                 LOGGER.info("mise à jour de {} pour la version {} -> {}", pomFile, versionPom, version);
+                Verify.verify(StringUtils.isBlank(majVersion.getMessageCommit()), "le message de commit est vide");
                 if (!MAJ_VERSION_METHODE2) {
                     pomParserService.updateVersion(Path.of(pomFile), version,
                             majVersion.isCommit(), majVersion.getMessageCommit());
