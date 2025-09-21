@@ -20,6 +20,8 @@ import {ListeVersions} from '../../entity/liste-versions';
 })
 export class MajVersion implements OnDestroy {
 
+  private NOM_CONTROL_CHECKBOX: string = "ligne";
+
   @ViewChild('toastEl', {static: true}) majVersionEl!: ElementRef;
 
   private majVersionModal!: Modal;
@@ -139,10 +141,11 @@ export class MajVersion implements OnDestroy {
                         for (let [k, v] of Object.entries(file.lignes)) {
                           let value = v
                           if (value && value.trouve) {
-                            let nom = "ligne" + no;
+                            let nom = this.NOM_CONTROL_CHECKBOX + no;
                             this.myForm.addControl(nom, new FormControl(true));
                             value.nomForm = nom;
                             this.listeNomFormCheckLigne.push(nom);
+                            no++;
                           }
                         }
                       }
@@ -179,19 +182,24 @@ export class MajVersion implements OnDestroy {
       }
       majVersion.id = this.id;
       this.ajouteLignesSelectionnees(majVersion);
-
-      this.majVersionService.majVersions(this.groupeId, this.nomProjet, majVersion)
-        .subscribe({
-          next: (data) => {
-            console.info("majVersion", data);
-            this.toasterService.show("majVersion OK");
-            this.majVersionModal.hide();
-          },
-          error: (error) => {
-            console.error(error);
-            this.toasterService.show("Erreur pour majVersion");
-          }
-        });
+      if (majVersion.commit && majVersion.messageCommit.length == 0) {
+        this.toasterService.show("Message de commit vide");
+      } else if (majVersion.listeIdLignes.length == 0) {
+        this.toasterService.show("Aucune ligne n'a été sélectionnée");
+      } else {
+        this.majVersionService.majVersions(this.groupeId, this.nomProjet, majVersion)
+          .subscribe({
+            next: (data) => {
+              console.info("majVersion", data);
+              this.toasterService.show("majVersion OK");
+              this.majVersionModal.hide();
+            },
+            error: (error) => {
+              console.error(error);
+              this.toasterService.show("Erreur pour majVersion");
+            }
+          });
+      }
     }
   }
 
@@ -217,19 +225,21 @@ export class MajVersion implements OnDestroy {
 
     majVersion.listeIdLignes = [];
     Object.keys(this.myForm.controls).forEach(key => {
-      let control = this.myForm.get(key);
-      if (control) {
-        let value = control.value;
-        if (value) {
-          this.fichierAModifier.forEach(file => {
-            if (file.lignes) {
-              file.lignes.forEach(ligne => {
-                if (ligne.nomForm == key && ligne.id) {
-                  majVersion.listeIdLignes.push(ligne.id);
-                }
-              })
-            }
-          });
+      if (key.startsWith(this.NOM_CONTROL_CHECKBOX)) {
+        let control = this.myForm.get(key);
+        if (control) {
+          let value = control.value;
+          if (value) {
+            this.fichierAModifier.forEach(file => {
+              if (file.lignes) {
+                file.lignes.forEach(ligne => {
+                  if (ligne.nomForm == key && ligne.id) {
+                    majVersion.listeIdLignes.push(ligne.id);
+                  }
+                });
+              }
+            });
+          }
         }
       }
     });
