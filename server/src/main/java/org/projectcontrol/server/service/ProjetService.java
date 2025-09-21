@@ -809,9 +809,7 @@ public class ProjetService {
                 var versionPom = projet.getProjetPom().getArtifact().version();
                 var pomFile = projet.getFichierPom();
                 LOGGER.info("mise à jour de {} pour la version {} -> {}", pomFile, versionPom, version);
-                Verify.verify(majVersion.isCommit() &&
-                        StringUtils.isNotBlank(majVersion.getMessageCommit()),
-                        "le message de commit est vide");
+                verificationsMaj(majVersion);
                 if (!MAJ_VERSION_METHODE2) {
                     pomParserService.updateVersion(Path.of(pomFile), version,
                             majVersion.isCommit(), majVersion.getMessageCommit());
@@ -819,6 +817,13 @@ public class ProjetService {
                     majVersion(majVersion, projet);
                 }
             }
+        }
+    }
+
+    private void verificationsMaj(MajVersionDto majVersion) {
+        if (majVersion.isCommit()) {
+            Verify.verify(StringUtils.isNotBlank(majVersion.getMessageCommit()),
+                    "le message de commit est vide : '%s'", majVersion.getMessageCommit());
         }
     }
 
