@@ -810,7 +810,7 @@ public class ProjetService {
                 var pomFile = projet.getFichierPom();
                 LOGGER.info("mise à jour de {} pour la version {} -> {}", pomFile, versionPom, version);
                 Verify.verify(majVersion.isCommit() &&
-                        StringUtils.isBlank(majVersion.getMessageCommit()),
+                        StringUtils.isNotBlank(majVersion.getMessageCommit()),
                         "le message de commit est vide");
                 if (!MAJ_VERSION_METHODE2) {
                     pomParserService.updateVersion(Path.of(pomFile), version,
