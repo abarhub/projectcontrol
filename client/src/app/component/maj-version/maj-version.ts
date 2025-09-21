@@ -43,7 +43,7 @@ export class MajVersion implements OnDestroy {
 
   constructor(private fb: FormBuilder, private majVersionService: MajVersionService) {
     this.myForm = this.fb.group({
-      choixVersion: ['', Validators.required],
+      choixVersion: [null, Validators.required],
       versionAutre: [{value: '', disabled: true}],
       commitActive: ['', Validators.required],
       commitMessage: ['', Validators.required]
@@ -112,8 +112,6 @@ export class MajVersion implements OnDestroy {
                 if (data.versionActuelle) {
                   this.messageCommitTemplate = data.messageCommit;
                   this.id = data.id;
-                  // this.myForm.controls['commitMessage'].setValue(data.messageCommit);
-                  //this.versions.set(data.versionActuelle, data.versionActuelle);
                   this.versionActuelle = data.versionActuelle;
                   if (data.listeVersions && data.listeVersions.length > 0) {
                     for (let i = 0; i < data.listeVersions.length; i++) {
