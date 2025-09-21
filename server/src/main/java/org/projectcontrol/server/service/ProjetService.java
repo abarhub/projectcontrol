@@ -829,11 +829,13 @@ public class ProjetService {
 
     private void majVersion(MajVersionDto majVersion, Projet projet) throws Exception {
         String idMaj = majVersion.getId();
+        Verify.verify(StringUtils.isNotBlank(idMaj), "l'id de maj est vide : '%s'", idMaj);
+        Verify.verify(!CollectionUtils.isEmpty(majVersion.getListeIdLignes()), "les ids des lignes sont vides");
         if (mapListVersionDto.containsKey(idMaj)) {
             var listeMaj = mapListVersionDto.get(idMaj);
             var listLignes = getListeLigneModifier(listeMaj, majVersion);
             pomParserService.updateVersion2(Path.of(projet.getFichierPom()), projet.getProjetPom().getArtifact().version(),
-                    majVersion.isCommit(), majVersion.getMessageCommit(), listLignes, majVersion.getListeIdLignes(), majVersion.getVersion());
+                    majVersion.isCommit(), majVersion.getMessageCommit(), listLignes, majVersion.getVersion());
         } else {
             LOGGER.error("impossible de trouver les infos pour la maj version {}", majVersion);
             throw new IllegalArgumentException("Impossible de trouver les infos pour la maj version " + majVersion.getVersion());

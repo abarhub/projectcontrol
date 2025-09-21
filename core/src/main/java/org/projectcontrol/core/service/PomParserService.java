@@ -129,7 +129,7 @@ public class PomParserService {
     }
 
     public void updateVersion2(Path file, String versionInitiale, boolean commit, String messageCommit,
-                               Map<String, List<LigneAModifier>> listLignes, List<String> listeIdLignes, String versionModifiee) throws Exception {
+                               Map<String, List<LigneAModifier>> listLignes, String versionModifiee) throws Exception {
         LOGGER.info("version: {} <> {} (fichier: {})", versionInitiale, versionModifiee, file);
         LOGGER.info("liste: {}", listLignes);
         Path repRacine = file.getParent();
