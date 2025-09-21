@@ -166,7 +166,7 @@ public class PomParserService {
             }
         }
 
-        if (commit&&CollectionUtils.isNotEmpty(listeFichiers)) {
+        if (commit && CollectionUtils.isNotEmpty(listeFichiers)) {
             var repoDir = repRacine.resolve(".git");
             if (Files.exists(repoDir)) {
 
@@ -179,6 +179,7 @@ public class PomParserService {
 
                     for (var fichier : listeFichiers) {
                         AddCommand add = git.add();
+                        fichier = StringUtils.replace(fichier, "\\", "/");
                         add.addFilepattern(fichier).call();
                     }
 
