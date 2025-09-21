@@ -177,9 +177,8 @@ public class PomParserService {
                         .build();
                 try (Git git = new Git(repository)) {
 
-                    AddCommand add = git.add();
-
                     for (var fichier : listeFichiers) {
+                        AddCommand add = git.add();
                         add.addFilepattern(fichier).call();
                     }
 
