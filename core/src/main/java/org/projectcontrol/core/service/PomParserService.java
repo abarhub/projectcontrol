@@ -145,16 +145,24 @@ public class PomParserService {
                 var pos = ligne.noLigne() - 1;
                 Verify.verify(pos >= 0 && pos < contenu.size(), "la ligne n'existe pas dans le fichier");
                 var s = contenu.get(pos);
-                Verify.verify(CollectionUtils.size(ligne.positionModification()) == 1, "il y a plusieurs modifications dans la ligne");
-                var inter = ligne.positionModification().getFirst();
-                var debut = s.substring(0, inter.debut());
-                var millieux = s.substring(inter.debut(), inter.fin() + 1);
-                var fin = s.substring(inter.fin() + 1);
-                var s2 = debut + versionModifiee + fin;
-                LOGGER.info("modification (ligne:{}, debut={}, fin={})...", pos, inter.debut(), inter.fin());
+//                Verify.verify(CollectionUtils.size(ligne.positionModification()) == 1, "il y a plusieurs modifications dans la ligne");
+                int posDebut=0;
+                List<String> listeResultat=new ArrayList<>();
+                for(var inter : ligne.positionModification()) {
+                    var debut = s.substring(posDebut, inter.debut());
+                    var millieux = s.substring(inter.debut(), inter.fin() + 1);
+                    LOGGER.info("modification (ligne:{}, debut={}, fin={})...", pos, inter.debut(), inter.fin());
+                    Verify.verify(Objects.equals(millieux, versionInitiale));
+                    listeResultat.add(debut);
+                    listeResultat.add(versionModifiee);
+                    posDebut=inter.fin()+1;
+                }
+                if(posDebut<s.length()){
+                    listeResultat.add(s.substring(posDebut));
+                }
+                var s2=listeResultat.stream().reduce("", String::concat);
                 LOGGER.info("ligne initiale : {}", s);
                 LOGGER.info("ligne modifiee : {}", s2);
-                Verify.verify(Objects.equals(millieux, versionInitiale));
                 contenu.set(pos, s2);
                 modification = true;
             }
