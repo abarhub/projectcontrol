@@ -4,9 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.projectcontrol.core.utils.GrepCriteresRecherche;
-import org.projectcontrol.core.utils.GrepParam;
-import org.projectcontrol.core.utils.LignesRecherche;
+import org.projectcontrol.core.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.test.StepVerifier;
@@ -64,12 +62,14 @@ class GrepServiceTest {
             assertNotNull(res);
             var liste = res.collectList().block();
             assertNotNull(liste);
+            LigneGrep ligneGrep = new LigneGrep(2, "très simple a rechercher", true, List.of(new Interval(5, 10)));
+            LigneGrep ligneGrep2 = new LigneGrep(2, "très simple a rechercher ici2", true, List.of(new Interval(5, 10)));
             assertThat(liste)
                     .hasSize(2)
                     .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
-                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
-                    .contains(tuple(2, List.of(2), List.of("très simple a rechercher"), "file1.txt"),
-                            tuple(2, List.of(2), List.of("très simple a rechercher ici2"), "dir1/file3.java"));
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x), LignesRecherche::lignes2)
+                    .contains(tuple(0, List.of(0), null, "file1.txt", List.of(ligneGrep)),
+                            tuple(0, List.of(0), null, "dir1/file3.java", List.of(ligneGrep2)));
         }
 
         @Test
@@ -86,10 +86,10 @@ class GrepServiceTest {
             assertNotNull(res);
 
             StepVerifier.create(res)
-                    .expectNextMatches(x -> similaire(x, 2, List.of(2),
-                            "très simple a rechercher ici2", "dir1/file3.java"))
-                    .expectNextMatches(x -> similaire(x, 2, List.of(2),
-                            "très simple a rechercher", "file1.txt"))
+                    .expectNextMatches(x -> similaire(x, 2, List.of(0),
+                            "très simple a rechercher ici2", "dir1/file3.java", new Interval(5, 10)))
+                    .expectNextMatches(x -> similaire(x, 2, List.of(0),
+                            "très simple a rechercher", "file1.txt", new Interval(5, 10)))
                     .expectComplete()
                     .verify();
         }
@@ -108,13 +108,16 @@ class GrepServiceTest {
             assertNotNull(res);
             var liste = res.collectList().block();
             assertNotNull(liste);
+            LigneGrep ligneGrep = new LigneGrep(1, "un exemple de fichier", true, List.of(new Interval(3, 9)));
+            LigneGrep ligneGrep2 = new LigneGrep(1, "un autre exemple de fichier à chercher2", true, List.of(new Interval(9, 15)));
+            LigneGrep ligneGrep3 = new LigneGrep(4, "exemple2", true, List.of(new Interval(0, 6)));
             assertThat(liste)
                     .hasSize(3)
                     .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
-                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
-                    .contains(tuple(1, List.of(1), List.of("un exemple de fichier"), "file1.txt"),
-                            tuple(1, List.of(1), List.of("un autre exemple de fichier à chercher2"), "dir1/file3.java"),
-                            tuple(4, List.of(4), List.of("exemple2"), "dir1/file3.java"));
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x), LignesRecherche::lignes2)
+                    .contains(tuple(0, List.of(0), null, "file1.txt", List.of(ligneGrep)),
+                            tuple(0, List.of(0), null, "dir1/file3.java", List.of(ligneGrep2)),
+                            tuple(0, List.of(0), null, "dir1/file3.java", List.of(ligneGrep3)));
         }
 
         @Test
@@ -132,11 +135,12 @@ class GrepServiceTest {
             assertNotNull(res);
             var liste = res.collectList().block();
             assertNotNull(liste);
+            LigneGrep ligneGrep = new LigneGrep(3, "fin du texte pour l'instant2", true, List.of(new Interval(20, 27)));
             assertThat(liste)
                     .hasSize(1)
                     .extracting(LignesRecherche::noLigneDebut, LignesRecherche::lignesTrouvees,
-                            LignesRecherche::lignes, (x) -> getChemin(rep1, x))
-                    .contains(tuple(3, List.of(3), List.of("fin du texte pour l'instant2"), "dir1/file4.tmp"));
+                            LignesRecherche::lignes, (x) -> getChemin(rep1, x), LignesRecherche::lignes2)
+                    .contains(tuple(0, List.of(0), null, "dir1/file4.tmp", List.of(ligneGrep)));
         }
 
     }
@@ -533,11 +537,13 @@ class GrepServiceTest {
     }
 
     private boolean similaire(LignesRecherche ligne, int noLigne, List<Integer> lignesTrouves,
-                              String ligneStr, String nomFichier) {
+                              String ligneStr, String nomFichier, Interval interval) {
         LOGGER.info("comparaison ligne {} : {}, {}, {}, {}", noLigne, ligne, lignesTrouves, ligneStr, nomFichier);
-        return ligne.noLigneDebut() == noLigne &&
-                Objects.equals(ligne.lignesTrouvees(), lignesTrouves) &&
-                Objects.equals(ligne.lignes(), List.of(ligneStr)) &&
-                Objects.equals(getChemin(rep1, ligne), nomFichier);
+        return Objects.equals(ligne.lignesTrouvees(), lignesTrouves) &&
+                Objects.equals(getChemin(rep1, ligne), nomFichier) &&
+                ligne.lignes2().size() == 1 &&
+                ligne.lignes2().getFirst().getNoLigne() == noLigne &&
+                Objects.equals(ligne.lignes2().getFirst().getLigne(), ligneStr) &&
+                Objects.equals(ligne.lignes2().getFirst().getRange(), List.of(interval));
     }
 }

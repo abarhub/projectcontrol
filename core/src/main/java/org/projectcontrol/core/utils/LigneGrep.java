@@ -1,14 +1,23 @@
 package org.projectcontrol.core.utils;
 
-import org.apache.commons.lang3.Range;
-
 import java.util.List;
+import java.util.Objects;
 
 public class LigneGrep {
     private int noLigne;
     private String ligne;
     private boolean trouve;
     private List<Interval> range;
+
+    public LigneGrep(int noLigne, String ligne, boolean trouve, List<Interval> range) {
+        this.noLigne = noLigne;
+        this.ligne = ligne;
+        this.trouve = trouve;
+        this.range = range;
+    }
+
+    public LigneGrep() {
+    }
 
     public int getNoLigne() {
         return noLigne;
@@ -50,5 +59,19 @@ public class LigneGrep {
                 ", trouve=" + trouve +
                 ", range=" + range +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        LigneGrep ligneGrep = (LigneGrep) o;
+        return noLigne == ligneGrep.noLigne && trouve == ligneGrep.trouve &&
+                Objects.equals(ligne, ligneGrep.ligne) &&
+                Objects.equals(range, ligneGrep.range);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(noLigne, ligne, trouve, range);
     }
 }
