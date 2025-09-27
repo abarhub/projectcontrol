@@ -7,4 +7,6 @@ export class LigneAModifier {
   positionModification: Interval[] = [];
   nomForm: string = '';
   id: string = '';
+  lignesDecoupees: string[] = [];
+  debutTrouve: boolean = false;
 }

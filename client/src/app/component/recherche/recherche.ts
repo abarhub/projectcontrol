@@ -8,6 +8,7 @@ import {ReponseRechercheSuivante} from '../../entity/reponse-recherche-suivante'
 import {LigneGrep} from '../../entity/ligne-grep';
 import {RechercheService} from '../../service/recherche.service';
 import {ToasterService} from '../../service/toaster.service';
+import {StringService} from '../../service/string.service';
 
 @Component({
   selector: 'app-recherche',
@@ -43,7 +44,7 @@ export class Recherche {
 
   private toasterService = inject(ToasterService);
 
-  constructor(private rechercheService: RechercheService) {
+  constructor(private rechercheService: RechercheService, private stringService: StringService) {
 
   }
 
@@ -57,14 +58,13 @@ export class Recherche {
     if (groupeId && texte && typeRecherche) {
       this.chargementRecherche = true;
       this.resultatRecherche = new Map<number, LigneResultat>();
-      let nbLignesAutourNumber=0;
+      let nbLignesAutourNumber = 0;
       if (nbLignesAutour) {
         nbLignesAutourNumber = parseInt(nbLignesAutour);
       }
 
       this.pollApiDataWithId(groupeId, projetId, texte, typeRecherche, 1000, nbLignesAutourNumber).subscribe({
         next: (data) => {
-          console.log('resultat', data);
           this.ajouteTableau(data);
         },
         error: (error) => {
@@ -83,7 +83,6 @@ export class Recherche {
     let tableau: Map<number, LigneResultat> = new Map<number, LigneResultat>();
     let i0 = 0;
     for (let [key, value] of this.resultatRecherche) {
-      // console.log(key, value);
       tableau.set(key, value);
       if (key > i0) {
         i0 = key;
@@ -168,65 +167,14 @@ export class Recherche {
     );
   }
 
-  // rechercher0($event: MouseEvent) {
-  //   $event.preventDefault();
-  //   const {groupeId} = this.formGrouId.value;
-  //   let texte = this.formGrouId3.value.recherche;
-  //   let typeRecherche = this.formGrouId3.value.typeRecherche;
-  //
-  //   if (groupeId && texte && typeRecherche) {
-  //     this.chargementRecherche = true;
-  //     this.rechercheService.getRecherche(groupeId, texte, typeRecherche).subscribe({
-  //       next: (data) => {
-  //         console.log('resultat', data);
-  //         let tableau: Map<number, LigneResultat> = new Map<number, LigneResultat>();
-  //         for (let i = 0; i < data.length; i++) {
-  //           let resultat = data[i];
-  //           tableau.set(resultat.noLigne, resultat);
-  //         }
-  //         this.resultatRecherche = tableau;
-  //         this.chargementRecherche = false;
-  //       },
-  //       error: (error) => {
-  //         console.error(error);
-  //         this.chargementRecherche = false;
-  //       }
-  //     })
-  //   }
-  //
-  // }
   private analyse(listeLigneGrep: LigneGrep[]) {
     for (let i = 0; i < listeLigneGrep.length; i++) {
       let ligneGrep = listeLigneGrep[i];
       if (ligneGrep.trouve) {
         if (ligneGrep.range) {
-          let liste: string[] = [];
-          let debutRouge = false;
-          let pos = 0;
-          for (let i = 0; i < ligneGrep.range.length; i++) {
-            let range = ligneGrep.range[i];
-            if (range.debut == pos) {
-              let s = ligneGrep.ligne.substring(pos, range.fin + 1);
-              liste.push(s);
-              pos = range.fin + 1;
-              if (i == 0) {
-                debutRouge = true;
-              }
-            } else {
-              let s = ligneGrep.ligne.substring(pos, range.debut - 1 + 1);
-              liste.push(s);
-              s = ligneGrep.ligne.substring(range.debut, range.fin + 1);
-              liste.push(s);
-              pos = range.fin + 1;
-              if (i == 0) {
-                debutRouge = false;
-              }
-            }
-          }
-          if (pos < ligneGrep.ligne.length) {
-            let s = ligneGrep.ligne.substring(pos, ligneGrep.ligne.length);
-            liste.push(s);
-          }
+          let resultat = this.stringService.decoupeLigne(ligneGrep.ligne, ligneGrep.range);
+          let liste = resultat[0];
+          let debutRouge = resultat[1];
           if (liste) {
             ligneGrep.lignesDecoupees = liste;
             ligneGrep.debutTrouve = debutRouge;
@@ -236,4 +184,6 @@ export class Recherche {
     }
 
   }
+
+
 }

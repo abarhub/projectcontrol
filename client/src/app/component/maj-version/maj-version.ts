@@ -8,6 +8,7 @@ import {MajVersionApi} from '../../entity/maj-version-api';
 import {ToasterService} from '../../service/toaster.service';
 import {FichierAModifier} from '../../entity/fichier-a-modifier';
 import {ListeVersions} from '../../entity/liste-versions';
+import {StringService} from '../../service/string.service';
 
 @Component({
   selector: 'app-maj-version',
@@ -43,7 +44,8 @@ export class MajVersion implements OnDestroy {
   changes2: Subscription | undefined;
   changes3: Subscription | undefined;
 
-  constructor(private fb: FormBuilder, private majVersionService: MajVersionService) {
+  constructor(private fb: FormBuilder, private majVersionService: MajVersionService,
+              private stringService: StringService) {
     this.myForm = this.fb.group({
       choixVersion: [null, Validators.required],
       versionAutre: [{value: '', disabled: true}],
@@ -145,6 +147,13 @@ export class MajVersion implements OnDestroy {
                             this.myForm.addControl(nom, new FormControl(true));
                             value.nomForm = nom;
                             this.listeNomFormCheckLigne.push(nom);
+                            let resultat = this.stringService.decoupeLigne(value.contenu, value.positionModification);
+                            let liste = resultat[0];
+                            let debutRouge = resultat[1];
+                            if (liste) {
+                              value.lignesDecoupees = liste;
+                              value.debutTrouve = debutRouge;
+                            }
                             no++;
                           }
                         }

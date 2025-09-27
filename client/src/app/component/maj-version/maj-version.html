@@ -70,13 +70,21 @@
                         @let ligne2 = ligne;
                         <span>{{ ligne2.ligne }}</span>
                         @if (ligne2.trouve) {
-                          <!--                      <span>X</span>-->
                           @if (ligne2.nomForm) {
                             <input class="form-check-input" type="checkbox" value="1" [id]="'cbl'+ligne2.nomForm"
                                    [name]="ligne2.nomForm" [formControlName]="ligne2.nomForm">
                           }
+                          @for (ligne3 of ligne2.lignesDecoupees; track $index) {
+                            @if ((ligne2.debutTrouve && $index % 2 == 0) || (!ligne2.debutTrouve && $index % 2 == 1)) {
+                              <span class="trouve formatted">{{ ligne3 }}</span>
+                            } @else {
+                              <span class="formatted">{{ ligne3 }}</span>
+                            }
+                          }
+                          <br/>
+                        } @else {
+                          <span class="formatted">{{ ligne2.contenu }}</span><br/>
                         }
-                        <span class="formatted">{{ ligne2.contenu }}</span><br/>
                       }
                     </td>
 
@@ -95,7 +103,9 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" (click)="enregistrer($event)" [disabled]="myForm.invalid">Save changes</button>
+        <button type="button" class="btn btn-primary" (click)="enregistrer($event)" [disabled]="myForm.invalid">Save
+          changes
+        </button>
       </div>
     </div>
   </div>
