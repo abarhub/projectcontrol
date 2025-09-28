@@ -25,7 +25,7 @@ public class GitCommentaireContoller {
     public List<LigneGitDto> getGitCommentaire(@PathVariable String groupId,
                                                @PathVariable String nomProjet,
                                                @RequestParam int nbCommit) throws Exception {
-        LOGGER.info("git commentaire : {} - {} - {} - {}", groupId, nomProjet, nbCommit);
+        LOGGER.info("git commentaire : {} - {} - {}", groupId, nomProjet, nbCommit);
         return projetService.getGitCommentaire(groupId, nomProjet, nbCommit);
     }
 
