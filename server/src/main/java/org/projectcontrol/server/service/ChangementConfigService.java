@@ -1,7 +1,6 @@
 package org.projectcontrol.server.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
@@ -41,42 +40,40 @@ public class ChangementConfigService {
 
         // Construire le repository Git
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        Repository repository = builder.setGitDir(new File(repoPath + "/.git"))
+        try (Repository repository = builder.setGitDir(new File(repoPath + "/.git"))
                 .readEnvironment()
                 .findGitDir()
-                .build();
+                .build()) {
 
-        Git git = new Git(repository);
+            // Récupérer les contenus des fichiers pour chaque commit
+            String yamlContent1 = getFileContentFromCommit(repository, commit1Hash, yamlFilePath);
+            String yamlContent2 = getFileContentFromCommit(repository, commit2Hash, yamlFilePath);
 
-        // Récupérer les contenus des fichiers pour chaque commit
-        String yamlContent1 = getFileContentFromCommit(repository, commit1Hash, yamlFilePath);
-        String yamlContent2 = getFileContentFromCommit(repository, commit2Hash, yamlFilePath);
+            // Parser les YAML
+            LoaderOptions options = new LoaderOptions();
+            options.setAllowDuplicateKeys(false);
+            options.setTagInspector(tag -> true);
+            Yaml yaml = new Yaml(new SafeConstructor(options));
+            Map<Object, Object> parsedYaml1 = yaml.load(yamlContent1);
+            Map<Object, Object> parsedYaml2 = yaml.load(yamlContent2);
 
-        // Parser les YAML
-        LoaderOptions options = new LoaderOptions();
-        options.setAllowDuplicateKeys(false);
-        options.setTagInspector(tag -> true);
-        Yaml yaml = new Yaml(new SafeConstructor(options));
-        Map<Object, Object> parsedYaml1 = yaml.load(yamlContent1);
-        Map<Object, Object> parsedYaml2 = yaml.load(yamlContent2);
+            Path tempDir = Files.createTempDirectory("cmpyml");
+            // Fichiers de sortie
+            String outputFile1 = tempDir + "/flattened_" + commit1Hash + ".yml";
+            String outputFile2 = tempDir + "/flattened_" + commit2Hash + ".yml";
 
-        Path tempDir = Files.createTempDirectory("cmpyml");
-        // Fichiers de sortie
-        String outputFile1 = tempDir + "/flattened_" + commit1Hash + ".yml";
-        String outputFile2 = tempDir + "/flattened_" + commit2Hash + ".yml";
+            // Écrire les fichiers YAML aplatis
+            writeFlattenedYaml(parsedYaml1, outputFile1);
+            writeFlattenedYaml(parsedYaml2, outputFile2);
 
-        // Écrire les fichiers YAML aplatis
-        writeFlattenedYaml(parsedYaml1, outputFile1);
-        writeFlattenedYaml(parsedYaml2, outputFile2);
+            // Comparer les fichiers
+            compareFiles(outputFile1, outputFile2, res);
 
-        // Comparer les fichiers
-        compareFiles(outputFile1, outputFile2, res);
+            Files.delete(Paths.get(outputFile1));
+            Files.delete(Paths.get(outputFile2));
+            Files.deleteIfExists(tempDir);
 
-        Files.delete(Paths.get(outputFile1));
-        Files.delete(Paths.get(outputFile2));
-        Files.deleteIfExists(tempDir);
-
-        repository.close();
+        }
 
         return res.toString();
     }
@@ -92,7 +89,8 @@ public class ChangementConfigService {
             treeWalk.setRecursive(true);
             treeWalk.setFilter(PathFilter.create(filePath));
             if (!treeWalk.next()) {
-                throw new IllegalStateException("Did not find expected file '" + filePath + "'");
+                LOGGER.warn("Did not find expected file '{}' pour the hash {}", filePath, commitHash);
+                return "";
             }
 
             ObjectId objectId = treeWalk.getObjectId(0);
@@ -105,11 +103,6 @@ public class ChangementConfigService {
             return outputStream.toString(StandardCharsets.UTF_8);
         }
 
-//        return new String(
-//                repository.open(
-//                        commit.getTree().toObjectId()findBlobMemberPath(filePath)
-//                ).getBytes()
-//        );
     }
 
     private void writeFlattenedYaml(Map<Object, Object> data, String outputFile) throws IOException {
@@ -235,7 +228,11 @@ public class ChangementConfigService {
             var s = f.toString();
             s = s.replaceAll("\\\\", "/");
             sb.append("*** Analyse de : ").append(s).append(" ***\n");
-            sb.append(changeConfig.compareYamlFiles(root.toString(), commitDebut, commitFin, s));
+            if (root.toString().endsWith(".yml")) {
+                sb.append(changeConfig.compareYamlFiles(root.toString(), commitDebut, commitFin, s));
+            } else {
+                sb.append("????\n");
+            }
         }
 
         return sb.toString();
@@ -249,7 +246,8 @@ public class ChangementConfigService {
             return walk
                     .filter(Files::isRegularFile) // Ne traiter que les fichiers réguliers
                     .filter(path -> StringUtils.startsWith(path.getFileName().toString(), "application")
-                            && StringUtils.endsWith(path.getFileName().toString(), ".yml")
+                            && (StringUtils.endsWith(path.getFileName().toString(), ".yml") ||
+                            StringUtils.endsWith(path.getFileName().toString(), ".properties"))
                             && !StringUtils.endsWith(path.getFileName().toString(), "-dev.yml")
                             && Objects.equals(path.getParent().getFileName().toString(), "config")) // Chercher les fichiers nommés pom.xml
                     .filter(ChangementConfigService::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
