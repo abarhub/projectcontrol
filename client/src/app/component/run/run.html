@@ -8,24 +8,10 @@
       </div>
       <div class="modal-body">
 
-<!--        <form [formGroup]="myForm">-->
-
-<!--          <div>-->
-<!--            <label for="commit-initial">Commit inital : </label>-->
-<!--            <input id="commit-initial" type="text" />-->
-<!--          </div>-->
-
-<!--          <div>-->
-<!--            <label for="commit-final">Commit final : </label>-->
-<!--            <input id="commit-final" type="text" formControlName="commitFinal"/>-->
-<!--          </div>-->
-
-<!--        </form>-->
-
         <div>
 
           @for (message of messages; track $index) {
-            <pre>{{message}}</pre>
+            <pre class="message-pre">{{message}}</pre>
           }
 
         </div>
@@ -33,7 +19,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" (click)="enregistrer($event)">Save changes</button>
+<!--        <button type="button" class="btn btn-primary" (click)="enregistrer($event)">Save changes</button>-->
       </div>
     </div>
   </div>

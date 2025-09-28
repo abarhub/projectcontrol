@@ -7,13 +7,14 @@ import {DetailsProjet} from '../details-projet/details-projet';
 import {Modal} from 'bootstrap';
 import {ToasterService} from '../../service/toaster.service';
 import {MajVersion} from '../maj-version/maj-version';
-import {ChangementConfigService} from '../../service/changement-config.service';
 import {ChangementConfig} from '../changement-config/changement-config';
 import {Run} from '../run/run';
-import {Button} from 'primeng/button';
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from 'primeng/tabs';
 import {Recherche} from '../recherche/recherche';
 import {GitCommentaire} from '../git-commentaire/git-commentaire';
+import {RunService} from '../../service/run.service';
+import {RunConfig} from '../../entity/run-config';
+import {SelectRun} from '../select-run/select-run';
 
 @Component({
   selector: 'app-details',
@@ -24,14 +25,14 @@ import {GitCommentaire} from '../git-commentaire/git-commentaire';
     MajVersion,
     ChangementConfig,
     Run,
-    Button,
     Tabs,
     TabList,
     Tab,
     TabPanels,
     TabPanel,
     Recherche,
-    GitCommentaire
+    GitCommentaire,
+    SelectRun
   ],
   templateUrl: './details.html',
   styleUrl: './details.scss'
@@ -44,9 +45,9 @@ export class Details implements AfterViewInit {
   private projetService = inject(ProjetService);
   projet = signal<Projet | null>(null);
   private toasterService = inject(ToasterService);
-  private changementConfigService = inject(ChangementConfigService);
+  private runService = inject(RunService);
+  listeRunConfig: RunConfig[] = [];
 
-  // @ViewChild('majVersion', {static: true}) majVersionEl!: ElementRef;
   @ViewChild(MajVersion) majVersionEl!: MajVersion;
 
   @ViewChild(ChangementConfig) changementConfig!: ChangementConfig;
@@ -55,6 +56,8 @@ export class Details implements AfterViewInit {
   @ViewChild(Run) run!: Run;
 
   @ViewChild(GitCommentaire) gitCommentaire!: GitCommentaire;
+
+  @ViewChild(SelectRun) selectRun!: SelectRun;
 
   private majVersionModal?: Modal;
 
@@ -143,6 +146,15 @@ export class Details implements AfterViewInit {
           }
         });
     }
+    this.runService.getListConfig().subscribe({
+      next: (data) => {
+        this.listeRunConfig = data;
+      },
+      error: (error) => {
+        console.error(error);
+        this.alerte("Erreur pour charger la config de run");
+      }
+    })
   }
 
   private alerte(message: string) {
@@ -173,6 +185,37 @@ export class Details implements AfterViewInit {
     let groupeProjet = this.groupeProjet();
     if (groupeProjet && nomProjet) {
       this.gitCommentaire.show(groupeProjet, nomProjet);
+    }
+  }
+
+  runCommande($event: MouseEvent, run: RunConfig) {
+    $event?.preventDefault();
+
+    let nomProjet = this.nomProjet();
+    let groupeProjet = this.groupeProjet();
+    if (groupeProjet && nomProjet && run.code) {
+      this.run.show(groupeProjet, nomProjet, run.code);
+    }
+  }
+
+  selectRunCommande($event: MouseEvent) {
+    $event?.preventDefault();
+
+    let nomProjet = this.nomProjet();
+    let groupeProjet = this.groupeProjet();
+    if (groupeProjet && nomProjet) {
+      this.selectRun.show(groupeProjet, nomProjet, this.listeRunConfig).subscribe({
+          next: (data) => {
+            let s = data;
+            if (s) {
+              this.run.show(groupeProjet, nomProjet, s);
+            }
+          },
+          error: (error) => {
+            console.error(error);
+          }
+        }
+      );
     }
   }
 }

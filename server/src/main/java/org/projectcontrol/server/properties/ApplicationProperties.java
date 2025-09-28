@@ -9,6 +9,7 @@ public class ApplicationProperties {
 
     private Map<String, ProjetProperties> listeProjets;
     private MajProperties maj;
+    private Map<String, RunCommandeProperties> run;
 
     public Map<String, ProjetProperties> getListeProjets() {
         return listeProjets;
@@ -24,5 +25,13 @@ public class ApplicationProperties {
 
     public void setMaj(MajProperties maj) {
         this.maj = maj;
+    }
+
+    public Map<String, RunCommandeProperties> getRun() {
+        return run;
+    }
+
+    public void setRun(Map<String, RunCommandeProperties> run) {
+        this.run = run;
     }
 }

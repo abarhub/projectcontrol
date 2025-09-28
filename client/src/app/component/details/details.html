@@ -27,9 +27,50 @@
       </button>
       <button type="button" class="btn btn-primary" (click)="analyseCommentaires($event)">Liste commentaire dans les commits
       </button>
+      <button type="button" class="btn btn-primary" (click)="selectRunCommande($event)">Execution
+      </button>
+<!--      <div class="btn-group" role="group">-->
+<!--        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">-->
+<!--          Execution-->
+<!--        </button>-->
+<!--        <ul class="dropdown-menu">-->
+<!--          @for(run of listeRunConfig; track $index){-->
+<!--            <li><a class="dropdown-item" (click)="runCommande($event, run)">{{run.libelle}}</a></li>-->
+<!--          }-->
+<!--          <li><a class="dropdown-item" href="#">Dropdown link</a></li>-->
+<!--          <li><a class="dropdown-item" href="#">Dropdown link</a></li>-->
+<!--        </ul>-->
+<!--      </div>-->
       <button type="button" class="btn btn-primary" (click)="recharger($event)">Recharger</button>
-      <p-button label="Check"/>
+<!--      <p-button label="Check"/>-->
+<!--      <div class="btn-group" role="group">-->
+<!--        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">-->
+<!--          Dropdown-->
+<!--        </button>-->
+<!--        <ul class="dropdown-menu">-->
+<!--          <li><a class="dropdown-item" href="#">Dropdown link</a></li>-->
+<!--          <li><a class="dropdown-item" href="#">Dropdown link</a></li>-->
+<!--        </ul>-->
+<!--      </div>-->
     </div>
+
+
+
+<!--    <div class="btn-group" role="group" aria-label="Button group with nested dropdown">-->
+<!--      <button type="button" class="btn btn-primary">1</button>-->
+<!--      <button type="button" class="btn btn-primary">2</button>-->
+
+<!--      <div class="btn-group" role="group">-->
+<!--        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">-->
+<!--          Dropdown-->
+<!--        </button>-->
+<!--        <ul class="dropdown-menu">-->
+<!--          <li><a class="dropdown-item" href="#">Dropdown link</a></li>-->
+<!--          <li><a class="dropdown-item" href="#">Dropdown link</a></li>-->
+<!--        </ul>-->
+<!--      </div>-->
+<!--    </div>-->
+
 
 
   </form>
@@ -83,5 +124,7 @@
   <app-run #run id="runId"></app-run>
 
   <app-git-commentaire #gitCommentaire id="gitCommentaireId"></app-git-commentaire>
+
+  <app-select-run #selectRun id="selectRun"></app-select-run>
 
 </div>

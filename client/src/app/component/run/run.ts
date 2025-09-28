@@ -27,10 +27,10 @@ export class Run {
   private toasterService = inject(ToasterService);
   messages: string [] = [];
   private runService = inject(RunService);
-  private action:string='';
+  private action: string = '';
 
 
-  public show(groupeId: string, nomProjet: string, action:string) {
+  public show(groupeId: string, nomProjet: string, action: string) {
     this.groupeId = groupeId;
     this.nomProjet = nomProjet;
     this.action = action;
@@ -39,12 +39,8 @@ export class Run {
     this.run();
   }
 
-  enregistrer($event: MouseEvent) {
-
-  }
-
   private run() {
-    if (this.groupeId && this.nomProjet&&this.action) {
+    if (this.groupeId && this.nomProjet && this.action) {
       this.messages = [];
       this.pollApiDataWithId(this.groupeId, this.nomProjet, this.action, 1000).subscribe({
         next: (data) => {

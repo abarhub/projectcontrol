@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.projectcontrol.core.service.RunService;
 import org.projectcontrol.server.dto.ProjetDto;
+import org.projectcontrol.server.properties.ApplicationProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +24,14 @@ public class ExecuteRun {
     private boolean fini = false;
     private final String repertoire;
     private final String action;
+    private final ApplicationProperties applicationProperties;
 
-    public ExecuteRun(String id, RunService runService, ProjetDto projet, String action) {
+    public ExecuteRun(String id, RunService runService, ProjetDto projet, String action, ApplicationProperties applicationProperties) {
         this.id = id;
         this.runService = runService;
         repertoire = projet.getRepertoire();
         this.action = action;
+        this.applicationProperties = applicationProperties;
     }
 
     public void run() throws IOException, InterruptedException {
@@ -36,7 +39,7 @@ public class ExecuteRun {
         LOGGER.info("debut run ...");
         fini = false;
         var fichier = repertoire + "/pom.xml";
-        if(StringUtils.isEmpty(action)){
+        if (StringUtils.isEmpty(action)) {
             throw new RuntimeException("Action invalide: " + action);
         }
         List<String> listeCommande = getListeCommande(action, fichier);
@@ -85,6 +88,20 @@ public class ExecuteRun {
         } else if (action.equals("dependencyAnalyse")) {
             return List.of("cmd", "/C", "mvn", "dependency:analyze", "-f", fichier);
         } else {
+            var map = applicationProperties.getRun();
+            if (map != null && map.containsKey(action)) {
+                var commande = map.get(action);
+                List<String> commandes = new ArrayList<>();
+                if (commande.isShell()) {
+                    commandes.addAll(List.of("cmd", "/C"));
+                }
+                commandes.addAll(commande.getCommande());
+                commandes = commandes.stream()
+                        .map(x -> StringUtils.replace(x, ":REPERTOIRE_PROJET:", repertoire))
+                        .toList();
+                return commandes;
+            }
+
             throw new RuntimeException("Action invalide: " + action);
         }
     }
