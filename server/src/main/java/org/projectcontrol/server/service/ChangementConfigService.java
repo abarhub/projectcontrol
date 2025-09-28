@@ -13,7 +13,9 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -35,7 +37,7 @@ public class ChangementConfigService {
 
     public String compareYamlFiles(String repoPath, String commit1Hash, String commit2Hash, String yamlFilePath) throws Exception {
 
-        StringBuilder res=new StringBuilder();
+        StringBuilder res = new StringBuilder();
 
         // Construire le repository Git
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -51,14 +53,17 @@ public class ChangementConfigService {
         String yamlContent2 = getFileContentFromCommit(repository, commit2Hash, yamlFilePath);
 
         // Parser les YAML
-        Yaml yaml = new Yaml();
+        LoaderOptions options = new LoaderOptions();
+        options.setAllowDuplicateKeys(false);
+        options.setTagInspector(tag -> true);
+        Yaml yaml = new Yaml(new SafeConstructor(options));
         Map<Object, Object> parsedYaml1 = yaml.load(yamlContent1);
         Map<Object, Object> parsedYaml2 = yaml.load(yamlContent2);
 
-        Path tempDir= Files.createTempDirectory("cmpyml");
+        Path tempDir = Files.createTempDirectory("cmpyml");
         // Fichiers de sortie
-        String outputFile1 = tempDir+"/flattened_" + commit1Hash + ".yml";
-        String outputFile2 = tempDir+"/flattened_" + commit2Hash + ".yml";
+        String outputFile1 = tempDir + "/flattened_" + commit1Hash + ".yml";
+        String outputFile2 = tempDir + "/flattened_" + commit2Hash + ".yml";
 
         // Écrire les fichiers YAML aplatis
         writeFlattenedYaml(parsedYaml1, outputFile1);
@@ -80,14 +85,14 @@ public class ChangementConfigService {
         ObjectId commitId = repository.resolve(commitHash);
         RevCommit commit = new org.eclipse.jgit.revwalk.RevWalk(repository).parseCommit(commitId);
 
-        RevTree tree=commit.getTree();
+        RevTree tree = commit.getTree();
 
         try (TreeWalk treeWalk = new TreeWalk(repository)) {
             treeWalk.addTree(tree);
             treeWalk.setRecursive(true);
             treeWalk.setFilter(PathFilter.create(filePath));
             if (!treeWalk.next()) {
-                throw new IllegalStateException("Did not find expected file '"+filePath+"'");
+                throw new IllegalStateException("Did not find expected file '" + filePath + "'");
             }
 
             ObjectId objectId = treeWalk.getObjectId(0);
@@ -120,10 +125,10 @@ public class ChangementConfigService {
 
     private void flattenMap(Map<Object, Object> source, String prefix, Map<Object, Object> destination) {
         for (Map.Entry<Object, Object> entry : source.entrySet()) {
-            String key = prefix.isEmpty() ? ""+entry.getKey() : prefix + "." + entry.getKey();
+            String key = prefix.isEmpty() ? "" + entry.getKey() : prefix + "." + entry.getKey();
 
             if (entry.getValue() instanceof Map) {
-                flattenMap((Map<Object, Object>)entry.getValue(), key, destination);
+                flattenMap((Map<Object, Object>) entry.getValue(), key, destination);
             } else {
                 destination.put(key, entry.getValue());
             }
@@ -131,41 +136,41 @@ public class ChangementConfigService {
     }
 
     private void compareFiles(String file1, String file2, StringBuilder res) throws IOException {
-        Map<String,String> map1=readFile(Paths.get(file1));
-        Map<String,String> map2=readFile(Paths.get(file2));
+        Map<String, String> map1 = readFile(Paths.get(file1));
+        Map<String, String> map2 = readFile(Paths.get(file2));
 
-        Set<String> keysAjout=new TreeSet<>(map2.keySet());
+        Set<String> keysAjout = new TreeSet<>(map2.keySet());
         keysAjout.removeAll(map1.keySet());
 
-        Set<String> keysSupprime=new TreeSet<>(map1.keySet());
+        Set<String> keysSupprime = new TreeSet<>(map1.keySet());
         keysSupprime.removeAll(map2.keySet());
 
-        Set<String> keysModifie=new TreeSet<>();
+        Set<String> keysModifie = new TreeSet<>();
 
         for (String key : map2.keySet()) {
             if (map1.containsKey(key)) {
-                if(!Objects.equals(map1.get(key), map2.get(key))){
+                if (!Objects.equals(map1.get(key), map2.get(key))) {
                     keysModifie.add(key);
                 }
             }
         }
 
         res.append("* Parametre à ajouter : \n");
-        for(String key : keysAjout){
+        for (String key : keysAjout) {
             res.append(key).append(": ").append(str(map2.get(key))).append("\n");
         }
         res.append("* Parametre à modifier : \n");
-        for(String key : keysModifie){
+        for (String key : keysModifie) {
             res.append(key).append(": ").append(str(map2.get(key))).append("\n");
         }
         res.append("* Parametre à supprimer : \n");
-        for(String key : keysSupprime){
+        for (String key : keysSupprime) {
             res.append(key).append("\n");
         }
     }
 
     private String str(String str) {
-        if(str==null) {
+        if (str == null) {
             return "";
         } else {
             return str;
@@ -199,14 +204,14 @@ public class ChangementConfigService {
         }
     }
 
-    private Map<String,String> readFile(Path path) throws IOException {
-        List<String> liste=Files.readAllLines(path);
+    private Map<String, String> readFile(Path path) throws IOException {
+        List<String> liste = Files.readAllLines(path);
 
-        Map<String,String> map=new HashMap<>();
+        Map<String, String> map = new HashMap<>();
 
-        for(String line:liste) {
-            int index=line.indexOf(':');
-            map.put(line.substring(0,index),line.substring(index+2));
+        for (String line : liste) {
+            int index = line.indexOf(':');
+            map.put(line.substring(0, index), line.substring(index + 2));
         }
 
         return map;
@@ -215,22 +220,22 @@ public class ChangementConfigService {
 
     public String calculDifference(Path file, String commitDebut, String commitFin) throws Exception {
 
-        ChangementConfigService changeConfig=this;
+        ChangementConfigService changeConfig = this;
 
-        Path root=file;
-        LOGGER.info("file={}",file);
-        LOGGER.info("root={}",root);
+        Path root = file;
+        LOGGER.info("file={}", file);
+        LOGGER.info("root={}", root);
 
-        List<Path> liste=findConfigFiles(root.toString());
+        List<Path> liste = findConfigFiles(root.toString());
 
-        StringBuilder sb=new StringBuilder();
-        for(Path p:liste){
-            var f=root.relativize(p);
-            LOGGER.info("analyse de : {}",f);
-            var s=f.toString();
-            s=s.replaceAll("\\\\", "/");
+        StringBuilder sb = new StringBuilder();
+        for (Path p : liste) {
+            var f = root.relativize(p);
+            LOGGER.info("analyse de : {}", f);
+            var s = f.toString();
+            s = s.replaceAll("\\\\", "/");
             sb.append("*** Analyse de : ").append(s).append(" ***\n");
-            sb.append(changeConfig.compareYamlFiles(root.toString(),commitDebut,commitFin,s));
+            sb.append(changeConfig.compareYamlFiles(root.toString(), commitDebut, commitFin, s));
         }
 
         return sb.toString();
@@ -243,9 +248,9 @@ public class ChangementConfigService {
         try (Stream<Path> walk = Files.walk(startPath)) {
             return walk
                     .filter(Files::isRegularFile) // Ne traiter que les fichiers réguliers
-                    .filter(path -> StringUtils.startsWith(path.getFileName().toString(),"application")
-                            &&StringUtils.endsWith(path.getFileName().toString(),".yml")
-                            &&!StringUtils.endsWith(path.getFileName().toString(),"-dev.yml")
+                    .filter(path -> StringUtils.startsWith(path.getFileName().toString(), "application")
+                            && StringUtils.endsWith(path.getFileName().toString(), ".yml")
+                            && !StringUtils.endsWith(path.getFileName().toString(), "-dev.yml")
                             && Objects.equals(path.getParent().getFileName().toString(), "config")) // Chercher les fichiers nommés pom.xml
                     .filter(ChangementConfigService::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
                     .collect(Collectors.toList());
@@ -258,8 +263,8 @@ public class ChangementConfigService {
         // Cela permet de s'assurer que même si un pom.xml se trouve dans un sous-sous-répertoire d'un répertoire ignoré, il est bien ignoré.
         for (Path segment : path) {
             String segmentName = segment.getFileName().toString();
-            if (Objects.equals(segmentName,"target") || Objects.equals(segmentName,"node_modules")
-                    || Objects.equals(segmentName,"node")) {
+            if (Objects.equals(segmentName, "target") || Objects.equals(segmentName, "node_modules")
+                    || Objects.equals(segmentName, "node")) {
                 return false; // Le chemin contient un répertoire à ignorer
             }
         }
