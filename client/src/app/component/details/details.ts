@@ -188,16 +188,6 @@ export class Details implements AfterViewInit {
     }
   }
 
-  runCommande($event: MouseEvent, run: RunConfig) {
-    $event?.preventDefault();
-
-    let nomProjet = this.nomProjet();
-    let groupeProjet = this.groupeProjet();
-    if (groupeProjet && nomProjet && run.code) {
-      this.run.show(groupeProjet, nomProjet, run.code);
-    }
-  }
-
   selectRunCommande($event: MouseEvent) {
     $event?.preventDefault();
 

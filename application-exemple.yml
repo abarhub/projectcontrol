@@ -12,5 +12,16 @@ app:
       repertoires: /home/user/autres-projets
       exclusions:
       defaut: false
+  maj:
+    message-commit: 'chore(version): préparation de la version VERSION'
+  run:
+    dir:
+      nom: liste des fichiers
+      commande: "dir :REPERTOIRE_PROJET:"
+      shell: true
+    echo:
+      nom: affichage
+      commande: ["echo", "bonjour à tous"]
+      shell: true
 
 

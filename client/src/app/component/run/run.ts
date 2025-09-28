@@ -28,12 +28,20 @@ export class Run {
   messages: string [] = [];
   private runService = inject(RunService);
   private action: string = '';
+  titre: string = '';
 
 
   public show(groupeId: string, nomProjet: string, action: string) {
     this.groupeId = groupeId;
     this.nomProjet = nomProjet;
     this.action = action;
+    if (action === 'dependencyAnalyse') {
+      this.titre = 'Analyse des dépendances';
+    } else if (action === 'dependencyTree') {
+      this.titre = 'Liste des dépendances';
+    } else {
+      this.titre = 'Execution de la commande ' + action;
+    }
     this.majVersionModal = new Modal(this.majVersionEl.nativeElement);
     this.majVersionModal.show();
     this.run();
