@@ -9,6 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,11 @@ public class RunService {
         LOGGER.info("run {}", liste);
         builder.command(liste);
         if (repertoire != null) {
+            if (Files.notExists(repertoire)) {
+                throw new IllegalArgumentException("Repertoire does not exist: " + repertoire);
+            } else if (!Files.isDirectory(repertoire)) {
+                throw new IllegalArgumentException("Repertoire is not a directory: " + repertoire);
+            }
             builder.directory(repertoire.toFile());
         }
         Process process = builder.start();

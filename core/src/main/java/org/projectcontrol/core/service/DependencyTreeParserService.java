@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,9 +23,10 @@ public class DependencyTreeParserService {
      * Lance "mvn dependency:tree -DoutputType=tgf" et retourne
      * la liste des dépendances DIRECTES enrichies de leurs transitives.
      */
-    public List<MavenDependency> buildDependencyTree(File projectDir, String mvnCmd) throws Exception {
+    public List<MavenDependency> buildDependencyTree(Path projectDir, String mvnCmd) throws Exception {
         Path tgfFile = Files.createTempFile("dep-tree-", ".tgf");
-//        tgfFile.deleteOnExit();
+
+        Path pomFile = projectDir.resolve("pom.xml").toAbsolutePath().normalize();
 
         try {
             // Lancer mvn dependency:tree en format TGF
@@ -35,11 +35,12 @@ public class DependencyTreeParserService {
                     "-DoutputType=tgf",
                     "-Doutput=" + tgfFile.toString(),
                     "--batch-mode",
-                    "--no-transfer-progress"
+                    "--no-transfer-progress",
+                    "-f=" + pomFile
             );
 
             return parseTgf(tgfFile);
-        }finally {
+        } finally {
             Files.deleteIfExists(tgfFile);
         }
     }
@@ -129,19 +130,19 @@ public class DependencyTreeParserService {
     // ---------------------------------------------------------------
     // Utilitaire : lancer un process Maven
     // ---------------------------------------------------------------
-    void runProcess(File dir, String mvnCmd, String... args) throws Exception {
+    void runProcess(Path dir, String mvnCmd, String... args) throws Exception {
         List<String> cmd = new ArrayList<>();
         cmd.add(mvnCmd);
         cmd.addAll(Arrays.asList(args));
         int exitCode = runService.runCommand(x -> LOGGER.debug("[MVN] {}", x),
                 x -> {
-                    if (x.line().startsWith("WARNING: ")||x.line().isEmpty()) {
+                    if (x.line().startsWith("WARNING: ") || x.line().isEmpty()) {
                         LOGGER.debug("[MVN] {}", x);
                     } else {
                         LOGGER.error("[MVN] {}", x);
                     }
                 },
-                dir.toPath(), cmd.toArray(String[]::new));
+                dir, cmd.toArray(String[]::new));
         if (exitCode != 0) {
             throw new RuntimeException("Maven a échoué (exit=" + exitCode + ") : " + Arrays.toString(args));
         }

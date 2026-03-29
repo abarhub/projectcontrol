@@ -49,29 +49,32 @@ public class EffectivePomReaderService {
     /**
      * Lit le effective-pom ET l'arbre de dépendances pour un projet Maven.
      *
-     * @param projectDir Répertoire racine du projet
+     * @param pomFile Répertoire racine du projet
      * @return PomInfo complet (modules récursifs + dépendances transitives)
      */
-    public MavenProjet readEffectivePom(File projectDir) throws Exception {
-        String mvnCmd = resolveMavenCommand(projectDir);
+    public MavenProjet readEffectivePom(Path pomFile) throws Exception {
+
+        String mvnCmd = resolveMavenCommand(pomFile);
 
         // 1. Générer et parser le effective-pom
         Path effectivePomFile = null;
         MavenProjet info;
         try {
-            effectivePomFile = runEffectivePom(projectDir, mvnCmd);
+            effectivePomFile = runEffectivePom(pomFile.getParent(), mvnCmd);
             info = parseEffectivePom(effectivePomFile);
         } finally {
-            Files.deleteIfExists(effectivePomFile);
+            if (effectivePomFile != null) {
+                Files.deleteIfExists(effectivePomFile);
+            }
         }
-        info.setFichierMaven(projectDir.toPath().resolve("pom.xml").toAbsolutePath().normalize().toString());
+        info.setFichierMaven(pomFile.toAbsolutePath().normalize().toString());
 
         // 2. Enrichir les dépendances directes avec leurs transitives
-        List<MavenDependency> enrichedDeps = treeParser.buildDependencyTree(projectDir, mvnCmd);
+        List<MavenDependency> enrichedDeps = treeParser.buildDependencyTree(pomFile.getParent(), mvnCmd);
         mergeTransitiveDeps(info.getDependencies(), enrichedDeps);
 
         // 3. Charger récursivement les modules
-        loadModulesRecursively(info, projectDir, mvnCmd);
+        loadModulesRecursively(info, pomFile, mvnCmd);
 
         return info;
     }
@@ -79,14 +82,17 @@ public class EffectivePomReaderService {
     // ================================================================
     //  ÉTAPE 1 : effective-pom
     // ================================================================
-    private Path runEffectivePom(File projectDir, String mvnCmd) throws Exception {
+    private Path runEffectivePom(Path projectDir, String mvnCmd) throws Exception {
         Path outputFile = Files.createTempFile("effective-pom-", ".xml");
+
+        Path pomFile = projectDir.resolve("pom.xml").toAbsolutePath().normalize();
 
         treeParser.runProcess(projectDir, mvnCmd,
                 "help:effective-pom",
                 "-Doutput=" + outputFile.toString(),
                 "--batch-mode",
-                "--no-transfer-progress"
+                "--no-transfer-progress",
+                "-f=" + pomFile
         );
 
         if (Files.notExists(outputFile) || Files.size(outputFile) == 0) {
@@ -98,14 +104,6 @@ public class EffectivePomReaderService {
     // ================================================================
     //  ÉTAPE 2 : Parser le XML → PomInfo
     // ================================================================
-    private MavenProjet parseEffectivePom0(File xmlFile) throws Exception {
-        MavenXpp3Reader reader = new MavenXpp3Reader();
-        Model model;
-        try (FileReader fr = new FileReader(xmlFile)) {
-            model = reader.read(fr);
-        }
-        return buildPomInfo(model);
-    }
 
     private MavenProjet parseEffectivePom(Path xmlFile) throws Exception {
         // Lire la racine du XML pour détecter le cas multi-module
@@ -266,7 +264,7 @@ public class EffectivePomReaderService {
     //  ÉTAPE 3 : Charger les modules récursivement
     // ================================================================
     private void loadModulesRecursively(MavenProjet parentInfo,
-                                        File parentDir,
+                                        Path parentDir,
                                         String mvnCmd) {
         List<MavenProjet> resolved = new ArrayList<>();
 
@@ -279,15 +277,15 @@ public class EffectivePomReaderService {
             }
 
             // Sinon, on tente de le charger depuis le sous-répertoire (fallback)
-            File moduleDir = new File(parentDir, stub.getName());
-            if (!moduleDir.exists() || !moduleDir.isDirectory()) {
+            Path moduleDir = parentDir.resolve(stub.getName());
+            if (!Files.notExists(moduleDir) || !Files.isDirectory(moduleDir)) {
                 LOGGER.error("[WARN] Module introuvable : {}", moduleDir);
                 resolved.add(stub);
                 continue;
             }
 
             try {
-                LOGGER.info("[INFO] Chargement du module : {}", moduleDir.getName());
+                LOGGER.info("[INFO] Chargement du module : {}", moduleDir.getFileName());
                 MavenProjet moduleInfo = readEffectivePom(moduleDir);
                 resolved.add(moduleInfo);
             } catch (Exception e) {
@@ -330,8 +328,8 @@ public class EffectivePomReaderService {
     // ================================================================
     //  Utilitaires
     // ================================================================
-    private String resolveMavenCommand(File projectDir) {
-        File mvnw = new File(projectDir, isWindows() ? "mvnw.cmd" : "mvnw");
+    private String resolveMavenCommand(Path projectDir) {
+        File mvnw = new File(projectDir.toFile(), isWindows() ? "mvnw.cmd" : "mvnw");
         if (mvnw.exists() && mvnw.canExecute()) return mvnw.getAbsolutePath();
         return isWindows() ? "mvn.cmd" : "mvn";
     }

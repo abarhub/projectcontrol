@@ -50,10 +50,10 @@ public class ProjetDetailService {
     }
 
     private MavenProjet analysePom(Path repertoire) {
-        var pomFile = repertoire.resolve("pom.xml");
+        var pomFile = repertoire.resolve("pom.xml").toAbsolutePath().normalize();
         if (Files.exists(pomFile)) {
             try {
-                return reader.readEffectivePom(new File("."));
+                return reader.readEffectivePom(pomFile);
             } catch (Exception e) {
                 LOGGER.error("erreur pour récupérer l'effective pom de {}", repertoire, e);
             }
