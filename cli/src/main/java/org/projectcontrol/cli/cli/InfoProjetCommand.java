@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.projectcontrol.core.service.ProjetDetailService;
 import org.projectcontrol.core.vo.projet.DetailProjet;
+import org.projectcontrol.core.vo.projet.MavenDependency;
+import org.projectcontrol.core.vo.projet.MavenProjet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 @Component
@@ -26,6 +29,10 @@ public class InfoProjetCommand implements Callable<Integer> {
 
     @CommandLine.Option(names = "--directory", description = "Répertoire du projet")
     private String directory;
+
+    @CommandLine.Option(names = "--dependancies", description = "Affiche les dépendances. " +
+            "Par défaut : ${DEFAULT-VALUE}", defaultValue = "false")
+    private boolean afficheDependances;
 
     public InfoProjetCommand(ProjetDetailService projetDetailService) {
         this.projetDetailService = projetDetailService;
@@ -57,12 +64,38 @@ public class InfoProjetCommand implements Callable<Integer> {
 
             var resultat = projetDetailService.getProjetDetail(repertoire);
 
+            if (afficheDependances) {
+                afficheDependances(resultat);
+            }
+
             ecritureFichier(resultat, fichierSortie);
 
             return 0;
         } catch (Exception e) {
             LOGGER.error("Error analyzing pom file", e);
             return 1;
+        }
+    }
+
+    private void afficheDependances(DetailProjet resultat) {
+        var pom = resultat.mavenProjet();
+        if (pom != null) {
+            LOGGER.info("=== {} ===", pom.getArtifact());
+            printDependencyTree(pom.getDependencies(), 0);
+
+            LOGGER.info("=== Modules ===");
+            for (MavenProjet module : pom.getModules()) {
+                LOGGER.info("  Module : {}", module.getArtifact());
+                printDependencyTree(module.getDependencies(), 2);
+            }
+        }
+    }
+
+
+    private void printDependencyTree(List<MavenDependency> deps, int indent) {
+        for (MavenDependency dep : deps) {
+            LOGGER.info("{}├─ {}", " ".repeat(indent), dep);
+            printDependencyTree(dep.getTransitiveDependencies(), indent + 3);
         }
     }
 

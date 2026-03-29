@@ -33,19 +33,9 @@ public class ProjetDetailService {
         var pomFile = repertoire.resolve("pom.xml");
         if (Files.exists(pomFile)) {
             try {
-//                String[] commande = List.of("mvn", "help:effective-pom", "-Doutput=project.groupId", "-DforceStdout").toArray(String[]::new);
-//                var liste = runService.runCommand(commande).collectList();
-//                EffectivePomReaderService reader = new EffectivePomReaderService();
                 MavenProjet pom = reader.readEffectivePom(new File("."));
 
-                LOGGER.info("=== {} ===", pom.getArtifact());
-                printDependencyTree(pom.getDependencies(), 0);
 
-                LOGGER.info("=== Modules ===");
-                for (MavenProjet module : pom.getModules()) {
-                    LOGGER.info("  Module : {}", module.getArtifact());
-                    printDependencyTree(module.getDependencies(), 2);
-                }
 
                 return pom;
 
@@ -54,13 +44,6 @@ public class ProjetDetailService {
             }
         }
         return null;
-    }
-
-    private void printDependencyTree(List<MavenDependency> deps, int indent) {
-        for (MavenDependency dep : deps) {
-            LOGGER.info("{}├─ {}", " ".repeat(indent), dep);
-            printDependencyTree(dep.getTransitiveDependencies(), indent + 3);
-        }
     }
 
 }

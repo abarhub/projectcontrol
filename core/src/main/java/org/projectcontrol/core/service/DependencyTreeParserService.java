@@ -128,7 +128,13 @@ public class DependencyTreeParserService {
         cmd.add(mvnCmd);
         cmd.addAll(Arrays.asList(args));
         int exitCode = runService.runCommand(x -> LOGGER.debug("[MVN] {}", x),
-                x -> LOGGER.error("[MVN] {}", x),
+                x -> {
+                    if (x.line().startsWith("WARNING: ")||x.line().isEmpty()) {
+                        LOGGER.debug("[MVN] {}", x);
+                    } else {
+                        LOGGER.error("[MVN] {}", x);
+                    }
+                },
                 dir.toPath(), cmd.toArray(String[]::new));
         if (exitCode != 0) {
             throw new RuntimeException("Maven a échoué (exit=" + exitCode + ") : " + Arrays.toString(args));
