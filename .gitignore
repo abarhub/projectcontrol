@@ -22,3 +22,6 @@ server/server.iml
 
 config/
 
+justfile
+
+
