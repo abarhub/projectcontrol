@@ -28,7 +28,6 @@ public class UpdateVersionCli implements Callable<Integer> {
     }
 
     public Integer call() throws Exception {
-        //mailService.sendMessage(to, subject, String.join(" ", body));
         try {
             LOGGER.info("call");
             afficheVersions();
@@ -59,10 +58,6 @@ public class UpdateVersionCli implements Callable<Integer> {
             map.put(libelle, version);
             liste2.add(libelle);
         }
-//        var console = System.console();
-//        if (console == null) {
-//            throw new Exception("console est null");
-//        }
         Scanner scan = new Scanner(System.in);
         while (true) {
             System.out.println("Versions disponibles :");
@@ -75,7 +70,6 @@ public class UpdateVersionCli implements Callable<Integer> {
             System.out.println("0 ) Quitter");
 
             System.out.println("Veullez sélectionner une version :");
-//            String choixStr = console.readLine();
             String choixStr = scan.nextLine();
             if (StringUtils.isNotBlank(choixStr)) {
                 int choix = Integer.parseInt(choixStr);
