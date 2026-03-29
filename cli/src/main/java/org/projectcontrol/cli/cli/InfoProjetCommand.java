@@ -105,6 +105,9 @@ public class InfoProjetCommand implements Callable<Integer> {
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            objectMapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
+            objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(output.toFile(), resultat);
 
             LOGGER.info("Ecriture du fichier de sortie : {} OK", output);

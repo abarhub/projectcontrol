@@ -1,6 +1,7 @@
 package org.projectcontrol.core.service;
 
 import org.projectcontrol.core.vo.projet.DetailProjet;
+import org.projectcontrol.core.vo.projet.GitRepositoryInfo;
 import org.projectcontrol.core.vo.projet.MavenProjet;
 import org.projectcontrol.core.vo.projet.NodeProjet;
 import org.slf4j.Logger;
@@ -21,9 +22,12 @@ public class ProjetDetailService {
 
     private final NodeReaderService nodeReaderService;
 
-    public ProjetDetailService(EffectivePomReaderService reader, NodeReaderService nodeReaderService) {
+    private final GitInfoService gitInfoService;
+
+    public ProjetDetailService(EffectivePomReaderService reader, NodeReaderService nodeReaderService, GitInfoService gitInfoService) {
         this.reader = reader;
         this.nodeReaderService = nodeReaderService;
+        this.gitInfoService = gitInfoService;
     }
 
     public DetailProjet getProjetDetail(Path repertoire) {
@@ -31,9 +35,19 @@ public class ProjetDetailService {
 
         List<NodeProjet> nodeProjets = nodeReaderService.analyse(repertoire);
 
-        return new DetailProjet(mavenProjet, nodeProjets);
+        GitRepositoryInfo gitRepositoryInfo = analyseGit(repertoire);
+
+        return new DetailProjet(mavenProjet, nodeProjets, gitRepositoryInfo);
     }
 
+    private GitRepositoryInfo analyseGit(Path repertoire) {
+        try {
+            return gitInfoService.analyzeRepository(repertoire.toString());
+        } catch (Exception e) {
+            LOGGER.error("Erreur lors de l'analyse du git de {}", repertoire, e);
+            return null;
+        }
+    }
 
     private MavenProjet analysePom(Path repertoire) {
         var pomFile = repertoire.resolve("pom.xml");
