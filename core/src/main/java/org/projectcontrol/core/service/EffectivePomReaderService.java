@@ -56,8 +56,15 @@ public class EffectivePomReaderService {
         String mvnCmd = resolveMavenCommand(projectDir);
 
         // 1. Générer et parser le effective-pom
-        Path effectivePomFile = runEffectivePom(projectDir, mvnCmd);
-        MavenProjet info = parseEffectivePom(effectivePomFile);
+        Path effectivePomFile = null;
+        MavenProjet info;
+        try {
+            effectivePomFile = runEffectivePom(projectDir, mvnCmd);
+            info = parseEffectivePom(effectivePomFile);
+        } finally {
+            Files.deleteIfExists(effectivePomFile);
+        }
+        info.setFichierMaven(projectDir.toPath().resolve("pom.xml").toAbsolutePath().normalize().toString());
 
         // 2. Enrichir les dépendances directes avec leurs transitives
         List<MavenDependency> enrichedDeps = treeParser.buildDependencyTree(projectDir, mvnCmd);
@@ -74,7 +81,6 @@ public class EffectivePomReaderService {
     // ================================================================
     private Path runEffectivePom(File projectDir, String mvnCmd) throws Exception {
         Path outputFile = Files.createTempFile("effective-pom-", ".xml");
-//        outputFile.deleteOnExit();
 
         treeParser.runProcess(projectDir, mvnCmd,
                 "help:effective-pom",

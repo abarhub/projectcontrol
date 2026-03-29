@@ -1,8 +1,8 @@
 package org.projectcontrol.core.service;
 
 import org.projectcontrol.core.vo.projet.DetailProjet;
-import org.projectcontrol.core.vo.projet.MavenDependency;
 import org.projectcontrol.core.vo.projet.MavenProjet;
+import org.projectcontrol.core.vo.projet.NodeProjet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,26 +19,27 @@ public class ProjetDetailService {
 
     private final EffectivePomReaderService reader;
 
-    public ProjetDetailService(EffectivePomReaderService reader) {
+    private final NodeReaderService nodeReaderService;
+
+    public ProjetDetailService(EffectivePomReaderService reader, NodeReaderService nodeReaderService) {
         this.reader = reader;
+        this.nodeReaderService = nodeReaderService;
     }
 
     public DetailProjet getProjetDetail(Path repertoire) {
         MavenProjet mavenProjet = analysePom(repertoire);
 
-        return new DetailProjet(mavenProjet);
+        List<NodeProjet> nodeProjets = nodeReaderService.analyse(repertoire);
+
+        return new DetailProjet(mavenProjet, nodeProjets);
     }
+
 
     private MavenProjet analysePom(Path repertoire) {
         var pomFile = repertoire.resolve("pom.xml");
         if (Files.exists(pomFile)) {
             try {
-                MavenProjet pom = reader.readEffectivePom(new File("."));
-
-
-
-                return pom;
-
+                return reader.readEffectivePom(new File("."));
             } catch (Exception e) {
                 LOGGER.error("erreur pour récupérer l'effective pom de {}", repertoire, e);
             }

@@ -7,14 +7,15 @@ import java.util.Map;
 
 public class MavenProjet {
 
-    private ArtifactInfo        parent;
-    private ArtifactInfo        artifact;
-    private String              name;
-    private String              description;
-    private Map<String, String> properties   = new LinkedHashMap<>();
-    private List<MavenDependency>    dependencies = new ArrayList<>();
-    private List<MavenProjet>       modules      = new ArrayList<>();  // ← récursif
-    private List<MavenProfile>       profiles     = new ArrayList<>();
+    private ArtifactInfo parent;
+    private ArtifactInfo artifact;
+    private String name;
+    private String description;
+    private Map<String, String> properties = new LinkedHashMap<>();
+    private List<MavenDependency> dependencies = new ArrayList<>();
+    private List<MavenProjet> modules = new ArrayList<>();  // ← récursif
+    private List<MavenProfile> profiles = new ArrayList<>();
+    private String fichierMaven;
 
     public ArtifactInfo getParent() {
         return parent;
@@ -78,5 +79,13 @@ public class MavenProjet {
 
     public void setProfiles(List<MavenProfile> profiles) {
         this.profiles = profiles;
+    }
+
+    public String getFichierMaven() {
+        return fichierMaven;
+    }
+
+    public void setFichierMaven(String fichierMaven) {
+        this.fichierMaven = fichierMaven;
     }
 }

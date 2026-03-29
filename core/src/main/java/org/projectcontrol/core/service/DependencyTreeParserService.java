@@ -9,6 +9,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 @Service
@@ -23,27 +25,31 @@ public class DependencyTreeParserService {
      * la liste des dépendances DIRECTES enrichies de leurs transitives.
      */
     public List<MavenDependency> buildDependencyTree(File projectDir, String mvnCmd) throws Exception {
-        File tgfFile = File.createTempFile("dep-tree-", ".tgf");
-        tgfFile.deleteOnExit();
+        Path tgfFile = Files.createTempFile("dep-tree-", ".tgf");
+//        tgfFile.deleteOnExit();
 
-        // Lancer mvn dependency:tree en format TGF
-        runProcess(projectDir, mvnCmd,
-                "dependency:tree",
-                "-DoutputType=tgf",
-                "-Doutput=" + tgfFile.getAbsolutePath(),
-                "--batch-mode",
-                "--no-transfer-progress"
-        );
+        try {
+            // Lancer mvn dependency:tree en format TGF
+            runProcess(projectDir, mvnCmd,
+                    "dependency:tree",
+                    "-DoutputType=tgf",
+                    "-Doutput=" + tgfFile.toString(),
+                    "--batch-mode",
+                    "--no-transfer-progress"
+            );
 
-        return parseTgf(tgfFile);
+            return parseTgf(tgfFile);
+        }finally {
+            Files.deleteIfExists(tgfFile);
+        }
     }
 
     // ---------------------------------------------------------------
     // Parser le fichier TGF
     // ---------------------------------------------------------------
-    private List<MavenDependency> parseTgf(File tgfFile) throws IOException {
+    private List<MavenDependency> parseTgf(Path tgfFile) throws IOException {
         List<String> lines = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(tgfFile))) {
+        try (BufferedReader br = Files.newBufferedReader(tgfFile)) {
             String line;
             while ((line = br.readLine()) != null) lines.add(line.trim());
         }
