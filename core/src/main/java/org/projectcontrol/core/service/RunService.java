@@ -1,7 +1,6 @@
 package org.projectcontrol.core.service;
 
 
-import org.projectcontrol.core.utils.LignesRecherche;
 import org.projectcontrol.core.utils.Line;
 import org.projectcontrol.core.utils.StreamGobbler;
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,6 +22,10 @@ public class RunService {
     private static final Logger LOGGER = LoggerFactory.getLogger(RunService.class);
 
     public int runCommand(Consumer<Line> consumer, String... commandes) throws InterruptedException, IOException {
+        return runCommand(consumer, null, null, commandes);
+    }
+
+    public int runCommand(Consumer<Line> consumer, Consumer<Line> errorConsumer, Path repertoire, String... commandes) throws InterruptedException, IOException {
         ProcessBuilder builder = new ProcessBuilder();
         List<String> liste = new ArrayList<>();
         for (String s : commandes) {
@@ -31,11 +35,11 @@ public class RunService {
                 liste.add(s);
             }
         }
-        Sinks.Many<LignesRecherche> sink = Sinks.many().multicast().onBackpressureBuffer();
-
-        Flux<LignesRecherche> hotFlux = sink.asFlux();
         LOGGER.info("run {}", liste);
         builder.command(liste);
+        if (repertoire != null) {
+            builder.directory(repertoire.toFile());
+        }
         Process process = builder.start();
         try (ExecutorService executorService = Executors.newCachedThreadPool()) {
             //LOGGER.info("output: {}",x);
@@ -44,8 +48,12 @@ public class RunService {
             executorService.submit(streamGobbler);
             StreamGobbler streamGobblerErrur =
                     new StreamGobbler(process.getErrorStream(), (x) -> {
-                        LOGGER.error("error: {}", x);
-                        consumer.accept(new Line(true, x));
+                        if (errorConsumer != null) {
+                            errorConsumer.accept(new Line(true, x));
+                        } else {
+                            LOGGER.error("error: {}", x);
+                            consumer.accept(new Line(true, x));
+                        }
                     });
             executorService.submit(streamGobblerErrur);
             return process.waitFor();
