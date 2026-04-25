@@ -208,6 +208,8 @@ class ChangementConfigServiceTest {
                         "* Parametre à supprimer : \n" +
                         "key5\n";
                 assertThat(res).isEqualTo(s);
+
+                //main(repoDir.toFile(), firstShortHash, secondShortHash);
             });
         }
     }
@@ -218,20 +220,25 @@ class ChangementConfigServiceTest {
         @Test
         void findConfigFiles() throws Exception {
 
-            Path firstVersionSource = REPERTOIRE_REFERENCE.resolve("version1");
 
-            copyDirectory(firstVersionSource, repoDir);
+            initialiseFichiers(repoDir, List.of("version1"), (firstShortHash, secondShortHash) -> {
 
-            var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString());
+                var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString(), firstShortHash, secondShortHash);
 
-            LOGGER.info("repoDir={}", repoDir);
-            LOGGER.info("listeConfigfiles={}", listeConfigfiles);
-            LOGGER.info("listeConfigfiles={}", repoDir.relativize(listeConfigfiles.getFirst()));
+                LOGGER.info("repoDir={}", repoDir);
+                LOGGER.info("listeConfigfiles={}", listeConfigfiles);
 
-            assertThat(listeConfigfiles)
-                    .hasSize(1);
-            assertThat(repoDir.relativize(listeConfigfiles.getFirst()).toString().replace('\\', '/'))
-                    .isEqualTo("src/main/java/resources/config/application.yml");
+                assertThat(listeConfigfiles)
+                        .hasSize(1);
+                assertThat(listeConfigfiles.getFirst().replace('\\', '/'))
+                        .isEqualTo("src/main/java/resources/config/application.yml");
+            });
+
+//            Path firstVersionSource = REPERTOIRE_REFERENCE.resolve("version1");
+
+//            copyDirectory(firstVersionSource, repoDir);
+
+
         }
 
     }
@@ -294,7 +301,7 @@ class ChangementConfigServiceTest {
             LOGGER.info("First commit:  {}", firstShortHash);
             LOGGER.info("Second commit: {}", secondShortHash);
 
-            var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString());
+            var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString(), firstShortHash, secondShortHash);
 
         }
     }
@@ -407,6 +414,71 @@ class ChangementConfigServiceTest {
         }
     }
 
+//    public List<String> main(File rep,String oldCommitId,String newCommitId) throws Exception {
+//        try (Git git = Git.open(rep)) {
+//            Repository repository = git.getRepository();
+//
+
+    /// /            String oldCommitId = "abc123";
+    /// /            String newCommitId = "def456";
+//
+//            List<DiffEntry> diffs = getDiffs(repository, oldCommitId, newCommitId);
+//
+//            for (DiffEntry diff : diffs) {
+//                System.out.println("Type : " + diff.getChangeType());
+//
+//                switch (diff.getChangeType()) {
+//                    case DELETE:
+//                        System.out.println("Path : " + diff.getOldPath());
+//                        break;
+//
+//                    case ADD:
+//                    case MODIFY:
+//                    case RENAME:
+//                    case COPY:
+//                    default:
+//                        System.out.println("Path : " + diff.getNewPath());
+//                        break;
+//                }
+//
+//                System.out.println("---");
+//            }
+//        }
+//    }
+
+//    public List<DiffEntry> getDiffs(
+//            Repository repository,
+//            String oldCommitId,
+//            String newCommitId
+//    ) throws Exception {
+//
+//        ObjectId oldHead = repository.resolve(oldCommitId);
+//        ObjectId newHead = repository.resolve(newCommitId);
+//
+//        try (
+//                RevWalk revWalk = new RevWalk(repository);
+//                ObjectReader reader = repository.newObjectReader();
+//                DiffFormatter diffFormatter =
+//                        new DiffFormatter(new ByteArrayOutputStream())
+//        ) {
+//            RevCommit oldCommit = revWalk.parseCommit(oldHead);
+//            RevCommit newCommit = revWalk.parseCommit(newHead);
+//
+//            RevTree oldTree = oldCommit.getTree();
+//            RevTree newTree = newCommit.getTree();
+//
+//            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
+//            oldTreeIter.reset(reader, oldTree);
+//
+//            CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
+//            newTreeIter.reset(reader, newTree);
+//
+//            diffFormatter.setRepository(repository);
+//            diffFormatter.setDetectRenames(true);
+//
+//            return diffFormatter.scan(oldTreeIter, newTreeIter);
+//        }
+//    }
     private static String shortHash(ObjectId objectId) {
         return objectId.abbreviate(7).name();
     }

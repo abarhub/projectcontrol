@@ -1,13 +1,17 @@
 package org.projectcontrol.server.service;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.*;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.slf4j.Logger;
@@ -221,11 +225,11 @@ public class ChangementConfigService {
         LOGGER.info("file={}", file);
         LOGGER.info("root={}", root);
 
-        List<Path> liste = findConfigFiles(root.toString());
+        List<String> liste = findConfigFiles(root.toString(),commitDebut,commitFin);
 
         StringBuilder sb = new StringBuilder();
-        for (Path p : liste) {
-            var f = root.relativize(p);
+        for (String p : liste) {
+            var f = p;//root.relativize(p);
             LOGGER.info("analyse de : {}", f);
             var s = f.toString();
             s = s.replaceAll("\\\\", "/");
@@ -316,7 +320,25 @@ public class ChangementConfigService {
         return map;
     }
 
-    public List<Path> findConfigFiles(String directoryPath) throws IOException {
+    public List<String> findConfigFiles(String directoryPath, String oldCommitId, String newCommitId) throws Exception {
+        var root=Paths.get(directoryPath);
+        var liste = getListPath(root.toFile(),oldCommitId,newCommitId);
+
+        var liste2 = findConfigFiles0(directoryPath);
+
+        for(var path:liste2){
+            var f=root.relativize(path);
+            if(!liste.contains(f.toString())){
+                liste.add(f.toString());
+            }
+        }
+
+        liste = liste.stream().sorted().distinct().toList();
+
+        return liste;
+    }
+
+    public List<Path> findConfigFiles0(String directoryPath) throws IOException {
         Path startPath = Paths.get(directoryPath);
 
         try (Stream<Path> walk = Files.walk(startPath)) {
@@ -329,7 +351,7 @@ public class ChangementConfigService {
                                     !StringUtils.endsWith(path.getFileName().toString(), "-dev.yml") &&
                                     (Objects.equals(path.getParent().getFileName().toString(), "config") ||
                                             Objects.equals(path.getParent().getParent().getFileName().toString(), "config"))) // Chercher les fichiers nommés pom.xml
-                    .filter(ChangementConfigService::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
+                    .filter(this::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
                     .collect(Collectors.toList());
         }
     }
@@ -340,7 +362,7 @@ public class ChangementConfigService {
                 StringUtils.endsWith(path.getFileName().toString(), ".properties"));
     }
 
-    private static boolean isNotIgnoredDirectory(Path path) {
+    private boolean isNotIgnoredDirectory(Path path) {
         // Vérifier si le chemin contient "target" ou "node_modules" comme nom de répertoire
         // Cela permet de s'assurer que même si un pom.xml se trouve dans un sous-sous-répertoire d'un répertoire ignoré, il est bien ignoré.
         for (Path segment : path) {
@@ -351,6 +373,83 @@ public class ChangementConfigService {
             }
         }
         return true; // Le chemin ne contient pas de répertoire à ignorer
+    }
+
+    private List<String> getListPath(File rep, String oldCommitId, String newCommitId) throws Exception {
+        List<String> liste = new ArrayList<>();
+        try (Git git = Git.open(rep)) {
+            Repository repository = git.getRepository();
+
+            List<DiffEntry> diffs = getDiffs(repository, oldCommitId, newCommitId);
+
+            for (DiffEntry diff : diffs) {
+                LOGGER.info("Type : {}", diff.getChangeType());
+
+                switch (diff.getChangeType()) {
+                    case DELETE:
+                        LOGGER.info("Path : {}", diff.getOldPath());
+                        ajoute(liste, diff.getOldPath());
+                        break;
+
+                    case ADD:
+                    case MODIFY:
+                    case RENAME:
+                    case COPY:
+                    default:
+                        LOGGER.info("Path : {}", diff.getNewPath());
+                        if (diff.getOldPath() != null && !diff.getOldPath().isBlank()) {
+                            ajoute(liste, diff.getOldPath());
+                        }
+                        ajoute(liste, diff.getNewPath());
+                        break;
+                }
+            }
+            liste = liste.stream().sorted().distinct().collect(Collectors.toCollection(ArrayList::new));
+        }
+        return liste;
+    }
+
+    private void ajoute(List<String> liste, String path) {
+        if (path != null && !path.isBlank() && !liste.contains(path)) {
+            if (path.contains("src/main/java/resources/config/config/") &&
+                    !path.endsWith("-dev.yml")) {
+                liste.add(path);
+            }
+        }
+    }
+
+    public List<DiffEntry> getDiffs(
+            Repository repository,
+            String oldCommitId,
+            String newCommitId
+    ) throws Exception {
+
+        ObjectId oldHead = repository.resolve(oldCommitId);
+        ObjectId newHead = repository.resolve(newCommitId);
+
+        try (
+                RevWalk revWalk = new RevWalk(repository);
+                ObjectReader reader = repository.newObjectReader();
+                DiffFormatter diffFormatter =
+                        new DiffFormatter(new ByteArrayOutputStream())
+        ) {
+            RevCommit oldCommit = revWalk.parseCommit(oldHead);
+            RevCommit newCommit = revWalk.parseCommit(newHead);
+
+            RevTree oldTree = oldCommit.getTree();
+            RevTree newTree = newCommit.getTree();
+
+            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
+            oldTreeIter.reset(reader, oldTree);
+
+            CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
+            newTreeIter.reset(reader, newTree);
+
+            diffFormatter.setRepository(repository);
+            diffFormatter.setDetectRenames(true);
+
+            return diffFormatter.scan(oldTreeIter, newTreeIter);
+        }
     }
 
 }
