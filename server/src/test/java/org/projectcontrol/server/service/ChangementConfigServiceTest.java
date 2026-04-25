@@ -177,12 +177,28 @@ class ChangementConfigServiceTest {
             });
         }
 
-
         @DisplayName("Calcul difference entre deux versions, avec des différences pour un fichier properties")
         @Test
         void calculDifference4Properties2() throws Exception {
 
             initialiseFichiers(repoDir, List.of("version5", "version6"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                var s = "*** Analyse de : src/main/java/resources/config/application.properties ***\n" +
+                        "* Parametre à ajouter : \n" +
+                        "key6: nnnn\n" +
+                        "* Parametre à modifier : \n" +
+                        "key2: bbbb2\n" +
+                        "* Parametre à supprimer : \n" +
+                        "key5\n";
+                assertThat(res).isEqualTo(s);
+            });
+        }
+
+        @DisplayName("Calcul difference entre deux versions, avec des différences pour un fichier properties")
+        @Test
+        void calculDifference4Properties3() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version5", "version6", "version7"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
                 var s = "*** Analyse de : src/main/java/resources/config/application.properties ***\n" +
                         "* Parametre à ajouter : \n" +
