@@ -1,6 +1,7 @@
 package org.projectcontrol.server.service;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.diff.*;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
@@ -16,10 +17,7 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -132,6 +130,10 @@ public class ChangementConfigService {
         Map<String, String> map1 = readFile(Paths.get(file1));
         Map<String, String> map2 = readFile(Paths.get(file2));
 
+        compareMap(res, map2, map1);
+    }
+
+    private void compareMap(StringBuilder res, Map<String, String> map2, Map<String, String> map1) {
         Set<String> keysAjout = new TreeSet<>(map2.keySet());
         keysAjout.removeAll(map1.keySet());
 
@@ -229,14 +231,89 @@ public class ChangementConfigService {
             s = s.replaceAll("\\\\", "/");
             sb.append("*** Analyse de : ").append(s).append(" ***\n");
             if (s.endsWith(".yml")) {
-                sb.append(changeConfig.compareYamlFiles(root.toString(), commitDebut, commitFin, s));
-            } else {
-                sb.append("????\n");
+                sb.append(compareYamlFiles(root.toString(), commitDebut, commitFin, s));
+            } else if (s.endsWith(".properties")) {
+                sb.append(comparePropertiesFiles(root.toString(), commitDebut, commitFin, s));
+            } else if (s.endsWith(".xml")) {
+                sb.append(compareTextFiles(root.toString(), commitDebut, commitFin, s));
             }
         }
 
         return sb.toString();
 
+    }
+
+    private String compareTextFiles(String repoPath, String commit1Hash, String commit2Hash, String texteFile) throws Exception {
+        StringBuilder res = new StringBuilder();
+
+        // Construire le repository Git
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        try (Repository repository = builder.setGitDir(new File(repoPath + "/.git"))
+                .readEnvironment()
+                .findGitDir()
+                .build()) {
+
+            // Récupérer les contenus des fichiers pour chaque commit
+            String texteContent1 = getFileContentFromCommit(repository, commit1Hash, texteFile);
+            String texteContent2 = getFileContentFromCommit(repository, commit2Hash, texteFile);
+
+            RawText a = new RawText(texteContent1.getBytes(StandardCharsets.UTF_8));
+            RawText b = new RawText(texteContent2.getBytes(StandardCharsets.UTF_8));
+
+            EditList edits = new HistogramDiff().diff(
+                    RawTextComparator.DEFAULT,
+                    a,
+                    b
+            );
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            try (DiffFormatter formatter = new DiffFormatter(out)) {
+                formatter.format(edits, a, b);
+            }
+
+            res.append(out.toString(StandardCharsets.UTF_8));
+
+        }
+        return res.toString();
+    }
+
+    private String comparePropertiesFiles(String repoPath, String commit1Hash, String commit2Hash, String propertiesFilePath) throws Exception {
+        StringBuilder res = new StringBuilder();
+
+        // Construire le repository Git
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        try (Repository repository = builder.setGitDir(new File(repoPath + "/.git"))
+                .readEnvironment()
+                .findGitDir()
+                .build()) {
+
+            // Récupérer les contenus des fichiers pour chaque commit
+            String propertiesContent1 = getFileContentFromCommit(repository, commit1Hash, propertiesFilePath);
+            String propertiesContent2 = getFileContentFromCommit(repository, commit2Hash, propertiesFilePath);
+
+            // Parser les properties
+            Properties properties1 = new Properties();
+            Properties properties2 = new Properties();
+
+            properties1.load(new StringReader(propertiesContent1));
+            properties2.load(new StringReader(propertiesContent2));
+
+            Map<String, String> map1 = convertToMap(properties1);
+            Map<String, String> map2 = convertToMap(properties2);
+
+            compareMap(res, map2, map1);
+        }
+
+        return res.toString();
+    }
+
+    private Map<String, String> convertToMap(Properties properties) {
+        Map<String, String> map = new HashMap<>();
+        for (String key : properties.stringPropertyNames()) {
+            map.put(key, properties.getProperty(key));
+        }
+        return map;
     }
 
     public List<Path> findConfigFiles(String directoryPath) throws IOException {
@@ -245,16 +322,23 @@ public class ChangementConfigService {
         try (Stream<Path> walk = Files.walk(startPath)) {
             return walk
                     .filter(Files::isRegularFile) // Ne traiter que les fichiers réguliers
-                    .filter(path -> StringUtils.startsWith(path.getFileName().toString(), "application")
-                            && (StringUtils.endsWith(path.getFileName().toString(), ".yml") ||
-                            StringUtils.endsWith(path.getFileName().toString(), ".properties"))
-                            && !StringUtils.endsWith(path.getFileName().toString(), "-dev.yml")
-                            && Objects.equals(path.getParent().getFileName().toString(), "config")) // Chercher les fichiers nommés pom.xml
+                    .filter(path ->
+                            (isConfig(path) ||
+                                    (StringUtils.endsWith(path.getFileName().toString(), ".xml") ||
+                                            StringUtils.endsWith(path.getFileName().toString(), ".json"))) &&
+                                    !StringUtils.endsWith(path.getFileName().toString(), "-dev.yml") &&
+                                    (Objects.equals(path.getParent().getFileName().toString(), "config") ||
+                                            Objects.equals(path.getParent().getParent().getFileName().toString(), "config"))) // Chercher les fichiers nommés pom.xml
                     .filter(ChangementConfigService::isNotIgnoredDirectory) // Ignorer les répertoires spécifiques
                     .collect(Collectors.toList());
         }
     }
 
+    private boolean isConfig(Path path) {
+        return StringUtils.startsWith(path.getFileName().toString(), "application")
+                && (StringUtils.endsWith(path.getFileName().toString(), ".yml") ||
+                StringUtils.endsWith(path.getFileName().toString(), ".properties"));
+    }
 
     private static boolean isNotIgnoredDirectory(Path path) {
         // Vérifier si le chemin contient "target" ou "node_modules" comme nom de répertoire

@@ -5,6 +5,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -85,6 +86,7 @@ class ChangementConfigServiceTest {
     @Nested
     class TestCalculDifference {
 
+        @DisplayName("Calcul difference entre deux versions, avec aucune différence")
         @Test
         void calculDifference() throws Exception {
 
@@ -98,6 +100,7 @@ class ChangementConfigServiceTest {
             });
         }
 
+        @DisplayName("Calcul difference entre deux versions, avec des différences pour un fichier yml")
         @Test
         void calculDifference2() throws Exception {
 
@@ -113,6 +116,41 @@ class ChangementConfigServiceTest {
                         "* Parametre à supprimer : \n" +
                         "app.key003\n" +
                         "key3\n";
+                assertThat(res).isEqualTo(s);
+            });
+        }
+
+        @DisplayName("Calcul difference entre deux versions, avec des différences pour un fichier xml")
+        @Test
+        void calculDifference3Xml() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version1", "version4"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                var s = "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
+                        "* Parametre à ajouter : \n" +
+                        "* Parametre à modifier : \n" +
+                        "* Parametre à supprimer : \n" +
+                        "*** Analyse de : src/main/java/resources/config/logback.xml ***\n" +
+                        "@@ -0,0 +1,19 @@\n" +
+                        "+<configuration>\n" +
+                        "+\n" +
+                        "+    <appender name=\"CONSOLE001\" class=\"ch.qos.logback.core.ConsoleAppender\">\n" +
+                        "+        <layout class=\"ch.qos.logback.classic.PatternLayout\">\n" +
+                        "+            <Pattern>\n" +
+                        "+                %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n\n" +
+                        "+            </Pattern>\n" +
+                        "+        </layout>\n" +
+                        "+    </appender>\n" +
+                        "+\n" +
+                        "+    <logger name=\"com.test\" level=\"debug\" additivity=\"false\">\n" +
+                        "+        <appender-ref ref=\"CONSOLE\"/>\n" +
+                        "+    </logger>\n" +
+                        "+\n" +
+                        "+    <root level=\"error\">\n" +
+                        "+        <appender-ref ref=\"CONSOLE001\"/>\n" +
+                        "+    </root>\n" +
+                        "+\n" +
+                        "+</configuration>\n";
                 assertThat(res).isEqualTo(s);
             });
         }
