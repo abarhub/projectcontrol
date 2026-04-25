@@ -14,6 +14,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -48,39 +49,49 @@ public class ChangementConfigService {
                 .build()) {
 
             // Récupérer les contenus des fichiers pour chaque commit
-            String yamlContent1 = getFileContentFromCommit(repository, commit1Hash, yamlFilePath);
-            String yamlContent2 = getFileContentFromCommit(repository, commit2Hash, yamlFilePath);
+            var yamlContent1 = getFileContentFromCommit(repository, commit1Hash, yamlFilePath);
+            var yamlContent2 = getFileContentFromCommit(repository, commit2Hash, yamlFilePath);
 
             // Parser les YAML
             LoaderOptions options = new LoaderOptions();
             options.setAllowDuplicateKeys(false);
             options.setTagInspector(tag -> true);
             Yaml yaml = new Yaml(new SafeConstructor(options));
-            Map<Object, Object> parsedYaml1 = yaml.load(yamlContent1);
-            Map<Object, Object> parsedYaml2 = yaml.load(yamlContent2);
+            Map<String, String> flattenedMap3 = convertYmlFile(yamlContent1, yaml);
+            Map<String, String> flattenedMap4 = convertYmlFile(yamlContent2, yaml);
 
-            Path tempDir = Files.createTempDirectory("cmpyml");
-            // Fichiers de sortie
-            String outputFile1 = tempDir + "/flattened_" + commit1Hash + ".yml";
-            String outputFile2 = tempDir + "/flattened_" + commit2Hash + ".yml";
-
-            // Écrire les fichiers YAML aplatis
-            writeFlattenedYaml(parsedYaml1, outputFile1);
-            writeFlattenedYaml(parsedYaml2, outputFile2);
-
-            // Comparer les fichiers
-            compareFiles(outputFile1, outputFile2, res);
-
-            Files.delete(Paths.get(outputFile1));
-            Files.delete(Paths.get(outputFile2));
-            Files.deleteIfExists(tempDir);
-
+            compareMap(res, flattenedMap3, flattenedMap4);
         }
 
         return res.toString();
     }
 
-    private String getFileContentFromCommit(Repository repository, String commitHash, String filePath) throws Exception {
+    @NonNull
+    private Map<String, String> convertYmlFile(Optional<byte[]> yamlContent2, Yaml yaml) {
+        Map<String, String> flattenedMap4;
+        Map<Object, Object> parsedYaml2;
+        if (yamlContent2.isEmpty()) {
+            flattenedMap4 = Map.of();
+        } else {
+            parsedYaml2 = yaml.load(new ByteArrayInputStream(yamlContent2.get()));
+            Map<Object, Object> flattenedMap2 = new TreeMap<>();
+            flattenMap(parsedYaml2, "", flattenedMap2);
+            flattenedMap4 = convertMap(flattenedMap2);
+        }
+        return flattenedMap4;
+    }
+
+    private Map<String, String> convertMap(Map<Object, Object> map) {
+        Map<String, String> resultat = new TreeMap<>();
+        for (Map.Entry<Object, Object> entry : map.entrySet()) {
+            String key = entry.getKey().toString();
+            String value = (entry.getValue() != null) ? entry.getValue().toString() : null;
+            resultat.put(key, value);
+        }
+        return resultat;
+    }
+
+    private Optional<byte[]> getFileContentFromCommit(Repository repository, String commitHash, String filePath) throws Exception {
         ObjectId commitId = repository.resolve(commitHash);
         RevCommit commit = new org.eclipse.jgit.revwalk.RevWalk(repository).parseCommit(commitId);
 
@@ -92,7 +103,7 @@ public class ChangementConfigService {
             treeWalk.setFilter(PathFilter.create(filePath));
             if (!treeWalk.next()) {
                 LOGGER.warn("Did not find expected file '{}' pour the hash {}", filePath, commitHash);
-                return "";
+                return Optional.empty();
             }
 
             ObjectId objectId = treeWalk.getObjectId(0);
@@ -102,20 +113,9 @@ public class ChangementConfigService {
             // and then one can the loader to read the file
             loader.copyTo(outputStream);
 
-            return outputStream.toString(StandardCharsets.UTF_8);
+            return Optional.of(outputStream.toByteArray());
         }
 
-    }
-
-    private void writeFlattenedYaml(Map<Object, Object> data, String outputFile) throws IOException {
-        Map<Object, Object> flattenedMap = new TreeMap<>();
-        flattenMap(data, "", flattenedMap);
-
-        try (FileWriter writer = new FileWriter(outputFile)) {
-            for (Map.Entry<Object, Object> entry : flattenedMap.entrySet()) {
-                writer.write(entry.getKey() + ": " + entry.getValue() + "\n");
-            }
-        }
     }
 
     private void flattenMap(Map<Object, Object> source, String prefix, Map<Object, Object> destination) {
@@ -128,13 +128,6 @@ public class ChangementConfigService {
                 destination.put(key, entry.getValue());
             }
         }
-    }
-
-    private void compareFiles(String file1, String file2, StringBuilder res) throws IOException {
-        Map<String, String> map1 = readFile(Paths.get(file1));
-        Map<String, String> map2 = readFile(Paths.get(file2));
-
-        compareMap(res, map2, map1);
     }
 
     private void compareMap(StringBuilder res, Map<String, String> map2, Map<String, String> map1) {
@@ -218,14 +211,11 @@ public class ChangementConfigService {
 
 
     public String calculDifference(Path file, String commitDebut, String commitFin) throws Exception {
-
-        ChangementConfigService changeConfig = this;
-
         Path root = file;
         LOGGER.info("file={}", file);
         LOGGER.info("root={}", root);
 
-        List<String> liste = findConfigFiles(root.toString(),commitDebut,commitFin);
+        List<String> liste = findConfigFiles(root.toString(), commitDebut, commitFin);
 
         StringBuilder sb = new StringBuilder();
         for (String p : liste) {
@@ -239,6 +229,8 @@ public class ChangementConfigService {
             } else if (s.endsWith(".properties")) {
                 sb.append(comparePropertiesFiles(root.toString(), commitDebut, commitFin, s));
             } else if (s.endsWith(".xml")) {
+                sb.append(compareTextFiles(root.toString(), commitDebut, commitFin, s));
+            } else {
                 sb.append(compareTextFiles(root.toString(), commitDebut, commitFin, s));
             }
         }
@@ -258,25 +250,45 @@ public class ChangementConfigService {
                 .build()) {
 
             // Récupérer les contenus des fichiers pour chaque commit
-            String texteContent1 = getFileContentFromCommit(repository, commit1Hash, texteFile);
-            String texteContent2 = getFileContentFromCommit(repository, commit2Hash, texteFile);
+            var texteContent1 = getFileContentFromCommit(repository, commit1Hash, texteFile);
+            var texteContent2 = getFileContentFromCommit(repository, commit2Hash, texteFile);
 
-            RawText a = new RawText(texteContent1.getBytes(StandardCharsets.UTF_8));
-            RawText b = new RawText(texteContent2.getBytes(StandardCharsets.UTF_8));
+            var buf1 = texteContent1.orElseGet(() -> new byte[0]);
+            var buf2 = texteContent2.orElseGet(() -> new byte[0]);
 
-            EditList edits = new HistogramDiff().diff(
-                    RawTextComparator.DEFAULT,
-                    a,
-                    b
-            );
+            if (isBinaryFile(buf1) || isBinaryFile(buf2)) {
 
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
+                if (texteContent1.isPresent() && texteContent2.isPresent()) {
+                    if (Arrays.equals(buf1, buf2)) {
+                        res.append("fichier binaire identique\n");
+                    } else {
+                        res.append("fichier binaire modifié\n");
+                    }
+                } else if (texteContent1.isPresent()) {
+                    res.append("fichier binaire supprimé\n");
+                } else if (texteContent2.isPresent()) {
+                    res.append("fichier binaire ajouté\n");
+                }
 
-            try (DiffFormatter formatter = new DiffFormatter(out)) {
-                formatter.format(edits, a, b);
+            } else {
+
+                RawText a = new RawText(buf1);
+                RawText b = new RawText(buf2);
+
+                EditList edits = new HistogramDiff().diff(
+                        RawTextComparator.DEFAULT,
+                        a,
+                        b
+                );
+
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                try (DiffFormatter formatter = new DiffFormatter(out)) {
+                    formatter.format(edits, a, b);
+                }
+
+                res.append(out.toString(StandardCharsets.UTF_8));
             }
-
-            res.append(out.toString(StandardCharsets.UTF_8));
 
         }
         return res.toString();
@@ -293,15 +305,23 @@ public class ChangementConfigService {
                 .build()) {
 
             // Récupérer les contenus des fichiers pour chaque commit
-            String propertiesContent1 = getFileContentFromCommit(repository, commit1Hash, propertiesFilePath);
-            String propertiesContent2 = getFileContentFromCommit(repository, commit2Hash, propertiesFilePath);
+            var propertiesContent1 = getFileContentFromCommit(repository, commit1Hash, propertiesFilePath);
+            var propertiesContent2 = getFileContentFromCommit(repository, commit2Hash, propertiesFilePath);
 
             // Parser les properties
             Properties properties1 = new Properties();
             Properties properties2 = new Properties();
 
-            properties1.load(new StringReader(propertiesContent1));
-            properties2.load(new StringReader(propertiesContent2));
+            String s1 = "";
+            String s2 = "";
+            if (propertiesContent1.isPresent()) {
+                s1 = new String(propertiesContent1.get(), StandardCharsets.UTF_8);
+            }
+            if (propertiesContent2.isPresent()) {
+                s2 = new String(propertiesContent2.get(), StandardCharsets.UTF_8);
+            }
+            properties1.load(new StringReader(s1));
+            properties2.load(new StringReader(s2));
 
             Map<String, String> map1 = convertToMap(properties1);
             Map<String, String> map2 = convertToMap(properties2);
@@ -321,14 +341,14 @@ public class ChangementConfigService {
     }
 
     public List<String> findConfigFiles(String directoryPath, String oldCommitId, String newCommitId) throws Exception {
-        var root=Paths.get(directoryPath);
-        var liste = getListPath(root.toFile(),oldCommitId,newCommitId);
+        var root = Paths.get(directoryPath);
+        var liste = getListPath(root.toFile(), oldCommitId, newCommitId);
 
         var liste2 = findConfigFiles0(directoryPath);
 
-        for(var path:liste2){
-            var f=root.relativize(path);
-            if(!liste.contains(f.toString())){
+        for (var path : liste2) {
+            var f = root.relativize(path);
+            if (!liste.contains(f.toString())) {
                 liste.add(f.toString());
             }
         }
@@ -449,6 +469,38 @@ public class ChangementConfigService {
             diffFormatter.setDetectRenames(true);
 
             return diffFormatter.scan(oldTreeIter, newTreeIter);
+        }
+    }
+
+    private boolean isBinaryFile(byte[] buf) throws IOException {
+        int maxBytes = Math.min(1024, buf.length); // on lit seulement le début du fichier
+        byte[] buffer = new byte[maxBytes];
+
+        try (ByteArrayInputStream fis = new ByteArrayInputStream(buf)) {
+            int bytesRead = fis.read(buffer);
+
+            if (bytesRead == -1) {
+                return false; // fichier vide → considéré comme texte
+            }
+
+            int nonPrintable = 0;
+
+            for (int i = 0; i < bytesRead; i++) {
+                int b = buffer[i] & 0xFF;
+
+                // caractères de contrôle autorisés : tab, LF, CR
+                if (b == 9 || b == 10 || b == 13) {
+                    continue;
+                }
+
+                // ASCII imprimable : 32 à 126
+                if (b < 32 || b > 126) {
+                    nonPrintable++;
+                }
+            }
+
+            // si plus de 30% des caractères sont non imprimables → binaire
+            return ((double) nonPrintable / bytesRead) > 0.3;
         }
     }
 
