@@ -1,5 +1,6 @@
 package org.projectcontrol.server.service;
 
+import org.apache.commons.lang3.function.FailableBiConsumer;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -13,8 +14,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChangementConfigServiceTest {
 
@@ -42,61 +45,7 @@ class ChangementConfigServiceTest {
         @Test
         void compareYamlFiles() throws Exception {
 
-            // Répertoires source contenant les fichiers à copier
-            Path firstVersionSource = Paths.get("src/test/resources/changeConfig/version1");
-            Path secondVersionSource = Paths.get("src/test/resources/changeConfig/version2");
-
-            try (Git git = Git.init()
-                    .setDirectory(repoDir.toFile())
-                    .call()) {
-
-                /*
-                 * -------------------------
-                 * 1er commit
-                 * -------------------------
-                 */
-
-                copyDirectory(firstVersionSource, repoDir);
-
-                git.add()
-                        .addFilepattern(".")
-                        .call();
-
-                RevCommit firstCommit = git.commit()
-                        .setMessage("Initial commit")
-                        .call();
-
-                /*
-                 * -------------------------
-                 * 2ème commit
-                 * -------------------------
-                 */
-
-                // Ici version2 contient par exemple :
-                // config/application.yml modifié
-                // + éventuellement d'autres fichiers
-                copyDirectory(secondVersionSource, repoDir);
-
-                git.add()
-                        .addFilepattern(".")
-                        .call();
-
-                RevCommit secondCommit = git.commit()
-                        .setMessage("Update application config")
-                        .call();
-
-                /*
-                 * -------------------------
-                 * Affichage des hashes courts
-                 * -------------------------
-                 */
-
-                String firstShortHash = shortHash(firstCommit.getId());
-                String secondShortHash = shortHash(secondCommit.getId());
-
-                LOGGER.info("First commit:  {}", firstShortHash);
-                LOGGER.info("Second commit: {}", secondShortHash);
-
+            initialiseFichiers(repoDir, List.of("version1", "version2"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.compareYamlFiles(repoDir.toString(), firstShortHash, secondShortHash,
                         "src/main/java/resources/config/application.yml");
 
@@ -106,8 +55,7 @@ class ChangementConfigServiceTest {
 
                 assertThat(res).isEqualTo(s);
 
-            }
-
+            });
         }
 
     }
@@ -118,70 +66,12 @@ class ChangementConfigServiceTest {
         @Test
         void calculDifference() throws Exception {
 
-            // Répertoires source contenant les fichiers à copier
-            Path firstVersionSource = Paths.get("src/test/resources/changeConfig/version1");
-            Path secondVersionSource = Paths.get("src/test/resources/changeConfig/version2");
-
-            try (Git git = Git.init()
-                    .setDirectory(repoDir.toFile())
-                    .call()) {
-
-                /*
-                 * -------------------------
-                 * 1er commit
-                 * -------------------------
-                 */
-
-                copyDirectory(firstVersionSource, repoDir);
-
-                git.add()
-                        .addFilepattern(".")
-                        .call();
-
-                RevCommit firstCommit = git.commit()
-                        .setMessage("Initial commit")
-                        .call();
-
-                /*
-                 * -------------------------
-                 * 2ème commit
-                 * -------------------------
-                 */
-
-                // Ici version2 contient par exemple :
-                // config/application.yml modifié
-                // + éventuellement d'autres fichiers
-                copyDirectory(secondVersionSource, repoDir);
-
-                git.add()
-                        .addFilepattern(".")
-                        .call();
-
-                RevCommit secondCommit = git.commit()
-                        .setMessage("Update application config")
-                        .call();
-
-                /*
-                 * -------------------------
-                 * Affichage des hashes courts
-                 * -------------------------
-                 */
-
-                String firstShortHash = shortHash(firstCommit.getId());
-                String secondShortHash = shortHash(secondCommit.getId());
-
-                LOGGER.info("First commit:  {}", firstShortHash);
-                LOGGER.info("Second commit: {}", secondShortHash);
-
+            initialiseFichiers(repoDir, List.of("version1", "version2"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-
                 var s = "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
                         "????\n";
-
                 assertThat(res).isEqualTo(s);
-
-            }
-
+            });
         }
     }
 
@@ -268,6 +158,114 @@ class ChangementConfigServiceTest {
             LOGGER.info("Second commit: {}", secondShortHash);
 
             var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString());
+
+        }
+    }
+
+    private void initialiseFichiers(Path repoDir, List<String> listeRepertoires,
+                                    FailableBiConsumer<String, String, Exception> consumer) throws Exception {
+        initialiseFichiers(repoDir, listeRepertoires, List.of(), consumer);
+    }
+
+    private void initialiseFichiers(Path repoDir, List<String> listeRepertoires, List<List<String>> fichiersASupprimer,
+                                    FailableBiConsumer<String, String, Exception> consumer) throws Exception {
+        try (Git git = Git.init()
+                .setDirectory(repoDir.toFile())
+                .call()) {
+
+            String premierCommit = null;
+            String dernierCommit = null;
+            int no = 0;
+
+            for (String repertoire : listeRepertoires) {
+
+                Path rep = REPERTOIRE_REFERENCE.resolve(repertoire);
+
+                copyDirectory(rep, repoDir);
+
+                git.add()
+                        .addFilepattern(".")
+                        .call();
+
+                RevCommit firstCommit = git.commit()
+                        .setMessage("commit")
+                        .call();
+
+                if (premierCommit == null) {
+                    premierCommit = shortHash(firstCommit.getId());
+                }
+                dernierCommit = shortHash(firstCommit.getId());
+
+                if (no > 0 && fichiersASupprimer.size() > no) {
+                    var listeFichiersASupprimer = fichiersASupprimer.get(no);
+                    if (listeFichiersASupprimer != null) {
+                        for (String fichier : listeFichiersASupprimer) {
+                            var path = repoDir.resolve(fichier).toAbsolutePath().normalize();
+                            LOGGER.info("Suppression du fichier {}", fichier);
+                            assertTrue(path.startsWith(repoDir));
+                            if (Files.exists(path)) {
+                                Files.delete(path);
+                            }
+                        }
+                    }
+                }
+
+                no++;
+            }
+
+            LOGGER.info("First commit:  {}", premierCommit);
+            LOGGER.info("Second commit: {}", dernierCommit);
+
+            consumer.accept(premierCommit, dernierCommit);
+
+//            /*
+//             * -------------------------
+//             * 1er commit
+//             * -------------------------
+//             */
+//
+//            copyDirectory(firstVersionSource, repoDir);
+//
+//            git.add()
+//                    .addFilepattern(".")
+//                    .call();
+//
+//            RevCommit firstCommit = git.commit()
+//                    .setMessage("Initial commit")
+//                    .call();
+//
+//            /*
+//             * -------------------------
+//             * 2ème commit
+//             * -------------------------
+//             */
+//
+//            // Ici version2 contient par exemple :
+//            // config/application.yml modifié
+//            // + éventuellement d'autres fichiers
+//            copyDirectory(secondVersionSource, repoDir);
+//
+//            git.add()
+//                    .addFilepattern(".")
+//                    .call();
+//
+//            RevCommit secondCommit = git.commit()
+//                    .setMessage("Update application config")
+//                    .call();
+//
+//            /*
+//             * -------------------------
+//             * Affichage des hashes courts
+//             * -------------------------
+//             */
+//
+//            String firstShortHash = shortHash(firstCommit.getId());
+//            String secondShortHash = shortHash(secondCommit.getId());
+//
+//            LOGGER.info("First commit:  {}", firstShortHash);
+//            LOGGER.info("Second commit: {}", secondShortHash);
+//
+//            var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString());
 
         }
     }
