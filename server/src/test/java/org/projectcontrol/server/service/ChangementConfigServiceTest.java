@@ -58,6 +58,28 @@ class ChangementConfigServiceTest {
             });
         }
 
+        @Test
+        void compareYamlFiles2() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version1", "version3"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.compareYamlFiles(repoDir.toString(), firstShortHash, secondShortHash,
+                        "src/main/java/resources/config/application.yml");
+
+                var s = "* Parametre à ajouter : \n" +
+                        "app.key004: ffff\n" +
+                        "key8: wwww\n" +
+                        "* Parametre à modifier : \n" +
+                        "app.key001: aaa03\n" +
+                        "key2: tutu02\n" +
+                        "* Parametre à supprimer : \n" +
+                        "app.key003\n" +
+                        "key3\n";
+
+                assertThat(res).isEqualTo(s);
+
+            });
+        }
+
     }
 
     @Nested
@@ -69,7 +91,28 @@ class ChangementConfigServiceTest {
             initialiseFichiers(repoDir, List.of("version1", "version2"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
                 var s = "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
-                        "????\n";
+                        "* Parametre à ajouter : \n" +
+                        "* Parametre à modifier : \n" +
+                        "* Parametre à supprimer : \n";
+                assertThat(res).isEqualTo(s);
+            });
+        }
+
+        @Test
+        void calculDifference2() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version1", "version3"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                var s = "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
+                        "* Parametre à ajouter : \n" +
+                        "app.key004: ffff\n" +
+                        "key8: wwww\n" +
+                        "* Parametre à modifier : \n" +
+                        "app.key001: aaa03\n" +
+                        "key2: tutu02\n" +
+                        "* Parametre à supprimer : \n" +
+                        "app.key003\n" +
+                        "key3\n";
                 assertThat(res).isEqualTo(s);
             });
         }

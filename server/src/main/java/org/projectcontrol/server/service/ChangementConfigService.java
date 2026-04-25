@@ -228,7 +228,7 @@ public class ChangementConfigService {
             var s = f.toString();
             s = s.replaceAll("\\\\", "/");
             sb.append("*** Analyse de : ").append(s).append(" ***\n");
-            if (root.toString().endsWith(".yml")) {
+            if (s.endsWith(".yml")) {
                 sb.append(changeConfig.compareYamlFiles(root.toString(), commitDebut, commitFin, s));
             } else {
                 sb.append("????\n");
