@@ -154,6 +154,46 @@ class ChangementConfigServiceTest {
                 assertThat(res).isEqualTo(s);
             });
         }
+
+        @DisplayName("Calcul difference entre deux versions, avec des différences pour un fichier properties")
+        @Test
+        void calculDifference4Properties() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version1", "version5"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                var s = "*** Analyse de : src/main/java/resources/config/application.properties ***\n" +
+                        "* Parametre à ajouter : \n" +
+                        "key1: aaa\n" +
+                        "key2: bbbb\n" +
+                        "key4: ddd\n" +
+                        "key5: xxx\n" +
+                        "* Parametre à modifier : \n" +
+                        "* Parametre à supprimer : \n" +
+                        "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
+                        "* Parametre à ajouter : \n" +
+                        "* Parametre à modifier : \n" +
+                        "* Parametre à supprimer : \n";
+                assertThat(res).isEqualTo(s);
+            });
+        }
+
+
+        @DisplayName("Calcul difference entre deux versions, avec des différences pour un fichier properties")
+        @Test
+        void calculDifference4Properties2() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version5", "version6"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                var s = "*** Analyse de : src/main/java/resources/config/application.properties ***\n" +
+                        "* Parametre à ajouter : \n" +
+                        "key6: nnnn\n" +
+                        "* Parametre à modifier : \n" +
+                        "key2: bbbb2\n" +
+                        "* Parametre à supprimer : \n" +
+                        "key5\n";
+                assertThat(res).isEqualTo(s);
+            });
+        }
     }
 
     @Nested
