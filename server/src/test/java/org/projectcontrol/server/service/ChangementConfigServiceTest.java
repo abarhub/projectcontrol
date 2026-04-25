@@ -208,8 +208,6 @@ class ChangementConfigServiceTest {
                         "* Parametre à supprimer : \n" +
                         "key5\n";
                 assertThat(res).isEqualTo(s);
-
-                //main(repoDir.toFile(), firstShortHash, secondShortHash);
             });
         }
     }
@@ -234,76 +232,8 @@ class ChangementConfigServiceTest {
                         .isEqualTo("src/main/java/resources/config/application.yml");
             });
 
-//            Path firstVersionSource = REPERTOIRE_REFERENCE.resolve("version1");
-
-//            copyDirectory(firstVersionSource, repoDir);
-
-
         }
 
-    }
-
-
-    @Test
-    void shouldCreateRepoAndCommitTwice() throws Exception {
-        // Répertoires source contenant les fichiers à copier
-        Path firstVersionSource = Paths.get("src/test/resources/changeConfig/version1");
-        Path secondVersionSource = Paths.get("src/test/resources/changeConfig/version2");
-
-        try (Git git = Git.init()
-                .setDirectory(repoDir.toFile())
-                .call()) {
-
-            /*
-             * -------------------------
-             * 1er commit
-             * -------------------------
-             */
-
-            copyDirectory(firstVersionSource, repoDir);
-
-            git.add()
-                    .addFilepattern(".")
-                    .call();
-
-            RevCommit firstCommit = git.commit()
-                    .setMessage("Initial commit")
-                    .call();
-
-            /*
-             * -------------------------
-             * 2ème commit
-             * -------------------------
-             */
-
-            // Ici version2 contient par exemple :
-            // config/application.yml modifié
-            // + éventuellement d'autres fichiers
-            copyDirectory(secondVersionSource, repoDir);
-
-            git.add()
-                    .addFilepattern(".")
-                    .call();
-
-            RevCommit secondCommit = git.commit()
-                    .setMessage("Update application config")
-                    .call();
-
-            /*
-             * -------------------------
-             * Affichage des hashes courts
-             * -------------------------
-             */
-
-            String firstShortHash = shortHash(firstCommit.getId());
-            String secondShortHash = shortHash(secondCommit.getId());
-
-            LOGGER.info("First commit:  {}", firstShortHash);
-            LOGGER.info("Second commit: {}", secondShortHash);
-
-            var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString(), firstShortHash, secondShortHash);
-
-        }
     }
 
     private void initialiseFichiers(Path repoDir, List<String> listeRepertoires,
@@ -362,123 +292,10 @@ class ChangementConfigServiceTest {
 
             consumer.accept(premierCommit, dernierCommit);
 
-//            /*
-//             * -------------------------
-//             * 1er commit
-//             * -------------------------
-//             */
-//
-//            copyDirectory(firstVersionSource, repoDir);
-//
-//            git.add()
-//                    .addFilepattern(".")
-//                    .call();
-//
-//            RevCommit firstCommit = git.commit()
-//                    .setMessage("Initial commit")
-//                    .call();
-//
-//            /*
-//             * -------------------------
-//             * 2ème commit
-//             * -------------------------
-//             */
-//
-//            // Ici version2 contient par exemple :
-//            // config/application.yml modifié
-//            // + éventuellement d'autres fichiers
-//            copyDirectory(secondVersionSource, repoDir);
-//
-//            git.add()
-//                    .addFilepattern(".")
-//                    .call();
-//
-//            RevCommit secondCommit = git.commit()
-//                    .setMessage("Update application config")
-//                    .call();
-//
-//            /*
-//             * -------------------------
-//             * Affichage des hashes courts
-//             * -------------------------
-//             */
-//
-//            String firstShortHash = shortHash(firstCommit.getId());
-//            String secondShortHash = shortHash(secondCommit.getId());
-//
-//            LOGGER.info("First commit:  {}", firstShortHash);
-//            LOGGER.info("Second commit: {}", secondShortHash);
-//
-//            var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString());
 
         }
     }
 
-//    public List<String> main(File rep,String oldCommitId,String newCommitId) throws Exception {
-//        try (Git git = Git.open(rep)) {
-//            Repository repository = git.getRepository();
-//
-
-    /// /            String oldCommitId = "abc123";
-    /// /            String newCommitId = "def456";
-//
-//            List<DiffEntry> diffs = getDiffs(repository, oldCommitId, newCommitId);
-//
-//            for (DiffEntry diff : diffs) {
-//                System.out.println("Type : " + diff.getChangeType());
-//
-//                switch (diff.getChangeType()) {
-//                    case DELETE:
-//                        System.out.println("Path : " + diff.getOldPath());
-//                        break;
-//
-//                    case ADD:
-//                    case MODIFY:
-//                    case RENAME:
-//                    case COPY:
-//                    default:
-//                        System.out.println("Path : " + diff.getNewPath());
-//                        break;
-//                }
-//
-//                System.out.println("---");
-//            }
-//        }
-//    }
-
-//    public List<DiffEntry> getDiffs(
-//            Repository repository,
-//            String oldCommitId,
-//            String newCommitId
-//    ) throws Exception {
-//
-//        ObjectId oldHead = repository.resolve(oldCommitId);
-//        ObjectId newHead = repository.resolve(newCommitId);
-//
-//        try (
-//                RevWalk revWalk = new RevWalk(repository);
-//                ObjectReader reader = repository.newObjectReader();
-//                DiffFormatter diffFormatter =
-//                        new DiffFormatter(new ByteArrayOutputStream())
-//        ) {
-//            RevCommit oldCommit = revWalk.parseCommit(oldHead);
-//            RevCommit newCommit = revWalk.parseCommit(newHead);
-//
-//            RevTree oldTree = oldCommit.getTree();
-//            RevTree newTree = newCommit.getTree();
-//
-//            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
-//            oldTreeIter.reset(reader, oldTree);
-//
-//            CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
-//            newTreeIter.reset(reader, newTree);
-//
-//            diffFormatter.setRepository(repository);
-//            diffFormatter.setDetectRenames(true);
-//
-//            return diffFormatter.scan(oldTreeIter, newTreeIter);
-//        }
-//    }
     private static String shortHash(ObjectId objectId) {
         return objectId.abbreviate(7).name();
     }

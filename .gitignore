@@ -20,7 +20,7 @@ buildNumber.properties
 
 server/server.iml
 
-config/
+./config/
 
 justfile
 

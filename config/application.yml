@@ -1,0 +1,36 @@
+
+# exemple de configuration
+
+app:
+  liste-projets:
+    projet-courant:
+      nom: Projet courant
+      repertoires: D:/projet/projectcontrol
+      exclusions:
+      defaut: true
+    projets-principaux:
+      nom: Tous les projets
+      repertoires: D:/projet
+      exclusions:
+      defaut: false
+  maj:
+    message-commit: 'chore(version): préparation de la version VERSION'
+  run:
+    dir:
+      nom: liste des fichiers
+      commande: "dir :REPERTOIRE_PROJET:"
+      shell: true
+    echo:
+      nom: affichage
+      commande: ["echo", "bonjour à tous"]
+      shell: true
+    dir2:
+      nom: liste des fichiers2
+      commande: [ "dir", ":REPERTOIRE_PROJET:" ]
+      shell: true
+    echo2:
+      nom: affichage
+      commande: ["echo", "bonjour à tous :REPERTOIRE_PROJET:"]
+      shell: true
+
+
