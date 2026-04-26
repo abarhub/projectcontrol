@@ -60,7 +60,7 @@ public class ChangementConfigService {
             Map<String, String> flattenedMap3 = convertYmlFile(yamlContent1, yaml);
             Map<String, String> flattenedMap4 = convertYmlFile(yamlContent2, yaml);
 
-            compareMap(res, flattenedMap3, flattenedMap4);
+            compareMap(res, flattenedMap4, flattenedMap3);
         }
 
         return res.toString();
