@@ -207,6 +207,41 @@ class ChangementConfigServiceTest {
                 assertThat(res).isEqualTo(s);
             });
         }
+
+        @DisplayName("Calcul difference entre deux versions, avec aucune différence pour des fichiers binaires")
+        @Test
+        void calculDifference5Binaire2() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version7", "version2"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                var s = "";
+                assertThat(res).isEqualTo(s);
+            });
+        }
+
+        @DisplayName("Calcul difference entre deux versions, avec suppression d'un des fichiers binaires")
+        @Test
+        void calculDifference5Binaire3() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version2", "version7"),
+                    List.of(List.of(), List.of("src/main/java/resources/config/test.p12")),
+                    (firstShortHash, secondShortHash) -> {
+
+                        {// tous les commits
+                            var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                            var s = "*** Analyse de : src/main/java/resources/config/test.jks ***\n" +
+                                    "fichier binaire ajouté\n";
+                            assertThat(res).isEqualTo(s);
+                        }
+                        {// les 2 derniers commits
+                            var res = changementConfigService.calculDifference(repoDir, "HEAD~1", "HEAD");
+                            var s = "*** Analyse de : src/main/java/resources/config/test.p12 ***\n" +
+                                    "fichier binaire supprimé\n";
+                            assertThat(res).isEqualTo(s);
+                        }
+
+                    });
+        }
     }
 
     @Nested
@@ -295,7 +330,9 @@ class ChangementConfigServiceTest {
                 }
                 dernierCommit = shortHash(firstCommit.getId());
 
-                if (no > 0 && fichiersASupprimer.size() > no) {
+                boolean modification = false;
+
+                if (no >= 0 && fichiersASupprimer.size() > no) {
                     var listeFichiersASupprimer = fichiersASupprimer.get(no);
                     if (listeFichiersASupprimer != null) {
                         for (String fichier : listeFichiersASupprimer) {
@@ -304,9 +341,22 @@ class ChangementConfigServiceTest {
                             assertTrue(path.startsWith(repoDir));
                             if (Files.exists(path)) {
                                 Files.delete(path);
+                                modification = true;
                             }
                         }
                     }
+                }
+
+                if (modification) {
+                    git.add()
+                            .addFilepattern(".")
+                            .call();
+
+                    RevCommit commit = git.commit()
+                            .setMessage("commit delete")
+                            .call();
+
+                    dernierCommit = shortHash(commit.getId());
                 }
 
                 no++;
