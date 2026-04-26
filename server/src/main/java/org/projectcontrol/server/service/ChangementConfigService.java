@@ -161,11 +161,7 @@ public class ChangementConfigService {
     }
 
     private String str(String str) {
-        if (str == null) {
-            return "";
-        } else {
-            return str;
-        }
+        return Objects.requireNonNullElse(str, "");
     }
 
     private void compareFiles2(String file1, String file2) throws IOException {
@@ -195,41 +191,27 @@ public class ChangementConfigService {
         }
     }
 
-    private Map<String, String> readFile(Path path) throws IOException {
-        List<String> liste = Files.readAllLines(path);
-
-        Map<String, String> map = new HashMap<>();
-
-        for (String line : liste) {
-            int index = line.indexOf(':');
-            map.put(line.substring(0, index), line.substring(index + 2));
-        }
-
-        return map;
-    }
-
 
     public String calculDifference(Path file, String commitDebut, String commitFin) throws Exception {
-        Path root = file;
-        LOGGER.info("file={}", file);
-        LOGGER.info("root={}", root);
+        LOGGER.debug("file={}", file);
+        LOGGER.debug("root={}", file);
 
-        List<String> liste = findConfigFiles(root.toString(), commitDebut, commitFin);
+        List<String> liste = findConfigFiles(file.toString(), commitDebut, commitFin);
 
         StringBuilder sb = new StringBuilder();
         for (String p : liste) {
-            LOGGER.info("analyse de : {}", p);
+            LOGGER.debug("analyse de : {}", p);
             var s = p;
-            s = s.replaceAll("\\\\", "/");
+            s = normalisePath(s);
             sb.append("*** Analyse de : ").append(s).append(" ***\n");
             if (s.endsWith(".yml")) {
-                sb.append(compareYamlFiles(root.toString(), commitDebut, commitFin, s));
+                sb.append(compareYamlFiles(file.toString(), commitDebut, commitFin, s));
             } else if (s.endsWith(".properties")) {
-                sb.append(comparePropertiesFiles(root.toString(), commitDebut, commitFin, s));
+                sb.append(comparePropertiesFiles(file.toString(), commitDebut, commitFin, s));
             } else if (s.endsWith(".xml")) {
-                sb.append(compareTextFiles(root.toString(), commitDebut, commitFin, s));
+                sb.append(compareTextFiles(file.toString(), commitDebut, commitFin, s));
             } else {
-                sb.append(compareTextFiles(root.toString(), commitDebut, commitFin, s));
+                sb.append(compareTextFiles(file.toString(), commitDebut, commitFin, s));
             }
         }
 
@@ -354,7 +336,7 @@ public class ChangementConfigService {
 
         for (var path : liste2) {
             var f = root.relativize(path);
-            var s = f.toString().replaceAll("\\\\", "/");
+            var s = normalisePath(f.toString());
             if (!liste.contains(s)) {
                 liste.add(s);
             }
@@ -444,7 +426,7 @@ public class ChangementConfigService {
 
     private void ajoute(List<String> liste, String path) {
         if (path != null && !path.isBlank()) {
-            path = path.replace("\\", "/");
+            path = normalisePath(path);
             if (!liste.contains(path) && path.contains("src/main/java/resources/config/") &&
                     !path.endsWith("-dev.yml")) {
                 liste.add(path);
@@ -515,6 +497,14 @@ public class ChangementConfigService {
 
             // si plus de 30% des caractères sont non imprimables → binaire
             return ((double) nonPrintable / bytesRead) > 0.3;
+        }
+    }
+
+    private String normalisePath(String s){
+        if(s==null) {
+            return null;
+        } else {
+            return s.replace("\\", "/");
         }
     }
 
