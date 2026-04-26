@@ -219,7 +219,7 @@ public class ChangementConfigService {
 
         StringBuilder sb = new StringBuilder();
         for (String p : liste) {
-            var f = p;//root.relativize(p);
+            var f = p;
             LOGGER.info("analyse de : {}", f);
             var s = f.toString();
             s = s.replaceAll("\\\\", "/");
@@ -348,12 +348,16 @@ public class ChangementConfigService {
 
         for (var path : liste2) {
             var f = root.relativize(path);
-            if (!liste.contains(f.toString())) {
-                liste.add(f.toString());
+            var s = f.toString().replaceAll("\\\\", "/");
+            if (!liste.contains(s)) {
+                liste.add(s);
             }
         }
 
-        liste = liste.stream().sorted().distinct().toList();
+        liste = liste.stream()
+                .sorted()
+                .distinct()
+                .toList();
 
         return liste;
     }
@@ -403,11 +407,11 @@ public class ChangementConfigService {
             List<DiffEntry> diffs = getDiffs(repository, oldCommitId, newCommitId);
 
             for (DiffEntry diff : diffs) {
-                LOGGER.info("Type : {}", diff.getChangeType());
+                LOGGER.debug("Type : {}", diff.getChangeType());
 
                 switch (diff.getChangeType()) {
                     case DELETE:
-                        LOGGER.info("Path : {}", diff.getOldPath());
+                        LOGGER.debug("Path : {}", diff.getOldPath());
                         ajoute(liste, diff.getOldPath());
                         break;
 
@@ -416,7 +420,7 @@ public class ChangementConfigService {
                     case RENAME:
                     case COPY:
                     default:
-                        LOGGER.info("Path : {}", diff.getNewPath());
+                        LOGGER.debug("Path : {}", diff.getNewPath());
                         if (diff.getOldPath() != null && !diff.getOldPath().isBlank()) {
                             ajoute(liste, diff.getOldPath());
                         }
@@ -424,14 +428,18 @@ public class ChangementConfigService {
                         break;
                 }
             }
-            liste = liste.stream().sorted().distinct().collect(Collectors.toCollection(ArrayList::new));
+            liste = liste.stream()
+                    .sorted()
+                    .distinct()
+                    .collect(Collectors.toCollection(ArrayList::new));
         }
         return liste;
     }
 
     private void ajoute(List<String> liste, String path) {
-        if (path != null && !path.isBlank() && !liste.contains(path)) {
-            if (path.contains("src/main/java/resources/config/config/") &&
+        if (path != null && !path.isBlank()) {
+            path = path.replace("\\", "/");
+            if (!liste.contains(path) && path.contains("src/main/java/resources/config/") &&
                     !path.endsWith("-dev.yml")) {
                 liste.add(path);
             }

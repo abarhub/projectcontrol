@@ -194,19 +194,16 @@ class ChangementConfigServiceTest {
             });
         }
 
-        @DisplayName("Calcul difference entre deux versions, avec des différences pour un fichier properties")
+        @DisplayName("Calcul difference entre deux versions, avec des différences pour des fichiers binaires")
         @Test
-        void calculDifference4Properties3() throws Exception {
+        void calculDifference5Binaire() throws Exception {
 
-            initialiseFichiers(repoDir, List.of("version5", "version6", "version7"), (firstShortHash, secondShortHash) -> {
+            initialiseFichiers(repoDir, List.of("version2", "version7"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/application.properties ***\n" +
-                        "* Parametre à ajouter : \n" +
-                        "key6: nnnn\n" +
-                        "* Parametre à modifier : \n" +
-                        "key2: bbbb2\n" +
-                        "* Parametre à supprimer : \n" +
-                        "key5\n";
+                var s = "*** Analyse de : src/main/java/resources/config/test.jks ***\n" +
+                        "fichier binaire ajouté\n" +
+                        "*** Analyse de : src/main/java/resources/config/test.p12 ***\n" +
+                        "fichier binaire ajouté\n";
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -230,6 +227,34 @@ class ChangementConfigServiceTest {
                         .hasSize(1);
                 assertThat(listeConfigfiles.getFirst().replace('\\', '/'))
                         .isEqualTo("src/main/java/resources/config/application.yml");
+            });
+
+        }
+
+        @Test
+        void findConfigFiles2() throws Exception {
+
+
+            initialiseFichiers(repoDir, List.of("version1", "version4", "version7", "version8"), (firstShortHash, secondShortHash) -> {
+
+                var listeConfigfiles = changementConfigService.findConfigFiles(repoDir.toString(), firstShortHash, secondShortHash);
+
+                LOGGER.info("repoDir={}", repoDir);
+                LOGGER.info("listeConfigfiles={}", listeConfigfiles);
+
+
+                assertThat(listeConfigfiles)
+                        .hasSize(7) // Vérifie la taille de la liste
+                        .extracting(path -> path.replace('\\', '/')) // Transformation
+                        .containsExactlyInAnyOrder(
+                                "src/main/java/resources/config/application-config.yml",
+                                "src/main/java/resources/config/application.properties",
+                                "src/main/java/resources/config/application.yml",
+                                "src/main/java/resources/config/donnees/donnees.json",
+                                "src/main/java/resources/config/logback.xml",
+                                "src/main/java/resources/config/test.jks",
+                                "src/main/java/resources/config/test.p12"
+                        );
             });
 
         }
