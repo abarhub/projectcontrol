@@ -60,7 +60,7 @@ class ChangementConfigServiceTest {
         }
 
         @Test
-        void compareYamlFiles2() throws Exception {
+        void compareYamlFiles2Modification() throws Exception {
 
             initialiseFichiers(repoDir, List.of("version1", "version3"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.compareYamlFiles(repoDir.toString(), firstShortHash, secondShortHash,
@@ -82,7 +82,7 @@ class ChangementConfigServiceTest {
         }
 
         @Test
-        void compareYamlFiles3() throws Exception {
+        void compareYamlFiles3Suppression() throws Exception {
 
             initialiseFichiers(repoDir, List.of("version1", "version3", "version2"),
                     List.of(List.of(), List.of(), List.of("src/main/java/resources/config/application.yml")),
@@ -234,7 +234,7 @@ class ChangementConfigServiceTest {
 
         @DisplayName("Calcul difference entre deux versions, avec aucune différence pour des fichiers binaires")
         @Test
-        void calculDifference5Binaire2() throws Exception {
+        void calculDifference6Binaire2() throws Exception {
 
             initialiseFichiers(repoDir, List.of("version7", "version2"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
@@ -245,7 +245,7 @@ class ChangementConfigServiceTest {
 
         @DisplayName("Calcul difference entre deux versions, avec suppression d'un des fichiers binaires")
         @Test
-        void calculDifference5Binaire3() throws Exception {
+        void calculDifference7Binaire3() throws Exception {
 
             initialiseFichiers(repoDir, List.of("version2", "version7"),
                     List.of(List.of(), List.of("src/main/java/resources/config/test.p12")),
@@ -265,6 +265,30 @@ class ChangementConfigServiceTest {
                         }
 
                     });
+        }
+
+        @DisplayName("Calcul difference entre deux versions, avec des fichiers binaires et texte d'un un pdf")
+        @Test
+        void calculDifference8Binaire4() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version2", "version9"), (firstShortHash, secondShortHash) -> {
+                var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
+                var s = "*** Analyse de : src/main/java/resources/config/test1.txt ***\n" +
+                        "@@ -0,0 +1,10 @@\n" +
+                        "+abc c'est un test\n" +
+                        "+hello world !\n" +
+                        "+\n" +
+                        "+aaaa\n" +
+                        "+\n" +
+                        "+bbbb\n" +
+                        "+\n" +
+                        "+\n" +
+                        "+cccccccccccccccccccccccccccccccccccc\n" +
+                        "+\n" +
+                        "*** Analyse de : src/main/java/resources/config/test2.pdf ***\n" +
+                        "fichier binaire ajouté\n";
+                assertThat(res).isEqualTo(s);
+            });
         }
     }
 

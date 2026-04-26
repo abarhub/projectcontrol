@@ -219,9 +219,8 @@ public class ChangementConfigService {
 
         StringBuilder sb = new StringBuilder();
         for (String p : liste) {
-            var f = p;
-            LOGGER.info("analyse de : {}", f);
-            var s = f.toString();
+            LOGGER.info("analyse de : {}", p);
+            var s = p;
             s = s.replaceAll("\\\\", "/");
             sb.append("*** Analyse de : ").append(s).append(" ***\n");
             if (s.endsWith(".yml")) {
@@ -256,7 +255,7 @@ public class ChangementConfigService {
             var buf1 = texteContent1.orElseGet(() -> new byte[0]);
             var buf2 = texteContent2.orElseGet(() -> new byte[0]);
 
-            if (isBinaryFile(buf1) || isBinaryFile(buf2)) {
+            if (isBinaryFile(buf1) || isBinaryFile(buf2) || isBinaryFromFilename(texteFile)) {
 
                 if (texteContent1.isPresent() && texteContent2.isPresent()) {
                     if (Arrays.equals(buf1, buf2)) {
@@ -292,6 +291,14 @@ public class ChangementConfigService {
 
         }
         return res.toString();
+    }
+
+    private boolean isBinaryFromFilename(String texteFile) {
+        if (texteFile == null || texteFile.isEmpty())
+            return false;
+        texteFile = texteFile.toLowerCase();
+        return texteFile.endsWith(".bin") || texteFile.endsWith(".jpg") || texteFile.endsWith(".png") || texteFile.endsWith(".pdf")
+                || texteFile.endsWith(".jks") || texteFile.endsWith(".p12");
     }
 
     private String comparePropertiesFiles(String repoPath, String commit1Hash, String commit2Hash, String propertiesFilePath) throws Exception {
