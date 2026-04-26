@@ -3,7 +3,10 @@ package org.projectcontrol.server.controler;
 import org.projectcontrol.server.dto.GroupeProjetDto;
 import org.projectcontrol.server.dto.ProjetDto;
 import org.projectcontrol.server.service.ProjetService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 

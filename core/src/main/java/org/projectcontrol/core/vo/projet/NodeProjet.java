@@ -1,6 +1,5 @@
 package org.projectcontrol.core.vo.projet;
 
-import java.nio.file.Path;
 import java.util.Map;
 
 public class NodeProjet {

@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 @Service
 public class ChangementConfigService {
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangementConfigService.class);
 
     public String compareYamlFiles(String repoPath, String commit1Hash, String commit2Hash, String yamlFilePath) throws Exception {

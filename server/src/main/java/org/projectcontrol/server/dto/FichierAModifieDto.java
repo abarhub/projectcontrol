@@ -1,6 +1,7 @@
 package org.projectcontrol.server.dto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FichierAModifieDto {
     private String nomFichier;
