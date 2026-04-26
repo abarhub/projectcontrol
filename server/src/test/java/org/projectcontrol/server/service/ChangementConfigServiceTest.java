@@ -81,6 +81,30 @@ class ChangementConfigServiceTest {
             });
         }
 
+        @Test
+        void compareYamlFiles3() throws Exception {
+
+            initialiseFichiers(repoDir, List.of("version1", "version3", "version2"),
+                    List.of(List.of(), List.of(), List.of("src/main/java/resources/config/application.yml")),
+                    (firstShortHash, secondShortHash) -> {
+                        var res = changementConfigService.compareYamlFiles(repoDir.toString(), firstShortHash, secondShortHash,
+                                "src/main/java/resources/config/application.yml");
+
+                        var s = "* Parametre à ajouter : \n" +
+                                "* Parametre à modifier : \n" +
+                                "* Parametre à supprimer : \n" +
+                                "app.key001\n" +
+                                "app.key002\n" +
+                                "app.key003\n" +
+                                "key1\n" +
+                                "key2\n" +
+                                "key3\n";
+
+                        assertThat(res).isEqualTo(s);
+
+                    });
+        }
+
     }
 
     @Nested
