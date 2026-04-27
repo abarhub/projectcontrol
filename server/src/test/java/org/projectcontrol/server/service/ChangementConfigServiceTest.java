@@ -4,6 +4,7 @@ import org.apache.commons.lang3.function.FailableBiConsumer;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +25,7 @@ class ChangementConfigServiceTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangementConfigServiceTest.class);
 
-    private ChangementConfigService changementConfigService = new ChangementConfigService();
+    private final ChangementConfigService changementConfigService = new ChangementConfigService();
 
     private static final Path REPERTOIRE_REFERENCE = Paths.get("src/test/resources/changeConfig")
             .toAbsolutePath().normalize();
@@ -50,9 +51,11 @@ class ChangementConfigServiceTest {
                 var res = changementConfigService.compareYamlFiles(repoDir.toString(), firstShortHash, secondShortHash,
                         "src/main/java/resources/config/application.yml");
 
-                var s = "* Parametre à ajouter : \n" +
-                        "* Parametre à modifier : \n" +
-                        "* Parametre à supprimer : \n";
+                var s = """
+                        * Parametre à ajouter :\s
+                        * Parametre à modifier :\s
+                        * Parametre à supprimer :\s
+                        """;
 
                 assertThat(res).isEqualTo(s);
 
@@ -66,15 +69,17 @@ class ChangementConfigServiceTest {
                 var res = changementConfigService.compareYamlFiles(repoDir.toString(), firstShortHash, secondShortHash,
                         "src/main/java/resources/config/application.yml");
 
-                var s = "* Parametre à ajouter : \n" +
-                        "app.key004: ffff\n" +
-                        "key8: wwww\n" +
-                        "* Parametre à modifier : \n" +
-                        "app.key001: aaa03\n" +
-                        "key2: tutu02\n" +
-                        "* Parametre à supprimer : \n" +
-                        "app.key003\n" +
-                        "key3\n";
+                var s = """
+                        * Parametre à ajouter :\s
+                        app.key004: ffff
+                        key8: wwww
+                        * Parametre à modifier :\s
+                        app.key001: aaa03
+                        key2: tutu02
+                        * Parametre à supprimer :\s
+                        app.key003
+                        key3
+                        """;
 
                 assertThat(res).isEqualTo(s);
 
@@ -90,15 +95,17 @@ class ChangementConfigServiceTest {
                         var res = changementConfigService.compareYamlFiles(repoDir.toString(), firstShortHash, secondShortHash,
                                 "src/main/java/resources/config/application.yml");
 
-                        var s = "* Parametre à ajouter : \n" +
-                                "* Parametre à modifier : \n" +
-                                "* Parametre à supprimer : \n" +
-                                "app.key001\n" +
-                                "app.key002\n" +
-                                "app.key003\n" +
-                                "key1\n" +
-                                "key2\n" +
-                                "key3\n";
+                        var s = """
+                                * Parametre à ajouter :\s
+                                * Parametre à modifier :\s
+                                * Parametre à supprimer :\s
+                                app.key001
+                                app.key002
+                                app.key003
+                                key1
+                                key2
+                                key3
+                                """;
 
                         assertThat(res).isEqualTo(s);
 
@@ -116,10 +123,12 @@ class ChangementConfigServiceTest {
 
             initialiseFichiers(repoDir, List.of("version1", "version2"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
-                        "* Parametre à ajouter : \n" +
-                        "* Parametre à modifier : \n" +
-                        "* Parametre à supprimer : \n";
+                var s = """
+                        *** Analyse de : src/main/java/resources/config/application.yml ***
+                        * Parametre à ajouter :\s
+                        * Parametre à modifier :\s
+                        * Parametre à supprimer :\s
+                        """;
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -130,16 +139,18 @@ class ChangementConfigServiceTest {
 
             initialiseFichiers(repoDir, List.of("version1", "version3"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
-                        "* Parametre à ajouter : \n" +
-                        "app.key004: ffff\n" +
-                        "key8: wwww\n" +
-                        "* Parametre à modifier : \n" +
-                        "app.key001: aaa03\n" +
-                        "key2: tutu02\n" +
-                        "* Parametre à supprimer : \n" +
-                        "app.key003\n" +
-                        "key3\n";
+                var s = """
+                        *** Analyse de : src/main/java/resources/config/application.yml ***
+                        * Parametre à ajouter :\s
+                        app.key004: ffff
+                        key8: wwww
+                        * Parametre à modifier :\s
+                        app.key001: aaa03
+                        key2: tutu02
+                        * Parametre à supprimer :\s
+                        app.key003
+                        key3
+                        """;
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -150,31 +161,33 @@ class ChangementConfigServiceTest {
 
             initialiseFichiers(repoDir, List.of("version1", "version4"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
-                        "* Parametre à ajouter : \n" +
-                        "* Parametre à modifier : \n" +
-                        "* Parametre à supprimer : \n" +
-                        "*** Analyse de : src/main/java/resources/config/logback.xml ***\n" +
-                        "@@ -0,0 +1,19 @@\n" +
-                        "+<configuration>\n" +
-                        "+\n" +
-                        "+    <appender name=\"CONSOLE001\" class=\"ch.qos.logback.core.ConsoleAppender\">\n" +
-                        "+        <layout class=\"ch.qos.logback.classic.PatternLayout\">\n" +
-                        "+            <Pattern>\n" +
-                        "+                %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n\n" +
-                        "+            </Pattern>\n" +
-                        "+        </layout>\n" +
-                        "+    </appender>\n" +
-                        "+\n" +
-                        "+    <logger name=\"com.test\" level=\"debug\" additivity=\"false\">\n" +
-                        "+        <appender-ref ref=\"CONSOLE\"/>\n" +
-                        "+    </logger>\n" +
-                        "+\n" +
-                        "+    <root level=\"error\">\n" +
-                        "+        <appender-ref ref=\"CONSOLE001\"/>\n" +
-                        "+    </root>\n" +
-                        "+\n" +
-                        "+</configuration>\n";
+                var s = """
+                        *** Analyse de : src/main/java/resources/config/application.yml ***
+                        * Parametre à ajouter :\s
+                        * Parametre à modifier :\s
+                        * Parametre à supprimer :\s
+                        *** Analyse de : src/main/java/resources/config/logback.xml ***
+                        @@ -0,0 +1,19 @@
+                        +<configuration>
+                        +
+                        +    <appender name="CONSOLE001" class="ch.qos.logback.core.ConsoleAppender">
+                        +        <layout class="ch.qos.logback.classic.PatternLayout">
+                        +            <Pattern>
+                        +                %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n
+                        +            </Pattern>
+                        +        </layout>
+                        +    </appender>
+                        +
+                        +    <logger name="com.test" level="debug" additivity="false">
+                        +        <appender-ref ref="CONSOLE"/>
+                        +    </logger>
+                        +
+                        +    <root level="error">
+                        +        <appender-ref ref="CONSOLE001"/>
+                        +    </root>
+                        +
+                        +</configuration>
+                        """;
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -185,18 +198,20 @@ class ChangementConfigServiceTest {
 
             initialiseFichiers(repoDir, List.of("version1", "version5"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/application.properties ***\n" +
-                        "* Parametre à ajouter : \n" +
-                        "key1: aaa\n" +
-                        "key2: bbbb\n" +
-                        "key4: ddd\n" +
-                        "key5: xxx\n" +
-                        "* Parametre à modifier : \n" +
-                        "* Parametre à supprimer : \n" +
-                        "*** Analyse de : src/main/java/resources/config/application.yml ***\n" +
-                        "* Parametre à ajouter : \n" +
-                        "* Parametre à modifier : \n" +
-                        "* Parametre à supprimer : \n";
+                var s = """
+                        *** Analyse de : src/main/java/resources/config/application.properties ***
+                        * Parametre à ajouter :\s
+                        key1: aaa
+                        key2: bbbb
+                        key4: ddd
+                        key5: xxx
+                        * Parametre à modifier :\s
+                        * Parametre à supprimer :\s
+                        *** Analyse de : src/main/java/resources/config/application.yml ***
+                        * Parametre à ajouter :\s
+                        * Parametre à modifier :\s
+                        * Parametre à supprimer :\s
+                        """;
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -207,13 +222,15 @@ class ChangementConfigServiceTest {
 
             initialiseFichiers(repoDir, List.of("version5", "version6"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/application.properties ***\n" +
-                        "* Parametre à ajouter : \n" +
-                        "key6: nnnn\n" +
-                        "* Parametre à modifier : \n" +
-                        "key2: bbbb2\n" +
-                        "* Parametre à supprimer : \n" +
-                        "key5\n";
+                var s = """
+                        *** Analyse de : src/main/java/resources/config/application.properties ***
+                        * Parametre à ajouter :\s
+                        key6: nnnn
+                        * Parametre à modifier :\s
+                        key2: bbbb2
+                        * Parametre à supprimer :\s
+                        key5
+                        """;
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -224,10 +241,12 @@ class ChangementConfigServiceTest {
 
             initialiseFichiers(repoDir, List.of("version2", "version7"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/test.jks ***\n" +
-                        "fichier binaire ajouté\n" +
-                        "*** Analyse de : src/main/java/resources/config/test.p12 ***\n" +
-                        "fichier binaire ajouté\n";
+                var s = """
+                        *** Analyse de : src/main/java/resources/config/test.jks ***
+                        fichier binaire ajouté
+                        *** Analyse de : src/main/java/resources/config/test.p12 ***
+                        fichier binaire ajouté
+                        """;
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -253,14 +272,18 @@ class ChangementConfigServiceTest {
 
                         {// tous les commits
                             var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                            var s = "*** Analyse de : src/main/java/resources/config/test.jks ***\n" +
-                                    "fichier binaire ajouté\n";
+                            var s = """
+                                    *** Analyse de : src/main/java/resources/config/test.jks ***
+                                    fichier binaire ajouté
+                                    """;
                             assertThat(res).isEqualTo(s);
                         }
                         {// les 2 derniers commits
                             var res = changementConfigService.calculDifference(repoDir, "HEAD~1", "HEAD");
-                            var s = "*** Analyse de : src/main/java/resources/config/test.p12 ***\n" +
-                                    "fichier binaire supprimé\n";
+                            var s = """
+                                    *** Analyse de : src/main/java/resources/config/test.p12 ***
+                                    fichier binaire supprimé
+                                    """;
                             assertThat(res).isEqualTo(s);
                         }
 
@@ -273,20 +296,22 @@ class ChangementConfigServiceTest {
 
             initialiseFichiers(repoDir, List.of("version2", "version9"), (firstShortHash, secondShortHash) -> {
                 var res = changementConfigService.calculDifference(repoDir, firstShortHash, secondShortHash);
-                var s = "*** Analyse de : src/main/java/resources/config/test1.txt ***\n" +
-                        "@@ -0,0 +1,10 @@\n" +
-                        "+abc c'est un test\n" +
-                        "+hello world !\n" +
-                        "+\n" +
-                        "+aaaa\n" +
-                        "+\n" +
-                        "+bbbb\n" +
-                        "+\n" +
-                        "+\n" +
-                        "+cccccccccccccccccccccccccccccccccccc\n" +
-                        "+\n" +
-                        "*** Analyse de : src/main/java/resources/config/test2.pdf ***\n" +
-                        "fichier binaire ajouté\n";
+                var s = """
+                        *** Analyse de : src/main/java/resources/config/test1.txt ***
+                        @@ -0,0 +1,10 @@
+                        +abc c'est un test
+                        +hello world !
+                        +
+                        +aaaa
+                        +
+                        +bbbb
+                        +
+                        +
+                        +cccccccccccccccccccccccccccccccccccc
+                        +
+                        *** Analyse de : src/main/java/resources/config/test2.pdf ***
+                        fichier binaire ajouté
+                        """;
                 assertThat(res).isEqualTo(s);
             });
         }
@@ -430,8 +455,8 @@ class ChangementConfigServiceTest {
         Files.walkFileTree(source, new SimpleFileVisitor<>() {
 
             @Override
-            public FileVisitResult preVisitDirectory(Path dir,
-                                                     BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult preVisitDirectory(@NonNull Path dir,
+                                                     @NonNull BasicFileAttributes attrs) throws IOException {
                 Path relative = source.relativize(dir);
                 Path destinationDir = target.resolve(relative);
                 Files.createDirectories(destinationDir);
@@ -439,8 +464,8 @@ class ChangementConfigServiceTest {
             }
 
             @Override
-            public FileVisitResult visitFile(Path file,
-                                             BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(@NonNull Path file,
+                                             @NonNull BasicFileAttributes attrs) throws IOException {
                 Path relative = source.relativize(file);
                 Path destinationFile = target.resolve(relative);
 

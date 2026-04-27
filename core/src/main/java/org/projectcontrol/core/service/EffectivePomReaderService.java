@@ -186,7 +186,15 @@ public class EffectivePomReaderService {
     // ---------------------------------------------------------------
     private String nodeToXmlString(Node node) throws TransformerException {
         var factory = TransformerFactory.newInstance();
+        // Désactive l'accès aux DTD externes
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+
+        // Désactive l'accès aux stylesheets externes (XSL externes)
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+
+        // Active le mode secure processing
         factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
         Transformer transformer = factory.newTransformer();
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");

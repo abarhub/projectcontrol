@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 public class ChangementConfigService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangementConfigService.class);
+    private static final String GIT_DIRECTORY_PATH = "/.git";
 
     public String compareYamlFiles(String repoPath, String commit1Hash, String commit2Hash, String yamlFilePath) throws Exception {
 
@@ -42,7 +43,7 @@ public class ChangementConfigService {
 
         // Construire le repository Git
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        try (Repository repository = builder.setGitDir(new File(repoPath + "/.git"))
+        try (Repository repository = builder.setGitDir(new File(repoPath + GIT_DIRECTORY_PATH))
                 .readEnvironment()
                 .findGitDir()
                 .build()) {
@@ -90,7 +91,7 @@ public class ChangementConfigService {
         return resultat;
     }
 
-    private Optional<byte[]> getFileContentFromCommit(Repository repository, String commitHash, String filePath) throws Exception {
+    private Optional<byte[]> getFileContentFromCommit(Repository repository, String commitHash, String filePath) throws IOException {
         ObjectId commitId = repository.resolve(commitHash);
         RevCommit commit = new org.eclipse.jgit.revwalk.RevWalk(repository).parseCommit(commitId);
 
@@ -204,14 +205,16 @@ public class ChangementConfigService {
             var s = p;
             s = normalisePath(s);
             sb.append("*** Analyse de : ").append(s).append(" ***\n");
-            if (s.endsWith(".yml")) {
-                sb.append(compareYamlFiles(file.toString(), commitDebut, commitFin, s));
-            } else if (s.endsWith(".properties")) {
-                sb.append(comparePropertiesFiles(file.toString(), commitDebut, commitFin, s));
-            } else if (s.endsWith(".xml")) {
-                sb.append(compareTextFiles(file.toString(), commitDebut, commitFin, s));
-            } else {
-                sb.append(compareTextFiles(file.toString(), commitDebut, commitFin, s));
+            if (s != null) {
+                if (s.endsWith(".yml")) {
+                    sb.append(compareYamlFiles(file.toString(), commitDebut, commitFin, s));
+                } else if (s.endsWith(".properties")) {
+                    sb.append(comparePropertiesFiles(file.toString(), commitDebut, commitFin, s));
+                } else if (s.endsWith(".xml")) {
+                    sb.append(compareTextFiles(file.toString(), commitDebut, commitFin, s));
+                } else {
+                    sb.append(compareTextFiles(file.toString(), commitDebut, commitFin, s));
+                }
             }
         }
 
@@ -224,7 +227,7 @@ public class ChangementConfigService {
 
         // Construire le repository Git
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        try (Repository repository = builder.setGitDir(new File(repoPath + "/.git"))
+        try (Repository repository = builder.setGitDir(new File(repoPath + GIT_DIRECTORY_PATH))
                 .readEnvironment()
                 .findGitDir()
                 .build()) {
@@ -287,7 +290,7 @@ public class ChangementConfigService {
 
         // Construire le repository Git
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        try (Repository repository = builder.setGitDir(new File(repoPath + "/.git"))
+        try (Repository repository = builder.setGitDir(new File(repoPath + GIT_DIRECTORY_PATH))
                 .readEnvironment()
                 .findGitDir()
                 .build()) {
@@ -403,11 +406,7 @@ public class ChangementConfigService {
                         ajoute(liste, diff.getOldPath());
                         break;
 
-                    case ADD:
-                    case MODIFY:
-                    case RENAME:
-                    case COPY:
-                    default:
+                    default: // ADD, MODIFY, RENAME, COPY
                         LOGGER.debug("Path : {}", diff.getNewPath());
                         if (diff.getOldPath() != null && !diff.getOldPath().isBlank()) {
                             ajoute(liste, diff.getOldPath());
@@ -438,7 +437,7 @@ public class ChangementConfigService {
             Repository repository,
             String oldCommitId,
             String newCommitId
-    ) throws Exception {
+    ) throws IOException {
 
         ObjectId oldHead = repository.resolve(oldCommitId);
         ObjectId newHead = repository.resolve(newCommitId);
@@ -500,8 +499,8 @@ public class ChangementConfigService {
         }
     }
 
-    private String normalisePath(String s){
-        if(s==null) {
+    private String normalisePath(String s) {
+        if (s == null) {
             return null;
         } else {
             return s.replace("\\", "/");
