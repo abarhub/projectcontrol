@@ -17,6 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -223,6 +224,8 @@ public class GrepService {
 
                 try (InputStream xmlFile = Files.newInputStream(file)) {
                     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                    dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                    dbf.setExpandEntityReferences(false);
                     DocumentBuilder db = dbf.newDocumentBuilder();
                     Document xml = db.parse(xmlFile);
                     xml.getDocumentElement().normalize();

@@ -14,6 +14,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -108,6 +109,8 @@ public class EffectivePomReaderService {
     private MavenProjet parseEffectivePom(Path xmlFile) throws Exception {
         // Lire la racine du XML pour détecter le cas multi-module
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setExpandEntityReferences(false);
         DocumentBuilder builder = factory.newDocumentBuilder();
         try (InputStream input = Files.newInputStream(xmlFile)) {
             Document doc = builder.parse(input);
@@ -182,7 +185,9 @@ public class EffectivePomReaderService {
     // Utilitaire : convertir un nœud DOM en String XML
     // ---------------------------------------------------------------
     private String nodeToXmlString(Node node) throws TransformerException {
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        var factory = TransformerFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        Transformer transformer = factory.newTransformer();
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 

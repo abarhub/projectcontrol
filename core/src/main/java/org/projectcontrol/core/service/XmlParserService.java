@@ -28,6 +28,7 @@ public class XmlParserService {
         List<ResultatBalise> resultat = new ArrayList<>();
 
         XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+        inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
 
         LOGGER.info("Parsing du fichier {}", inputFile);
 
