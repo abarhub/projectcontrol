@@ -22,7 +22,7 @@ public class DependencyTreeParserService {
      * Lance "mvn dependency:tree -DoutputType=tgf" et retourne
      * la liste des dépendances DIRECTES enrichies de leurs transitives.
      */
-    public List<MavenDependency> buildDependencyTree(Path projectDir, String mvnCmd) throws Exception {
+    public List<MavenDependency> buildDependencyTree(Path projectDir, String mvnCmd) throws IOException, InterruptedException {
         Path tgfFile = Files.createTempFile("dep-tree-", ".tgf");
 
         Path pomFile = projectDir.resolve("pom.xml").toAbsolutePath().normalize();
@@ -129,7 +129,7 @@ public class DependencyTreeParserService {
     // ---------------------------------------------------------------
     // Utilitaire : lancer un process Maven
     // ---------------------------------------------------------------
-    void runProcess(Path dir, String mvnCmd, String... args) throws Exception {
+    void runProcess(Path dir, String mvnCmd, String... args) throws IOException, InterruptedException {
         List<String> cmd = new ArrayList<>();
         cmd.add(mvnCmd);
         cmd.addAll(Arrays.asList(args));

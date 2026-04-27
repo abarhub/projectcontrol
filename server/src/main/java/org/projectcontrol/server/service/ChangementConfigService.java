@@ -37,7 +37,7 @@ public class ChangementConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangementConfigService.class);
     private static final String GIT_DIRECTORY_PATH = "/.git";
 
-    public String compareYamlFiles(String repoPath, String commit1Hash, String commit2Hash, String yamlFilePath) throws Exception {
+    public String compareYamlFiles(String repoPath, String commit1Hash, String commit2Hash, String yamlFilePath) throws IOException {
 
         StringBuilder res = new StringBuilder();
 
@@ -165,34 +165,6 @@ public class ChangementConfigService {
         return Objects.requireNonNullElse(str, "");
     }
 
-    private void compareFiles2(String file1, String file2) throws IOException {
-        List<String> lines1 = Files.readAllLines(Paths.get(file1));
-        List<String> lines2 = Files.readAllLines(Paths.get(file2));
-
-        System.out.println("Différences entre les fichiers :");
-
-        // Implémentation simple de la comparaison
-        Set<String> linesSet1 = new HashSet<>(lines1);
-        Set<String> linesSet2 = new HashSet<>(lines2);
-
-        // Lignes dans le premier fichier mais pas dans le second
-        Set<String> uniqueToFile1 = new HashSet<>(linesSet1);
-        uniqueToFile1.removeAll(linesSet2);
-        if (!uniqueToFile1.isEmpty()) {
-            System.out.println("Lignes uniquement dans le premier fichier:");
-            uniqueToFile1.forEach(line -> System.out.println("- " + line));
-        }
-
-        // Lignes dans le second fichier mais pas dans le premier
-        Set<String> uniqueToFile2 = new HashSet<>(linesSet2);
-        uniqueToFile2.removeAll(linesSet1);
-        if (!uniqueToFile2.isEmpty()) {
-            System.out.println("Lignes uniquement dans le second fichier:");
-            uniqueToFile2.forEach(line -> System.out.println("- " + line));
-        }
-    }
-
-
     public String calculDifference(Path file, String commitDebut, String commitFin) throws Exception {
         LOGGER.debug("file={}", file);
         LOGGER.debug("root={}", file);
@@ -222,7 +194,7 @@ public class ChangementConfigService {
 
     }
 
-    private String compareTextFiles(String repoPath, String commit1Hash, String commit2Hash, String texteFile) throws Exception {
+    private String compareTextFiles(String repoPath, String commit1Hash, String commit2Hash, String texteFile) throws IOException {
         StringBuilder res = new StringBuilder();
 
         // Construire le repository Git
@@ -285,7 +257,7 @@ public class ChangementConfigService {
                 || texteFile.endsWith(".jks") || texteFile.endsWith(".p12");
     }
 
-    private String comparePropertiesFiles(String repoPath, String commit1Hash, String commit2Hash, String propertiesFilePath) throws Exception {
+    private String comparePropertiesFiles(String repoPath, String commit1Hash, String commit2Hash, String propertiesFilePath) throws IOException {
         StringBuilder res = new StringBuilder();
 
         // Construire le repository Git
@@ -390,7 +362,7 @@ public class ChangementConfigService {
         return true; // Le chemin ne contient pas de répertoire à ignorer
     }
 
-    private List<String> getListPath(File rep, String oldCommitId, String newCommitId) throws Exception {
+    private List<String> getListPath(File rep, String oldCommitId, String newCommitId) throws IOException {
         List<String> liste = new ArrayList<>();
         try (Git git = Git.open(rep)) {
             Repository repository = git.getRepository();
@@ -400,19 +372,15 @@ public class ChangementConfigService {
             for (DiffEntry diff : diffs) {
                 LOGGER.debug("Type : {}", diff.getChangeType());
 
-                switch (diff.getChangeType()) {
-                    case DELETE:
-                        LOGGER.debug("Path : {}", diff.getOldPath());
+                if (Objects.requireNonNull(diff.getChangeType()) == DiffEntry.ChangeType.DELETE) {
+                    LOGGER.debug("Path : {}", diff.getOldPath());
+                    ajoute(liste, diff.getOldPath());
+                } else {// ADD, MODIFY, RENAME, COPY
+                    LOGGER.debug("Path : {}", diff.getNewPath());
+                    if (diff.getOldPath() != null && !diff.getOldPath().isBlank()) {
                         ajoute(liste, diff.getOldPath());
-                        break;
-
-                    default: // ADD, MODIFY, RENAME, COPY
-                        LOGGER.debug("Path : {}", diff.getNewPath());
-                        if (diff.getOldPath() != null && !diff.getOldPath().isBlank()) {
-                            ajoute(liste, diff.getOldPath());
-                        }
-                        ajoute(liste, diff.getNewPath());
-                        break;
+                    }
+                    ajoute(liste, diff.getNewPath());
                 }
             }
             liste = liste.stream()
