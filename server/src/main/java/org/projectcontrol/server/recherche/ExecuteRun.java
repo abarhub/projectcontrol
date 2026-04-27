@@ -46,40 +46,28 @@ public class ExecuteRun {
         if (CollectionUtils.isEmpty(listeCommande)) {
             throw new RuntimeException("Commande invalide: " + listeCommande);
         }
-        if (false) {
-            runService.runCommand(x -> {
-                try {
-                    LOGGER.info("ligne: {}", x);
-                    resultat.put(x.line());
-                } catch (InterruptedException e) {
-                    LOGGER.error("error", e);
-                    throw new RuntimeException(e);
-                }
-            }, listeCommande.toArray(new String[0]));
-        } else {
-            var res = runService.runCommand(listeCommande.toArray(new String[0]));
-            LOGGER.info("fin run ...");
-            LOGGER.info("subscribe ...");
-            var disposable = res.subscribe(x -> {
-                        try {
-                            LOGGER.info("ligne: {}", x);
-                            resultat.put(x.line());
-                        } catch (InterruptedException e) {
-                            LOGGER.error("error", e);
-                            throw new RuntimeException(e);
-                        }
-                    }, error -> {
-                        LOGGER.error("error", error);
-                    },
-                    () -> {
-                        fini = true;
-                        LOGGER.info("fin run ...");
-                    });
-            LOGGER.info("subscribe ok");
-            LOGGER.info("dispose ...");
-            disposable.dispose();
-            LOGGER.info("dispose ok");
-        }
+        var res = runService.runCommand(listeCommande.toArray(new String[0]));
+        LOGGER.info("fin run ...");
+        LOGGER.info("subscribe ...");
+        var disposable = res.subscribe(x -> {
+                    try {
+                        LOGGER.info("ligne: {}", x);
+                        resultat.put(x.line());
+                    } catch (InterruptedException e) {
+                        LOGGER.error("error", e);
+                        throw new RuntimeException(e);
+                    }
+                }, error -> {
+                    LOGGER.error("error", error);
+                },
+                () -> {
+                    fini = true;
+                    LOGGER.info("fin run ...");
+                });
+        LOGGER.info("subscribe ok");
+        LOGGER.info("dispose ...");
+        disposable.dispose();
+        LOGGER.info("dispose ok");
     }
 
     private List<String> getListeCommande(String action, String fichier) {

@@ -3,10 +3,8 @@ package org.projectcontrol.core.service;
 import org.projectcontrol.core.vo.projet.GitRepositoryInfo;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -105,51 +103,6 @@ public class GitInfoService {
             throw new GitAnalysisException("Git command failed with exit code " + res);
         }
         return String.join("\n", logs);
-    }
-
-
-    private String runCommand0(File workingDir, String... command) throws GitAnalysisException {
-        try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-            pb.directory(workingDir);
-            pb.redirectErrorStream(false);
-
-            Process process = pb.start();
-
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (!output.isEmpty()) output.append("\n");
-                    output.append(line);
-                }
-            }
-
-            int exitCode = process.waitFor();
-            if (exitCode != 0) {
-                // Lire stderr pour un message d'erreur utile
-                StringBuilder error = new StringBuilder();
-                try (BufferedReader errReader = new BufferedReader(
-                        new InputStreamReader(process.getErrorStream()))) {
-                    String line;
-                    while ((line = errReader.readLine()) != null) {
-                        error.append(line).append("\n");
-                    }
-                }
-                throw new GitAnalysisException(
-                        "Commande échouée (exit " + exitCode + ") : " + String.join(" ", command)
-                                + "\n" + error
-                );
-            }
-
-            return output.toString().trim();
-
-        } catch (GitAnalysisException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new GitAnalysisException("Erreur lors de l'exécution de la commande Git", e);
-        }
     }
 
     /**

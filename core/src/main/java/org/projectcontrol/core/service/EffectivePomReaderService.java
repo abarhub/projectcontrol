@@ -285,7 +285,7 @@ public class EffectivePomReaderService {
     // ================================================================
     private void loadModulesRecursively(MavenProjet parentInfo,
                                         Path parentDir,
-                                        String mvnCmd) {
+                                        String mvnCmd) throws InterruptedException {
         List<MavenProjet> resolved = new ArrayList<>();
 
         for (MavenProjet stub : parentInfo.getModules()) {
@@ -308,6 +308,8 @@ public class EffectivePomReaderService {
                 LOGGER.info("[INFO] Chargement du module : {}", moduleDir.getFileName());
                 MavenProjet moduleInfo = readEffectivePom(moduleDir);
                 resolved.add(moduleInfo);
+            } catch (InterruptedException e) {
+                throw e;
             } catch (Exception e) {
                 LOGGER.error("[WARN] Erreur module {} : {}", stub.getName(), e.getMessage());
                 resolved.add(stub);
