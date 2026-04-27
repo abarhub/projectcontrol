@@ -3,6 +3,8 @@ package org.projectcontrol.core.service;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.projectcontrol.core.utils.TempUtils;
 import org.projectcontrol.core.vo.projet.ArtifactInfo;
 import org.projectcontrol.core.vo.projet.MavenDependency;
 import org.projectcontrol.core.vo.projet.MavenProfile;
@@ -13,10 +15,12 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -53,7 +57,9 @@ public class EffectivePomReaderService {
      * @param pomFile Répertoire racine du projet
      * @return PomInfo complet (modules récursifs + dépendances transitives)
      */
-    public MavenProjet readEffectivePom(Path pomFile) throws Exception {
+    public MavenProjet readEffectivePom(Path pomFile) throws IOException, InterruptedException,
+            XmlPullParserException, ParserConfigurationException,
+            TransformerException, SAXException {
 
         String mvnCmd = resolveMavenCommand(pomFile);
 
@@ -83,8 +89,8 @@ public class EffectivePomReaderService {
     // ================================================================
     //  ÉTAPE 1 : effective-pom
     // ================================================================
-    private Path runEffectivePom(Path projectDir, String mvnCmd) throws Exception {
-        Path outputFile = Files.createTempFile("effective-pom-", ".xml");
+    private Path runEffectivePom(Path projectDir, String mvnCmd) throws IOException, InterruptedException {
+        Path outputFile = TempUtils.createTempFile("effective-pom-", ".xml");
 
         Path pomFile = projectDir.resolve("pom.xml").toAbsolutePath().normalize();
 
@@ -106,7 +112,8 @@ public class EffectivePomReaderService {
     //  ÉTAPE 2 : Parser le XML → PomInfo
     // ================================================================
 
-    private MavenProjet parseEffectivePom(Path xmlFile) throws Exception {
+    private MavenProjet parseEffectivePom(Path xmlFile) throws ParserConfigurationException, IOException,
+            SAXException, XmlPullParserException, TransformerException {
         // Lire la racine du XML pour détecter le cas multi-module
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -134,7 +141,7 @@ public class EffectivePomReaderService {
     // ---------------------------------------------------------------
     // Cas 1 : un seul <project>
     // ---------------------------------------------------------------
-    private MavenProjet parseSingleProject(Path xmlFile) throws Exception {
+    private MavenProjet parseSingleProject(Path xmlFile) throws IOException, XmlPullParserException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileReader fr = new FileReader(xmlFile.toFile())) {
             return buildPomInfo(reader.read(fr));
@@ -146,7 +153,7 @@ public class EffectivePomReaderService {
     //   → le premier <project> = le parent/agrégateur
     //   → les suivants = les modules
     // ---------------------------------------------------------------
-    private MavenProjet parseMultiModuleProjects(Document doc) throws Exception {
+    private MavenProjet parseMultiModuleProjects(Document doc) throws TransformerException, XmlPullParserException, IOException {
         NodeList projectNodes = doc.getDocumentElement()
                 .getElementsByTagName("project");
 
@@ -169,7 +176,7 @@ public class EffectivePomReaderService {
         }
 
         // -- Le premier = projet racine (l'agrégateur) --
-        MavenProjet root = allModules.get(0);
+        MavenProjet root = allModules.getFirst();
 
         // -- Les suivants = modules, on les attache au root --
         // (ils remplacent les stubs créés dans buildPomInfo)

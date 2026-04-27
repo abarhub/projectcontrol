@@ -1,5 +1,6 @@
 package org.projectcontrol.core.service;
 
+import org.projectcontrol.core.utils.TempUtils;
 import org.projectcontrol.core.vo.projet.MavenDependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public class DependencyTreeParserService {
      * la liste des dépendances DIRECTES enrichies de leurs transitives.
      */
     public List<MavenDependency> buildDependencyTree(Path projectDir, String mvnCmd) throws IOException, InterruptedException {
-        Path tgfFile = Files.createTempFile("dep-tree-", ".tgf");
+        Path tgfFile = TempUtils.createTempFile("dep-tree-", ".tgf");
 
         Path pomFile = projectDir.resolve("pom.xml").toAbsolutePath().normalize();
 

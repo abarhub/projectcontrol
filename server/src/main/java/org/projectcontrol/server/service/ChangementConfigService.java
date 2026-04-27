@@ -303,7 +303,7 @@ public class ChangementConfigService {
         return map;
     }
 
-    public List<String> findConfigFiles(String directoryPath, String oldCommitId, String newCommitId) throws Exception {
+    public List<String> findConfigFiles(String directoryPath, String oldCommitId, String newCommitId) throws IOException {
         var root = Paths.get(directoryPath);
         var liste = getListPath(root.toFile(), oldCommitId, newCommitId);
 

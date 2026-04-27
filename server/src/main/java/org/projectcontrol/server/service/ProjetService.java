@@ -69,12 +69,12 @@ public class ProjetService {
 
     private static final boolean MAJ_VERSION_METHODE2 = true;
 
-    private Map<String, Map<String, ProjetGroupe>> listeGroupes = new HashMap<>();
-    private Map<String, ListVersionDto> mapListVersionDto = new HashMap<>();
+    private final Map<String, Map<String, ProjetGroupe>> listeGroupes = new HashMap<>();
+    private final Map<String, ListVersionDto> mapListVersionDto = new HashMap<>();
 
-    private AtomicLong idProjet = new AtomicLong(1);
-    private AtomicLong idHash = new AtomicLong(1);
-    private Set<String> setHash = new HashSet<>();
+    private final AtomicLong idProjet = new AtomicLong(1);
+    private final AtomicLong idHash = new AtomicLong(1);
+    private final Set<String> setHash = new HashSet<>();
 
     @Value("${repertoireProjet:}")
     private String repertoireProjet;
@@ -694,8 +694,6 @@ public class ProjetService {
                         ArtefactMaven parentArtefact = new ArtefactMaven(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
                         projetPom.setParent(parentArtefact);
 
-                    } else {
-
                     }
                     ArtefactMaven artefactMaven = new ArtefactMaven(model.getGroupId(), model.getArtifactId(), model.getVersion());
                     projetPom.setArtifact(artefactMaven);
@@ -722,43 +720,45 @@ public class ProjetService {
                 }
 
                 // analyse des enfants
+                try (var stream = Files.list(pomFile.getParent())) {
+                    var liste = stream
+                            .filter(Files::isDirectory)
+                            .toList();
 
-                var liste = Files.list(pomFile.getParent())
-                        .filter(Files::isDirectory)
-                        .toList();
+                    for (var f : liste) {
+                        var f2 = f.resolve("pom.xml");
+                        if (Files.exists(f2)) {
+                            Projet projetEnfant = new Projet();
+                            projetEnfant.setNom(f.getFileName().toString());
+                            rechercheRepertoireService.completeProjet(f, projetEnfant);
+                            analysePom(f2, projetEnfant);
+                            ProjetPom projetPom2 = null;
+                            if (projetEnfant.getProjetPom() != null) {
+                                if (projetPom.getProjetPomEnfants() == null) {
+                                    projetPom.setProjetPomEnfants(new ArrayList<>());
+                                }
+                                if (projetEnfant.getNom() != null && projetEnfant.getProjetPom().getNom() == null) {
+                                    projetEnfant.getProjetPom().setNom(projetEnfant.getNom());
+                                }
+                                projetPom2 = projetEnfant.getProjetPom();
+                                projetPom.getProjetPomEnfants().add(projetPom2);
+                            }
 
-                for (var f : liste) {
-                    var f2 = f.resolve("pom.xml");
-                    if (Files.exists(f2)) {
-                        Projet projetEnfant = new Projet();
-                        projetEnfant.setNom(f.getFileName().toString());
-                        rechercheRepertoireService.completeProjet(f, projetEnfant);
-                        analysePom(f2, projetEnfant);
-                        ProjetPom projetPom2 = null;
-                        if (projetEnfant.getProjetPom() != null) {
-                            if (projetPom.getProjetPomEnfants() == null) {
-                                projetPom.setProjetPomEnfants(new ArrayList<>());
+                            var f3 = f.resolve("package.json");
+                            if (Files.exists(f3)) {
+                                ProjetNode resultat2 = new ProjetNode();
+                                analysePackageJson(f3, resultat2);
+                                projetEnfant.setProjetNode(resultat2);
+                                if (projetPom2 == null) {
+                                    projetPom2 = new ProjetPom();
+                                    projetPom2.setNom(projetEnfant.getNom());
+                                    projetPom2.getProjetPomEnfants().add(projetPom2);
+                                }
+                                projetPom2.setProjetNode(resultat2);
                             }
-                            if (projetEnfant.getNom() != null && projetEnfant.getProjetPom().getNom() == null) {
-                                projetEnfant.getProjetPom().setNom(projetEnfant.getNom());
-                            }
-                            projetPom2 = projetEnfant.getProjetPom();
-                            projetPom.getProjetPomEnfants().add(projetPom2);
-                        }
-
-                        var f3 = f.resolve("package.json");
-                        if (Files.exists(f3)) {
-                            ProjetNode resultat2 = new ProjetNode();
-                            analysePackageJson(f3, resultat2);
-                            projetEnfant.setProjetNode(resultat2);
-                            if (projetPom2 == null) {
-                                projetPom2 = new ProjetPom();
-                                projetPom2.setNom(projetEnfant.getNom());
-                                projetPom2.getProjetPomEnfants().add(projetPom2);
-                            }
-                            projetPom2.setProjetNode(resultat2);
                         }
                     }
+
                 }
 
             }
@@ -873,7 +873,7 @@ public class ProjetService {
                     LOGGER.info("changement de config : {}", s);
                     if (s != null) {
                         String[] lines = s.split("\\r?\\n");
-                        if (lines != null && lines.length > 0) {
+                        if (lines.length > 0) {
                             resultat.setResultat(Arrays.asList(lines));
                         }
                     }
@@ -908,16 +908,16 @@ public class ProjetService {
                     diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
                     diffFormatter.setDetectRenames(true);
 
-                    ObjectReader reader = repo.newObjectReader();
-                    CanonicalTreeParser headTreeIter = new CanonicalTreeParser();
-                    ObjectId headTree = repo.resolve("HEAD^{tree}");
-                    headTreeIter.reset(reader, headTree);
+                    try (ObjectReader reader = repo.newObjectReader()) {
+                        CanonicalTreeParser headTreeIter = new CanonicalTreeParser();
+                        ObjectId headTree = repo.resolve("HEAD^{tree}");
 
-                    FileTreeIterator workingTreeIter = new FileTreeIterator(repo);
+                        FileTreeIterator workingTreeIter = new FileTreeIterator(repo);
 
-                    List<DiffEntry> diffs = diffFormatter.scan(headTreeIter, workingTreeIter);
-                    for (DiffEntry entry : diffs) {
-                        diffFormatter.format(entry);
+                        List<DiffEntry> diffs = diffFormatter.scan(headTreeIter, workingTreeIter);
+                        for (DiffEntry entry : diffs) {
+                            diffFormatter.format(entry);
+                        }
                     }
 
                     out.write("### Uncommitted changes ###\n".getBytes());
