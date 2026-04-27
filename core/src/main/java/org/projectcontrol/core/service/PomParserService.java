@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.projectcontrol.core.utils.LigneAModifier;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -129,7 +131,8 @@ public class PomParserService {
     }
 
     public void updateVersion2(Path file, String versionInitiale, boolean commit, String messageCommit,
-                               Map<String, List<LigneAModifier>> listLignes, String versionModifiee) throws Exception {
+                               Map<String, List<LigneAModifier>> listLignes, String versionModifiee)
+            throws IOException, GitAPIException {
         LOGGER.info("version: {} <> {} (fichier: {})", versionInitiale, versionModifiee, file);
         LOGGER.info("liste: {}", listLignes);
         Path repRacine = file.getParent();

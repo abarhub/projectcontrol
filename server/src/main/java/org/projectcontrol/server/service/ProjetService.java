@@ -862,7 +862,7 @@ public class ProjetService {
         return mapLigneAModifier;
     }
 
-    public ChangementConfigDto getChangementConfig(String groupId, String nomProjet, String commitInitial, String commitFinal) throws Exception {
+    public ChangementConfigDto getChangementConfig(String groupId, String nomProjet, String commitInitial, String commitFinal) throws IOException {
 
         ChangementConfigDto resultat = new ChangementConfigDto();
         resultat.setResultat(List.of());
