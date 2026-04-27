@@ -10,7 +10,7 @@
     </parent>
     <groupId>org.projectcontrol</groupId>
     <artifactId>projectcontrol-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>projectcontrol-parent</name>
     <packaging>pom</packaging>
     <description>Demo project for Spring Boot</description>
@@ -36,8 +36,8 @@
     <properties>
         <java.version>21</java.version>
         <picocli.version>4.7.7</picocli.version>
-        <core.version>0.0.1-SNAPSHOT</core.version>
-        <client.version>0.0.1-SNAPSHOT</client.version>
+        <core.version>1.0.0-SNAPSHOT</core.version>
+        <client.version>1.0.0-SNAPSHOT</client.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
     </properties>
