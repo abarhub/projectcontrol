@@ -13,6 +13,10 @@ import java.util.Set;
 
 public class TempUtils {
 
+    private TempUtils() {
+        /* This utility class should not be instantiated */
+    }
+
     public static Path createTempFile(String prefix, String suffix) throws IOException {
         if (SystemUtils.IS_OS_UNIX) {
             FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
@@ -21,15 +25,15 @@ public class TempUtils {
             File f = Files.createTempFile(prefix, suffix).toFile();  // Compliant
             var res = f.setReadable(true, true);
             if (!res) {
-                throw new RuntimeException("impossible de changer le mode de lecture");
+                throw new IOException("impossible de changer le mode de lecture");
             }
             res = f.setWritable(true, true);
             if (!res) {
-                throw new RuntimeException("impossible de changer le mode d'ecriture");
+                throw new IOException("impossible de changer le mode d'ecriture");
             }
             res = f.setExecutable(true, true);
             if (!res) {
-                throw new RuntimeException("impossible de changer le mode d'execution");
+                throw new IOException("impossible de changer le mode d'execution");
             }
             return f.toPath();
         }

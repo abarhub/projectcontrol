@@ -16,7 +16,10 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryBuilder;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -908,17 +911,15 @@ public class ProjetService {
                     diffFormatter.setDiffComparator(RawTextComparator.DEFAULT);
                     diffFormatter.setDetectRenames(true);
 
-                    try (ObjectReader reader = repo.newObjectReader()) {
-                        CanonicalTreeParser headTreeIter = new CanonicalTreeParser();
-                        ObjectId headTree = repo.resolve("HEAD^{tree}");
+                    CanonicalTreeParser headTreeIter = new CanonicalTreeParser();
 
-                        FileTreeIterator workingTreeIter = new FileTreeIterator(repo);
+                    FileTreeIterator workingTreeIter = new FileTreeIterator(repo);
 
-                        List<DiffEntry> diffs = diffFormatter.scan(headTreeIter, workingTreeIter);
-                        for (DiffEntry entry : diffs) {
-                            diffFormatter.format(entry);
-                        }
+                    List<DiffEntry> diffs = diffFormatter.scan(headTreeIter, workingTreeIter);
+                    for (DiffEntry entry : diffs) {
+                        diffFormatter.format(entry);
                     }
+
 
                     out.write("### Uncommitted changes ###\n".getBytes());
                     out.write(workingDiffOut.toByteArray());

@@ -165,7 +165,7 @@ public class ChangementConfigService {
         return Objects.requireNonNullElse(str, "");
     }
 
-    public String calculDifference(Path file, String commitDebut, String commitFin) throws Exception {
+    public String calculDifference(Path file, String commitDebut, String commitFin) throws IOException {
         LOGGER.debug("file={}", file);
         LOGGER.debug("root={}", file);
 
